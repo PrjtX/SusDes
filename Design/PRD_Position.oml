@@ -1,0 +1,125 @@
+classdef PRD_Position < handle
+
+	properties
+		A_SA
+		A_IR
+		A_Rkr
+		A_PRD
+		P_PRD_IB
+		P_PRD_OB
+		P_Rkr_B1
+		P_Rkr_B2
+		P_WC
+		MotionRatio
+		Ref_MR
+		Ref_SAdist
+	end
+	
+	methods 
+		%%%%-------------------------------------------------------------%%%%
+		function obj = PRD_Position(SteeringAxis, InstRotAxis)
+			obj.A_SA = SteeringAxis;
+			obj.A_IR = InstRotAxis;
+		end
+		%%%%-------------------------------------------------------------%%%%
+		function SetPoints(obj, Name, Coord)
+			switch Name
+				case 'WC'
+					obj.P_WC = Coord;
+				case 'PRD_IB'
+					obj.P_PRD_IB = Coord;
+				case 'PRD_OB'
+					obj.P_PRD_OB = Coord;
+				case 'Rkr_B1'
+					obj.P_Rkr_B1 = Coord;
+				case 'Rkr_B2'
+					obj.P_Rkr_B2 = Coord;
+			end
+		end
+	    %%%%-------------------------------------------------------------%%%%
+		function MR = RkrMotionRatio(obj)
+			
+			obj.A_Rkr = Link(obj.P_Rkr_B1, obj.P_Rkr_B2);
+			obj.A_PRD = Link(obj.P_PRD_IB, obj.P_PRD_OB);
+			
+			[Rrocker, t1, t2] = distance(obj.A_Rkr, obj.A_PRD);			
+			vRrkr = (obj.A_Rkr.Point(t1) - obj.A_PRD.Point(t2))/norm(obj.A_Rkr.Point(t1) - obj.A_PRD.Point(t2));
+			%%%------------------------------------------------------------------------------------%%%
+			vIR = [obj.A_IR.l;obj.A_IR.m;obj.A_IR.n]/norm([obj.A_IR.l;obj.A_IR.m;obj.A_IR.n]);
+			vRkr = (obj.P_Rkr_B1-obj.P_Rkr_B2)/norm(obj.P_Rkr_B1-obj.P_Rkr_B2);
+
+			[d, t] = distanceLinePoint(obj.A_IR, obj.P_WC);
+			vD   = (obj.A_IR.Point(t) - obj.P_WC)/norm(obj.A_IR.Point(t) - obj.P_WC);
+			vWC = cross(vIR,vD);
+			[d, t] = distanceLinePoint(obj.A_IR, obj.P_PRD_OB);
+			vD   = (obj.A_IR.Point(t) - obj.P_PRD_OB)/norm((obj.A_IR.Point(t) - obj.P_PRD_OB));
+			vPRD_OB = cross(vIR,vD);
+
+			vPRD = (obj.P_PRD_IB - obj.P_PRD_OB)/norm(obj.P_PRD_IB - obj.P_PRD_OB);
+
+			sPRD = (dot(vPRD_OB*vWC(3),vPRD)/norm(vPRD)^2)*vPRD;
+
+			vAlfa = cross(vPRD,vRrkr);
+
+			vAlfaProj = ((dot(vAlfa, vRkr))/norm(vRkr)^2)*vRkr;
+
+			obj.MotionRatio = (180/3.14)*norm(sPRD)/Rrocker*norm(vAlfaProj); % deg/mm
+			
+			MR = obj.MotionRatio;
+			%%%------------------------------------------------------------------------------------%%%
+			
+		end
+		%%%%-------------------------------------------------------------%%%%
+		function SetRefSAdist(obj, SAdist)
+			obj.Ref_SAdist = SAdist;
+		end
+		%%%%-------------------------------------------------------------%%%%
+		function SetRefMotionRatio(obj, MotionRatio)
+			obj.Ref_MR = MotionRatio;
+		end		
+		%%%%-------------------------------------------------------------%%%%
+		function dist = SteeringAxisDist(obj)
+			
+			[d, t1, t2] = distance(obj.A_SA, obj.A_PRD);
+			X_SA  = obj.A_SA.Xp(t1);
+			X_PRD = obj.A_PRD.Xp(t2);
+			if X_SA > X_PRD 
+				dsign = -1;
+			else
+				dsign = +1;
+			end
+			dist = d*dsign;		
+			
+		end
+		%%%%-------------------------------------------------------------%%%%
+		function Err = OptFunAxis(obj, x)
+			
+			POB_X  = x(1);
+			POB_Z  = x(2);
+			POB_Y  = obj.P_PRD_OB(2);
+			
+			P = [POB_X; POB_Y; POB_Z];
+			obj.SetPoints('PRD_OB', P);
+			
+			MR   = obj.RkrMotionRatio();
+			dist = obj.SteeringAxisDist();
+			
+			Err = (MR - obj.Ref_MR)^2 + (dist - obj.Ref_SAdist)^2;
+			
+			
+		end		
+		%%%%-------------------------------------------------------------%%%%
+		function Pos = Find_PRD_OB(obj)
+			
+			x0(1) = obj.P_PRD_OB(1);
+			x0(2) = obj.P_PRD_OB(3);
+			
+			[xout,fval,info,output] = fminsearch(@(x) obj.OptFunAxis(x), x0);
+			
+			Pos = [xout(1), obj.P_PRD_OB(2), xout(2)];
+			
+		end
+		%%%%-------------------------------------------------------------%%%%
+	end
+	
+end

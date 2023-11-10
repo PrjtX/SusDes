@@ -1,0 +1,49 @@
+%%%------------------------------------------------------------------------------------%%%
+clear all
+close all
+clc
+%%---------------------------------------------------------------------------%%
+tic
+%%---------------------------------------------------------------------------%%
+R = addpath('..\Design', '..\Tools', '..\Motion', '..\Loads', '..\GUI');
+%%---------------------------------------------------------------------------%%
+SuspName = 'Test'
+Path = 'C:\Scratch\TestLoad';
+ChcPath = 'W:\676\SUSP\FRONT\F2.11\_chc\230510_676_F2_11.chc';
+%%---------------------------------------------------------------------------%%
+ChcIn = ChcReader(ChcPath);
+ChcIn.FindSections();
+ChcIn.KinRead(1);
+ChcIn.KinRead(2);
+ChcIn.FrontKinDefine();
+ChcIn.RearKinDefine();
+ChcIn.TemplateDef(1);
+ChcIn.TemplateDef(2);	
+
+RHrange  = ChcIn.FindVariable(1, 'RideHeightRange');
+RHstatic = ChcIn.FindVariable(1, 'RefHeight') - ChcIn.FindVariable(1, 'FloorThickness');
+
+RHMin = RHstatic-RHrange(2);
+RHMax = RHstatic+RHrange(1);
+
+PinionRadius       = ChcIn.FindVariable(1, 'SteeringPinionRadius');
+SteeringWheelLock  = ChcIn.FindVariable(1, 'SteeringWheelLock');
+
+SteerRackTravel = PinionRadius*SteeringWheelLock*pi/180;
+%%---------------------------------------------------------------------------%%
+Load = load('W:\675\_LOADS\Front_675v1.mat');
+%%---------------------------------------------------------------------------%%
+LC = LoadCalc(ChcIn.FKin, Path);
+LC.SusTravel(RHMin,RHMax,1);
+LC.SusSteer(SteerRackTravel,1);
+L = LC.CalcLoad(Load);
+Load = load('W:\676\SUSP\FRONT\F2.12\SusAn\Front_LinkLoad_675v1.mat');
+%%---------------------------------------------------------------------------%%
+LP = LoadPlot();
+LP.AddSuspLoad(L, 'F2.12', [1 0 0]);
+LP.AddSuspLoad(Load.L, 'F2.13', [0 1 0]);
+LP.AddSuspLoad(Load.L, 'F2.13_', [0 0 1]);
+LP.AddSuspLoad(Load.L, 'F2.13_a', [1 0 1]);
+SusLoad = LP.LoadEnvelope(1);
+LP.DataPlot();
+%%---------------------------------------------------------------------------%%

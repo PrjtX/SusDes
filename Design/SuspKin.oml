@@ -1,0 +1,198 @@
+classdef SuspKin < handle
+
+	properties
+		Name
+		A_SA
+		A_IR
+		P_IRLat
+		P_IRLong
+		P_WC
+		P_TCP
+		P_RC
+		CamberGain
+		Squat
+		Dive
+		Caster
+		KingPin
+		Trail
+		Scrub
+	end 
+	
+	methods
+		%%%%------------------------------------------------------------------------------------%%%
+		function obj = SuspKin(SuspName)
+			obj.Name = SuspName;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignWC(obj, WC)
+			obj.P_WC = WC;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignTCP(obj, TCP)
+			obj.P_TCP = TCP;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignSteeringAxis(obj, SteerinAxisLine)
+			obj.A_SA = SteerinAxisLine;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignInstRotAxis(obj, InstantRotationAxis)
+			obj.A_IR = InstantRotationAxis;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignIRLat(obj, LateralInstantRotationPoint)
+			obj.P_IRLat = LateralInstantRotationPoint;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignIRLong(obj, LongitudinalInstantRotationPoint)
+			obj.P_IRLong = LateralInstantRotationPoint;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcInstRotLat(obj)
+			
+			t = obj.A_IR.findParam(obj.P_WC(1), 'X');
+			obj.P_IRLat(1,1) = obj.A_IR.Xp(t);
+			obj.P_IRLat(2,1) = obj.A_IR.Yp(t);
+			obj.P_IRLat(3,1) = obj.A_IR.Zp(t);
+			
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcInstRotLong(obj)
+
+			t = obj.A_IR.findParam(obj.P_WC(2), 'Y');
+			
+			obj.P_IRLong(1,1) = obj.A_IR.Xp(t);
+			obj.P_IRLong(2,1) = obj.A_IR.Yp(t);
+			obj.P_IRLong(3,1) = obj.A_IR.Zp(t);
+			
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcInstRollCenter(obj)
+
+			A_RC_Line = Link(obj.P_TCP, obj.P_IRLat);
+			t = A_RC_Line.findParam(0, 'Y');
+			obj.P_RC(1,1) = A_RC_Line.Xp(t);
+			obj.P_RC(2,1) = A_RC_Line.Yp(t);
+			obj.P_RC(3,1) = A_RC_Line.Zp(t);
+			
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcCamberGain(obj)
+			
+			DeltaY          = obj.P_IRLat(2,1) - obj.P_WC(2,1);
+			obj.CamberGain = 1/DeltaY; % rad/mm
+			
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcDive(obj)
+			
+			obj.Dive = (obj.P_IRLong(3,1) - obj.P_TCP(3,1))/(obj.P_IRLong(1,1) - obj.P_TCP(1,1));
+			
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcSquat(obj)
+
+			obj.Squat  = (obj.P_WC(3,1) - obj.P_IRLong(3,1))/(obj.P_WC(1,1) - obj.P_IRLong(1,1));
+			
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcIRLong(obj)
+			
+			A = [obj.Dive,-1; -obj.Squat,1];
+			B = [obj.Dive*obj.P_TCP(1,1)-obj.P_TCP(3,1); -obj.Squat*obj.P_WC(1,1)+obj.P_WC(3,1)];
+			
+			X = inv(A)*B;
+			
+			obj.P_IRLong(1,1) = X(1);
+			obj.P_IRLong(2,1) = obj.P_WC(2,1);
+			obj.P_IRLong(3,1) = X(2);
+			
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcIRLat(obj)
+			Y_IC = 1/obj.CamberGain + obj.P_WC(2,1);
+			
+			LineRC = Link(obj.P_TCP, obj.P_RC);
+			
+			t = LineRC.findParam(Y_IC, 'Y');
+			
+			obj.P_IRLat(1,1) = LineRC.Xp(t);
+			obj.P_IRLat(2,1) = LineRC.Yp(t);
+			obj.P_IRLat(3,1) = LineRC.Zp(t);
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignRCz(obj, Value)
+			obj.P_RC(1,1) = obj.P_WC(1,1);
+			obj.P_RC(2,1) = 0;
+			obj.P_RC(3,1) = Value;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignCamberGain(obj, Value)
+			obj.CamberGain = Value;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignDive(obj, Value)
+			obj.Dive =Value;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignSquat(obj, Value)
+			obj.Squat = Value;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignScrub(obj, Value)
+			obj.Scrub = Value;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignTrail(obj, Value)
+			obj.Trail= Value;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignCaster(obj, Value)
+			obj.Caster = Value;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function AssignKingPin(obj, Value)
+			obj.KingPin = Value;
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcCaster(obj)
+			obj.Caster = atan(obj.A_SA.l/obj.A_SA.n);
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcKingPin(obj)
+			obj.KingPin = atan(obj.A_SA.m/obj.A_SA.n);
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcScrub(obj)
+			t = obj.A_SA.findParam(obj.P_TCP(3,1),'Z');
+			SG_Y = obj.A_SA.Yp(t);
+			obj.Scrub = SG_Y - obj.P_TCP(2,1);
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcTrail(obj)
+			t = obj.A_SA.findParam(obj.P_TCP(3,1),'Z');
+			SG_X = obj.A_SA.Xp(t);
+			obj.Trail = - SG_X + obj.P_TCP(1,1);
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalsSteerAxis(obj)
+			
+			Xsg = obj.P_TCP(1,1)-obj.Trail;
+			Ysg = obj.P_TCP(2,1)+obj.Scrub;
+			Zsg = obj.P_TCP(3,1);
+			
+			l = tan(obj.Caster);
+			m = tan(obj.KingPin);
+			n = 1;
+			
+			obj.A_SA = Link([0,0,0],[0,0,0]);
+			obj.A_SA.SetRefPoint([Xsg; Ysg; Zsg]);
+			obj.A_SA.SetSlopes(l, m, n);
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+		function CalcInstRotAxis(obj)
+			obj.A_IR = Link(obj.P_IRLat, obj.P_IRLong, 'X');
+		end
+		%%%%------------------------------------------------------------------------------------%%%
+	end
+end

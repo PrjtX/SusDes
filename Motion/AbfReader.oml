@@ -1,0 +1,29 @@
+function Data = AbfReader(AbfPath, Type, Request, Component)
+	
+	
+	index = [];
+	ReqList = getreqlist(AbfPath, Type);
+	for k = 1:numel(ReqList)
+		ReqComp = '';
+		ReqComp = ReqList{1,k};
+		Req = ReqComp(14:end);
+		if strcmp(Request, Req) == 1;
+			index = k;
+		end
+	end
+	
+	if isempty(index)
+		for k = 1:numel(ReqList)
+			ReqComp = '';
+			ReqComp = ReqList{1,k};
+			Req = ReqComp(15:end);
+			if strcmp(Request, Req) == 1;
+				index = k;
+			end
+		end
+	end
+	
+	Data = readvector(AbfPath, Type, ReqList{1,index}, Component);
+
+	
+end

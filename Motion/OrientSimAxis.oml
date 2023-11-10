@@ -1,0 +1,16 @@
+function M = OrientSimAxis(P_OB, P_FL, P_RL)
+	
+	
+	
+	V_FL = -(P_OB-P_FL)/norm(P_OB-P_FL);
+	V_RL = -(P_OB-P_RL)/norm(P_OB-P_RL);
+	
+	N = cross(V_FL, V_RL);
+	
+	VMid = (V_FL+V_RL)/norm(V_FL+V_RL);
+	
+	V_Plane = cross(VMid, N);
+	
+	M = [VMid, V_Plane, N]';
+	
+end

@@ -1,0 +1,23 @@
+function L = LoadSorting(InputLoad, SuspOutput)
+	[Cat, FirstPos, NRep] = unique(InputLoad.Category);
+	L.Category = struct;
+	for k = 1:numel(Cat)
+		NCat(k) = NRep(FirstPos(k));
+	end
+	
+	for k = 1:numel(InputLoad.Fx)
+		if isfield(L.Category, InputLoad.Category{k}) == 1
+			j = numel(L.Category.(InputLoad.Category{k}))+1;
+		else
+			j = 1;
+		end
+		L.Category.(InputLoad.Category{k})(j).LWB_FL = SuspOutput.LWB_FL.Force(k+1);
+		L.Category.(InputLoad.Category{k})(j).LWB_RL = SuspOutput.LWB_RL.Force(k+1);
+		L.Category.(InputLoad.Category{k})(j).TWB_FL = SuspOutput.TWB_FL.Force(k+1);
+		L.Category.(InputLoad.Category{k})(j).TWB_RL = SuspOutput.TWB_RL.Force(k+1);
+		L.Category.(InputLoad.Category{k})(j).TRD    = SuspOutput.TRD.Force(k+1);
+		L.Category.(InputLoad.Category{k})(j).PRD    = SuspOutput.PRD.Force(k+1);
+		L.Category.(InputLoad.Category{k})(j).Valid  = 1;
+	end
+	
+end

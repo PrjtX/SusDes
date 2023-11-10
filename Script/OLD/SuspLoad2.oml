@@ -1,0 +1,48 @@
+%%%------------------------------------------------------------------------------------%%%
+clear all
+close all
+clc
+%%---------------------------------------------------------------------------%%
+tic
+%%---------------------------------------------------------------------------%%
+R = addpath('..\Design', '..\Tools', '..\Motion', '..\Loads', '..\GUI');
+%%---------------------------------------------------------------------------%%
+SuspName = 'Test'
+Path = 'C:\Scratch\TestLoad';
+%%---------------------------------------------------------------------------%%
+DP = DesignPanel();
+Tab1 = DP.HardPointConstrPage();
+Tab2 = DP.KinParamPage();
+Tab3 = DP.ExchangePage();
+DP.ButtonPanel();
+set(DP.ChcPathInField, 'string', 'W:\676\SUSP\FRONT\F2.11\_chc\230510_676_F2_11.chc');
+DP.ChcPathIn = 'W:\676\SUSP\FRONT\F2.11\_chc\230510_676_F2_11.chc';
+set(DP.Buttons.FrontRadio, 'value',1);
+DP.ChcRead([],[]);
+
+RHrange  = DP.ChcIn.FindVariable(1, 'RideHeightRange');
+RHstatic = DP.ChcIn.FindVariable(1, 'RefHeight') - DP.ChcIn.FindVariable(1, 'FloorThickness');
+
+RHMin = RHstatic-RHrange(2);
+RHMax = RHstatic+RHrange(1);
+
+PinionRadius       = DP.ChcIn.FindVariable(1, 'SteeringPinionRadius');
+SteeringWheelLock  = DP.ChcIn.FindVariable(1, 'SteeringWheelLock');
+
+SteerRackTravel = PinionRadius*SteeringWheelLock*pi/180;
+%%---------------------------------------------------------------------------%%
+Load = load('W:\675\_LOADS\Front_675v1.mat');
+%%---------------------------------------------------------------------------%%
+LC = LoadCalc(DP.ChcIn.FKin, Path);
+LC.SusTravel(RHMin,RHMax,1);
+LC.SusSteer(SteerRackTravel,1);
+L = LC.CalcLoad(Load);
+LC.SaveLoad('W:\676\SUSP\FRONT\F2.11\SusAn\Front_LinkLoad_675v1.mat');
+L2 = load('W:\676\SUSP\FRONT\F2.12\SusAn\Front_LinkLoad_675v1.mat');
+%%---------------------------------------------------------------------------%%
+LP = LoadPlot();
+LP.AddSuspLoad(L, 'F2.12', [1 0 0]);
+LP.AddSuspLoad(L2.L, 'F2.11', [0 1 0]);
+SusLoad = LP.LoadEnvelope(1);
+LP.DataPlot();
+%%---------------------------------------------------------------------------%%

@@ -1,0 +1,182 @@
+classdef WbnComp < handle
+
+	properties
+		
+		AV
+		CV		
+		Comb
+		Vector = {'FL_IB_X', 'FL_IB_Y', 'FL_IB_Z', ...			      
+			      'FL_OB_X', 'FL_OB_Y', 'FL_OB_Z', ...
+			      'RL_IB_X', 'RL_IB_Y', 'RL_IB_Z', ...
+			      'RL_OB_X', 'RL_OB_Y', 'RL_OB_Z', ...
+			      'Delta_X', 'Delta_Y', 'Delta_Z'}
+		A_SA		
+		A_IR				  
+		FL
+		RL
+				  
+	end
+	
+	methods
+		%%%--------------------------------------------------------------------------------%%%
+		function obj = WbnComp(ActVect, CoordVect)
+			obj.AV = ActVect;
+			obj.CV = CoordVect;
+			if sum(obj.AV(13:15)) == 3
+				obj.Comb = 1;
+			else
+				obj.Comb = 0;
+			end
+		end
+		%%%--------------------------------------------------------------------------------%%%
+		function SetSteeringAxis(obj, SteeringAxis)
+			obj.A_SA = SteeringAxis;
+		end
+		%%%--------------------------------------------------------------------------------%%%
+		function SetInstRotAxis(obj, InstRotAxis)
+			obj.A_IR = InstRotAxis;
+		end		
+		%%%--------------------------------------------------------------------------------%%%
+		function NotCombCalc(obj)					
+			
+			if sum(obj.AV(13:15)) == 0
+				obj.FL = obj.CalcLeg('Front');
+				obj.RL = obj.CalcLeg('Rear');
+			else
+				%% find leg with 2 dof on the OB
+				nFL = sum(obj.AV(4:6));
+				nRL = sum(obj.AV(10:12));
+				if nFL > nRL
+					obj.FL = obj.CalcLeg('Front');
+					P = obj.FL.FindPoint(2);
+					if obj.AV(13) == 1
+						obj.CV(10) = P(1) - obj.CV(13);
+						obj.AV(10) = 1;
+					elseif obj.AV(14) == 1
+						obj.CV(11) = P(2) - obj.CV(14);
+						obj.AV(11) = 1;
+					elseif obj.AV(15) == 1
+						obj.CV(12) = P(3) - obj.CV(15);						
+						obj.AV(12) = 1;
+					end
+					obj.RL = obj.CalcLeg('Rear');
+				else
+					obj.RL = obj.CalcLeg('Rear');
+					P = obj.RL.FindPoint(2);
+					if obj.CV(4) == 1
+						obj.CV(4) = P(1) + obj.CV(4);
+						obj.AV(4) = 1;
+					elseif obj.CV(5) == 1
+						obj.CV(5) = P(2) + obj.CV(5);
+						obj.AV(5) = 1;
+					elseif obj.CV(6) == 1
+						obj.CV(6) = P(3) + obj.CV(6);						
+						obj.AV(6) = 1;
+					end		
+					obj.FL = obj.CalcLeg('Front');					
+				end
+			end
+			
+		end
+		%%%--------------------------------------------------------------------------------%%%
+		function CombCalc(obj)
+			
+			ML = ML_CombOB(obj.A_SA, obj.A_IR);
+			ML.FL_IB_Pos(obj.CV(1), obj.CV(2));
+			ML.RL_IB_Pos(obj.CV(7), obj.CV(8));
+			ML.FL_OB_ZPos(obj.CV(6));
+			ML.OB_DeltaPos(-obj.CV(13),-obj.CV(14),-obj.CV(15));
+			Err = ML.FindLinks();
+			fprintf('Error: %2.2f\n', Err);
+
+			obj.FL.VirtualLink = Link(ML.P_FL_IB, ML.P_FL_OB);
+			obj.RL.VirtualLink = Link(ML.P_RL_IB, ML.P_RL_OB);
+			
+			obj.FL.LineError = distance(obj.A_SA, obj.FL.VirtualLink) + distance(obj.A_IR, obj.FL.VirtualLink);
+			obj.RL.LineError = distance(obj.A_SA, obj.RL.VirtualLink) + distance(obj.A_IR, obj.RL.VirtualLink);
+
+			
+			
+		end
+		%%%--------------------------------------------------------------------------------%%%
+		function Leg = CalcLeg(obj, FrontRear)
+			
+			switch FrontRear
+				case 'Front'
+					Index = [1, 3;4, 6];					
+					Ini(1)   = mean([obj.CV(1) obj.CV(4) obj.CV(7) obj.CV(10)]);	
+					Ini(2)   = mean([obj.CV(3) obj.CV(6) obj.CV(9) obj.CV(12)]);	
+				case 'Rear'
+					Index = [7, 9;10, 12];					
+					Ini(1)   = mean([obj.CV(1) obj.CV(4) obj.CV(7) obj.CV(10)]);	
+					Ini(2)   = mean([obj.CV(3) obj.CV(6) obj.CV(9) obj.CV(12)]);	
+			end
+			
+			Leg = ConnectLine(obj.A_SA, obj.A_IR);
+			
+		    Comp = {'X', 'Y', 'Z'};
+				
+		    IB.Comp = [];
+			IB.Coor = [];
+			OB.Comp = [];
+			OB.Coor = [];			
+			
+			j = 0;
+			for k=Index(1,1):Index(1,2)
+				j = j + 1;
+				if obj.AV(k) == 1
+					if isempty(IB.Comp) == 1
+						IB.Comp{1} = Comp{j};
+						IB.Coor(1) = obj.CV(k);
+					else
+						IB.Comp{2} = Comp{j};
+						IB.Coor(2) = obj.CV(k);
+					end
+				end				
+			end			
+			
+			j = 0;
+			for k=Index(2,1):Index(2,2)	
+				j = j + 1;
+				if obj.AV(k) == 1
+					if isempty(OB.Comp) == 1
+						OB.Comp{1} = Comp{j};
+						OB.Coor(1) = obj.CV(k);
+					else
+						OB.Comp{2} = Comp{j};
+						OB.Coor(2) = obj.CV(k);
+					end
+				end				
+			end			
+			
+			Leg.ConstrainedPosition(IB.Comp{1}, IB.Coor(1), IB.Comp{2}, IB.Coor(2));
+			Leg.ConstrainedPosition(OB.Comp{1}, OB.Coor(1), OB.Comp{2}, OB.Coor(2));
+			
+			Leg.SetIniX(Ini(1));
+			Leg.SetIniZ(Ini(2));
+			
+			Leg.FindLine();
+									
+		end
+		%%%--------------------------------------------------------------------------------%%%
+		function WishBone = WishboneCalc(obj)
+			
+			if obj.Comb == 1
+				obj.CombCalc();
+				WishBone.FL.IB = obj.FL.VirtualLink.Point(0);
+				WishBone.FL.OB = obj.FL.VirtualLink.Point(-1);
+				WishBone.RL.IB = obj.RL.VirtualLink.Point(0);
+				WishBone.RL.OB = obj.RL.VirtualLink.Point(-1);				
+			else
+				obj.NotCombCalc();
+				WishBone.FL.IB = obj.FL.FindPoint(1)';
+				WishBone.FL.OB = obj.FL.FindPoint(2)';
+				WishBone.RL.IB = obj.RL.FindPoint(1)';
+				WishBone.RL.OB = obj.RL.FindPoint(2)';				
+			end			
+			
+		end
+		%%%--------------------------------------------------------------------------------%%%
+	end
+	
+end

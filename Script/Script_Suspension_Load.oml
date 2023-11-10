@@ -1,0 +1,73 @@
+%%%------------------------------------------------------------------------------------%%%
+clear all
+close all
+clc
+%%---------------------------------------------------------------------------%%
+tic
+%%---------------------------------------------------------------------------%%
+R = addpath('..\Design', '..\Tools', '..\Motion', '..\Loads', '..\GUI');
+%%---------------------------------------------------------------------------%%
+SuspName = 'Test'
+Path     = 'C:\Scratch\TestLoad';
+Axle     = 'Front';
+KinPath  = 'C:\Users\nikif\OneDrive\ProjectX\PerformanceModel\Study006\Models\Kinematic\Kin_R008.mdl';
+%%---------------------------------------------------------------------------%%
+KinIn = KinReader(KinPath);
+KinIn.DataRead();
+%%---------------------------------------------------------------------------%%
+LC = LoadCalc(KinIn.FKin, Path);
+LC.CalcKinParam = 0;
+Out = LC.SusTravel(35,115,1);
+%%---------------------------------------------------------------------------%%
+Ref = load('RefOut.mat');
+
+f = figure();
+undock(f)
+
+subplot(2,1,1)
+
+hold on
+grid on
+
+xlabel('RH [mm]');
+ylabel('Toe [deg]');
+
+plot(Ref.Out.RH, Ref.Out.Toe, 'b')
+plot(Out.RH, Out.Toe, 'r')
+
+
+subplot(2,1,2)
+
+hold on
+grid on
+
+xlabel('RH [mm]');
+ylabel('Rocker Rot [deg]');
+
+plot(Ref.Out.RH, Ref.Out.RkrRot, 'b')
+plot(Out.RH, Out.RkrRot, 'r')
+%%---------------------------------------------------------------------------%%
+% f2 = figure();
+% undock(f2)
+
+
+% subplot(2,1,1)
+
+% hold on
+% grid on
+
+% xlabel('RH [mm]');
+% ylabel('Camber Gain [deg/100mm]');
+
+% plot(Out.RH, Out.CamberGain*180/pi*100, 'r')
+
+% subplot(2,1,2)
+
+% hold on
+% grid on
+
+% xlabel('RH [mm]');
+% ylabel('RC_z [mm]');
+
+% plot(Out.RH, Out.RC_z, 'r')
+% %%---------------------------------------------------------------------------%%

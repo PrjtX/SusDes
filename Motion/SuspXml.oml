@@ -1,0 +1,797 @@
+classdef SuspXml < handle
+
+	properties
+		Name 
+		Path
+		Chc
+		XmlPath
+		AbfPath
+		Mode = 'Travel'
+		%%%
+		Body
+		Mrkr
+		Joint
+		Bush
+		Motion
+		Output
+		Xml
+		LWB_FL_IB
+		LWB_RL_IB
+		TWB_FL_IB
+		TWB_RL_IB		
+		LWB_FL_OB
+		LWB_RL_OB
+		TWB_FL_OB
+		TWB_RL_OB				
+		TRD_IB
+		TRD_OB
+		PRD_IB
+		PRD_OB
+		WC
+		WCatCL
+		TCP
+		Floor
+		Rack
+		Rkr_B1
+		Rkr_B2
+		Rkr_Arb
+		Arb_Bear1
+		Arb_Bear2
+		Arb_Link
+		Rkr_Damper
+		Chs_Damper
+		Out
+		LinkStif = [0;0;0;0;0;0]
+	end
+	
+	methods
+		%%-------------------------------------------------------------------------------------%%
+		function obj = SuspXml(SuspName, Path)
+			obj.Name = SuspName;
+			obj.Path = Path;
+			%%% ------------------------------ %%%
+			obj.Body.LWB_FL            = 10301
+			obj.Body.LWB_RL            = 10302
+			obj.Body.TWB_FL            = 10303
+			obj.Body.TWB_RL            = 10304
+			obj.Body.TRD               = 10305
+			obj.Body.PRD               = 10306		
+			%%%-----%%%
+			obj.Body.Upr               = 10307
+			obj.Body.Rkr               = 10308
+			obj.Body.Rack              = 10309
+			obj.Body.Arb               = 10310
+			obj.Body.ArbLink           = 10311
+			obj.Body.Grnd              = 10101
+			%%% ------------------------------ %%%		
+			obj.Mrkr.LWB_FL            = 1030100
+			obj.Mrkr.LWB_FL_OBLug      = 1030101
+			obj.Mrkr.LWB_RL            = 1030200
+			obj.Mrkr.TWB_FL            = 1030300
+			obj.Mrkr.TWB_FL_OBLug      = 1030301
+			obj.Mrkr.TWB_RL            = 1030400
+			obj.Mrkr.TRD               = 1030500
+			obj.Mrkr.PRD               = 1030600
+			obj.Mrkr.Upr               = 1030700
+			obj.Mrkr.Rkr               = 1030800
+			obj.Mrkr.Rack              = 1030900
+			obj.Mrkr.Grnd              = 1010100
+			obj.Mrkr.Grnd2LWB_FL_IB    = 20101010
+			obj.Mrkr.Grnd2LWB_RL_IB    = 20101020
+			obj.Mrkr.Grnd2TWB_FL_IB    = 20101030
+			obj.Mrkr.Grnd2TWB_RL_IB    = 20101040
+			obj.Mrkr.Grnd2Rkr_B1       = 20101081
+			obj.Mrkr.Grnd2Rkr_B2       = 20101082
+			obj.Mrkr.Grnd2Rack_IB      = 20101090
+			obj.Mrkr.Grnd2Floor        = 20101000
+			obj.Mrkr.Grnd2WC           = 20107010
+			obj.Mrkr.Link2LWB_FL_IB    = 20301010
+			obj.Mrkr.Link2LWB_RL_IB    = 20302010
+			obj.Mrkr.Link2TWB_FL_IB    = 20303010
+			obj.Mrkr.Link2TWB_RL_IB    = 20304010
+			obj.Mrkr.Link2TRD_IB       = 20305010
+			obj.Mrkr.Link2PRD_IB       = 20306010
+			obj.Mrkr.Link2LWB_FL_OB    = 20301020
+			obj.Mrkr.Link2LWB_RL_OB    = 20302020
+			obj.Mrkr.Link2TWB_FL_OB    = 20303020
+			obj.Mrkr.Link2TWB_RL_OB    = 20304020
+			obj.Mrkr.Link2TRD_OB       = 20305020
+			obj.Mrkr.Link2PRD_OB       = 20306020
+			obj.Mrkr.Upr2LWB_FL_OB 	   = 20307010
+			obj.Mrkr.Upr2LWB_RL_OB 	   = 20307020
+			obj.Mrkr.Upr2TWB_FL_OB 	   = 20307030
+			obj.Mrkr.Upr2TWB_RL_OB 	   = 20307040
+			obj.Mrkr.Upr2TRD_OB    	   = 20307050
+			obj.Mrkr.Upr2PRD_OB    	   = 20307060
+			obj.Mrkr.Upr2TCP       	   = 20307120
+			obj.Mrkr.Upr2WC        	   = 20307110
+			obj.Mrkr.Upr2WC_Hub        = 20307111
+			obj.Mrkr.Upr2LWB_FL_OB_Gra = 20307011
+			obj.Mrkr.Upr2LWB_RL_OB_Gra = 20307021
+			obj.Mrkr.Upr2TWB_FL_OB_Gra = 20307031
+			obj.Mrkr.Upr2TWB_RL_OB_Gra = 20307041
+			obj.Mrkr.Upr2TRD_OB_Gra    = 20307051
+			obj.Mrkr.Upr2PRD_OB_Gra    = 20307061
+			obj.Mrkr.Rkr2Rkr_B1        = 20308011
+			obj.Mrkr.Rkr2Rkr_B2        = 20308012
+			obj.Mrkr.Rkr2PRD_IB        = 20308060
+			obj.Mrkr.Rkr2ArbLink       = 20308013
+			obj.Mrkr.Rkr2ArbLink2      = 20308014
+			obj.Mrkr.Rack2Rack_IB      = 20309010
+			obj.Mrkr.Rack2TRD_IB       = 20309050
+			obj.Mrkr.Rack2TRD_IB_Perp  = 20309051
+			obj.Mrkr.Arb_Bear1         = 20401010
+			obj.Mrkr.Arb_Bear2         = 20401011
+			obj.Mrkr.Arb_Link          = 20401012
+			obj.Mrkr.ArbLink2Link      = 20401013
+			obj.Mrkr.ArbLink2Rkr       = 20401014
+			obj.Mrkr.Grnd2Arb_Bear1    = 20402010
+			obj.Mrkr.Grnd2Arb_Bear2    = 20402011
+			obj.Mrkr.Grnd2Damper       = 20501011
+			obj.Mrkr.Rkr2Damper        = 20501012
+			%%% ------------------------------ %%%		
+			obj.Joint.LWB_FL_IB_Sph    = 30301010
+			obj.Joint.LWB_RL_IB_Sph    = 30302010
+			obj.Joint.TWB_FL_IB_Sph    = 30303010
+			obj.Joint.TWB_RL_IB_Sph    = 30304010
+			obj.Joint.TRD_IB_Sph       = 30305010
+			obj.Joint.PRD_IB_Sph       = 30306010
+			obj.Joint.LWB_FL_IB_Per    = 30301011
+			obj.Joint.LWB_RL_IB_Per    = 30302011
+			obj.Joint.TWB_FL_IB_Per    = 30303011
+			obj.Joint.TWB_RL_IB_Per    = 30304011
+			obj.Joint.TRD_IB_Per       = 30305011
+			obj.Joint.PRD_IB_Per       = 30306011
+			obj.Joint.LWB_FL_OB_Sph    = 30301020
+			obj.Joint.LWB_RL_OB_Sph    = 30302020
+			obj.Joint.TWB_FL_OB_Sph    = 30303020
+			obj.Joint.TWB_RL_OB_Sph    = 30304020
+			obj.Joint.TRD_OB_Sph       = 30305020
+			obj.Joint.PRD_OB_Sph       = 30306020
+			obj.Joint.Rkr_B1_Inl 	   = 30308010
+			obj.Joint.Rkr_B2_Sph 	   = 30308020
+			obj.Joint.Rack_Tr    	   = 30309010
+			obj.Joint.Arb_B1_Sph 	   = 30310011
+			obj.Joint.Arb_B2_Inl  	   = 30310012
+			obj.Joint.Arb2Link_Sph 	   = 30310013
+			obj.Joint.Link2Rkr_Sph 	   = 30310014
+			%%% ------------------------------ %%%		
+			obj.Motion.Rack      	   = 10
+			obj.Motion.RH        	   = 20
+			%%% ------------------------------ %%%		
+			obj.Output.LWB_FL_IB 	   = 601030101
+			obj.Output.LWB_FL_OB 	   = 601030102
+			obj.Output.LWB_RL_IB 	   = 601030201
+			obj.Output.LWB_RL_OB 	   = 601030202
+			obj.Output.TWB_FL_IB 	   = 601030301
+			obj.Output.TWB_FL_OB 	   = 601030302
+			obj.Output.TWB_RL_IB 	   = 601030401
+			obj.Output.TWB_RL_OB 	   = 601030402
+			obj.Output.TRD_IB    	   = 601030501
+			obj.Output.TRD_OB    	   = 601030502
+			obj.Output.PRD_IB    	   = 601030601
+			obj.Output.PRD_OB    	   = 601030602
+			obj.Output.UprtRot     	   = 601030701
+			obj.Output.UprtRot2	       = 601030702
+			obj.Output.UprtRH    	   = 601030703
+			obj.Output.UprtWC    	   = 601030705
+			obj.Output.UprtWCLoad 	   = 601030713
+			obj.Output.UprtTCP   	   = 601030704
+			obj.Output.RackDisp        = 601030901		
+            obj.Output.RkrRot		   = 601030801
+			obj.Output.ArbRot		   = 601031001
+			obj.Output.F_LWB_FL 	   = 601030103
+			obj.Output.F_LWB_RL 	   = 601030203
+			obj.Output.F_TWB_FL	       = 601030303
+			obj.Output.F_TWB_RL 	   = 601030403
+			obj.Output.F_TRD    	   = 601030503
+			obj.Output.F_PRD    	   = 601030603
+			obj.Output.F_LWB_FL_OBLug  = 601030104
+			obj.Output.F_LWB_RL_OBLug  = 601030204
+			obj.Output.F_TWB_FL_OBLug  = 601030304
+			obj.Output.F_TWB_RL_OBLug  = 601030404
+			obj.Output.Len_Damper      = 601040101
+			%%% ------------------------------ %%%		
+			obj.Bush.LWB_FL_OB    = 30301020
+			obj.Bush.LWB_RL_OB    = 30302020
+			obj.Bush.TWB_FL_OB    = 30303020
+			obj.Bush.TWB_RL_OB    = 30304020
+			obj.Bush.TRD_OB       = 30305020
+			obj.Bush.PRD_OB       = 30306020
+			%%% ------------------------------ %%%					
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function SetKLink(obj, LinkName, Value)
+			
+			switch LinkName
+				case 'TWB_FL'
+					obj.LinkStif(1,1) = Value;
+				case 'TWB_RL'
+					obj.LinkStif(2,1) = Value;
+				case 'LWB_FL'
+					obj.LinkStif(3,1) = Value;					
+				case 'LWB_RL'
+					obj.LinkStif(4,1) = Value;
+				case 'TRD'
+					obj.LinkStif(5,1) = Value;
+				case 'PRD'
+					obj.LinkStif(6,1) = Value;					
+			end
+										
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function SetMode(obj, Mode)
+			obj.Mode = Mode;
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function XmlInit(obj)
+			obj.XmlPath = [obj.Path '/' obj.Mode '/' obj.Name '.xml'];
+			obj.AbfPath = [obj.Path '/' obj.Mode '/' obj.Name '.abf'];
+			obj.Xml = MS_Xml(obj.XmlPath);			
+		end
+        %%-------------------------------------------------------------------------------------%%
+		function DefPoint(obj, Name, Coord)
+			PointData = Coord;
+			switch Name
+				case 'LWB_FL_IB'
+					obj.LWB_FL_IB = PointData;
+				case 'LWB_RL_IB'
+					obj.LWB_RL_IB = PointData;					
+				case 'LWB_FL_OB'
+					obj.LWB_FL_OB = PointData;
+				case 'LWB_RL_OB'
+					obj.LWB_RL_OB = PointData;
+				case 'TWB_FL_IB'
+					obj.TWB_FL_IB = PointData;
+				case 'TWB_RL_IB'
+					obj.TWB_RL_IB = PointData;					
+				case 'TWB_FL_OB'
+					obj.TWB_FL_OB = PointData;
+				case 'TWB_RL_OB'
+					obj.TWB_RL_OB = PointData;			
+				case 'TRD_IB'
+					obj.TRD_IB = PointData;	
+				case 'TRD_OB'
+					obj.TRD_OB = PointData;				
+				case 'PRD_IB'
+					obj.PRD_IB = PointData;	
+				case 'PRD_OB'
+					obj.PRD_OB = PointData;				
+				case 'WC'
+					obj.WC = PointData;
+				case 'WCatCL'
+					obj.WCatCL = PointData;
+				case 'TCP'
+					obj.TCP = PointData;		
+				case 'Floor'
+					obj.Floor = PointData;		
+				case 'Rack'
+					obj.Rack = PointData;
+				case 'Rkr_B1'
+					obj.Rkr_B1 = PointData;				
+				case 'Rkr_B2'
+					obj.Rkr_B2 = PointData;		
+				case 'Rkr_Arb'
+					obj.Rkr_Arb = PointData;	
+				case 'ArbArm_BearIB'
+					obj.Arb_Bear1 = PointData;			
+				case 'ArbArm_BearOB'
+					obj.Arb_Bear2 = PointData;
+				case 'ArbArm_Link'
+					obj.Arb_Link = PointData;
+				case 'Rkr_Damper'
+					obj.Rkr_Damper = PointData;	
+				case 'Chs_Damper'
+					obj.Chs_Damper= PointData;						
+			end
+		end
+		%%-------------------------------------------------------------------------------------%%
+	    function BodyDef(obj)
+			obj.Xml.DefineBody(obj.Body.LWB_FL, 'LWB_FL', 0, obj.Mrkr.LWB_FL);
+			obj.Xml.DefineBody(obj.Body.LWB_RL, 'LWB_RL', 0, obj.Mrkr.LWB_RL);
+			obj.Xml.DefineBody(obj.Body.TWB_FL, 'TWB_FL', 0, obj.Mrkr.TWB_FL);
+			obj.Xml.DefineBody(obj.Body.TWB_RL, 'TWB_RL', 0, obj.Mrkr.TWB_RL);
+			obj.Xml.DefineBody(obj.Body.TRD,    'TRD', 0,       obj.Mrkr.TRD);
+			obj.Xml.DefineBody(obj.Body.PRD,    'PRD', 0,       obj.Mrkr.PRD);			
+			obj.Xml.DefineBody(obj.Body.Upr, 'Upr', 0,       obj.Mrkr.Upr);
+			obj.Xml.DefineBody(obj.Body.Rkr, 'Rkr', 0,       obj.Mrkr.Rkr);
+			obj.Xml.DefineBody(obj.Body.Rack, 'Rack', 0,     obj.Mrkr.Rack);
+			obj.Xml.DefineBody(obj.Body.Grnd, 'Grnd', 1, '');
+			obj.Xml.DefineBody(obj.Body.Arb, 'Arb', 0,     obj.Mrkr.Arb_Bear1);
+			obj.Xml.DefineBody(obj.Body.ArbLink , 'ArbLink', 0, obj.Mrkr.ArbLink2Link);
+			
+		end		
+		%%-------------------------------------------------------------------------------------%%
+		function MarkerDef(obj)
+			%% Body
+			obj.Xml.DefineMarker(obj.Mrkr.LWB_FL, 'LWB_FL', obj.Body.LWB_FL, mean([obj.LWB_FL_IB,obj.LWB_FL_OB]') );
+			obj.Xml.DefineMarker(obj.Mrkr.LWB_RL, 'LWB_RL', obj.Body.LWB_RL, mean([obj.LWB_RL_IB,obj.LWB_RL_OB]') );
+			obj.Xml.DefineMarker(obj.Mrkr.TWB_FL, 'RWB_FL', obj.Body.TWB_FL, mean([obj.TWB_FL_IB,obj.TWB_FL_OB]') );
+			obj.Xml.DefineMarker(obj.Mrkr.TWB_RL, 'RWB_RL', obj.Body.TWB_RL, mean([obj.TWB_RL_IB,obj.TWB_RL_OB]') );
+			obj.Xml.DefineMarker(obj.Mrkr.TRD,    'TRD',    obj.Body.TRD,    mean([obj.TRD_IB,   obj.TRD_OB]') );
+			obj.Xml.DefineMarker(obj.Mrkr.PRD,    'PRD',    obj.Body.PRD,    mean([obj.PRD_IB,   obj.PRD_OB]') );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr,    'Upr',    obj.Body.Upr, obj.WC );
+			obj.Xml.DefineMarker(obj.Mrkr.Rkr,    'Rkr',    obj.Body.Rkr, mean([obj.Rkr_B1,obj.Rkr_B2]') );
+			obj.Xml.DefineMarker(obj.Mrkr.Rack,   'Rack',   obj.Body.Rack, obj.Rack );
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd,   'Grnd',   obj.Body.Grnd, [0;0;0] );			
+			%% Ground
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2LWB_FL_IB, 'LWB_FL_IB+Grnd', obj.Body.Grnd, obj.LWB_FL_IB,  [1 0 0; 0 1 0; 0 0 1] );
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2LWB_RL_IB, 'LWB_RL_IB+Grnd', obj.Body.Grnd, obj.LWB_RL_IB,  [1 0 0; 0 1 0; 0 0 1] );
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2TWB_FL_IB, 'TWB_FL_IB+Grnd', obj.Body.Grnd, obj.TWB_FL_IB,  [1 0 0; 0 1 0; 0 0 1] );
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2TWB_RL_IB, 'TWB_RL_IB+Grnd', obj.Body.Grnd, obj.TWB_RL_IB,  [1 0 0; 0 1 0; 0 0 1]);
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2Rkr_B1,    'TRD_IB+Grnd',       obj.Body.Grnd,  obj.Rkr_B1, Orient(obj.Rkr_B2, obj.Rkr_B1) );
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2Rkr_B2,    'PRD_IB+Grnd',       obj.Body.Grnd,  obj.Rkr_B2 );
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2Rack_IB,   'Rack_IB+Grnd',     obj.Body.Grnd,  obj.Rack, [1 0 0; 0 0 1; 0 1 0]' );
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2Floor,     'Floor+Grnd',         obj.Body.Grnd,   obj.Floor );
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2WC,        'WC+Grnd',         obj.Body.Grnd,   obj.WC );
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2Arb_Bear1 , 'Arb_Bear1+Grnd', obj.Body.Grnd, obj.Arb_Bear1,  Orient(obj.Arb_Bear1, obj.Arb_Bear2)  );
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2Arb_Bear2 , 'Arb_Bear2+Grnd', obj.Body.Grnd, obj.Arb_Bear2,   Orient(obj.Arb_Bear1, obj.Arb_Bear2)  );	
+			obj.Xml.DefineMarker(obj.Mrkr.Grnd2Damper , 'Damper+Grnd',       obj.Body.Grnd, obj.Chs_Damper,           [1 0 0; 0 1 0; 0 0 1]  );
+			%% Link IB
+			obj.Xml.DefineMarker(obj.Mrkr.Link2LWB_FL_IB, 'LWB_FL_IB+Link', obj.Body.LWB_FL, obj.LWB_FL_IB, OrientB(obj.LWB_FL_IB, obj.LWB_FL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Link2LWB_RL_IB, 'LWB_RL_IB+Link', obj.Body.LWB_RL, obj.LWB_RL_IB, OrientB(obj.LWB_RL_IB, obj.LWB_RL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Link2TWB_FL_IB, 'TWB_FL_IB+Link', obj.Body.TWB_FL, obj.TWB_FL_IB, OrientB(obj.TWB_FL_IB, obj.TWB_FL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Link2TWB_RL_IB, 'TWB_RL_IB+Link', obj.Body.TWB_RL, obj.TWB_RL_IB, OrientB(obj.TWB_RL_IB, obj.TWB_RL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Link2TRD_IB,    'TRD_IB+Link',  obj.Body.TRD,    obj.TRD_IB, OrientB(obj.TRD_IB, obj.TRD_OB)  );
+			obj.Xml.DefineMarker(obj.Mrkr.Link2PRD_IB,    'PRD_IB+Link',  obj.Body.PRD,    obj.PRD_IB, OrientB(obj.PRD_IB, obj.PRD_OB) );
+			%% Link OB
+			obj.Xml.DefineMarker(obj.Mrkr.Link2LWB_FL_OB, 'LWB_FL_OB+Link', obj.Body.LWB_FL,   obj.LWB_FL_OB, Orient(obj.LWB_FL_IB, obj.LWB_FL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Link2LWB_RL_OB, 'LWB_RL_OB+Link', obj.Body.LWB_RL,   obj.LWB_RL_OB, Orient(obj.LWB_RL_IB, obj.LWB_RL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Link2TWB_FL_OB, 'TWB_FL_OB+Link', obj.Body.TWB_FL,   obj.TWB_FL_OB, Orient(obj.TWB_FL_IB, obj.TWB_FL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Link2TWB_RL_OB, 'TWB_RL_OB+Link', obj.Body.TWB_RL,   obj.TWB_RL_OB, Orient(obj.TWB_RL_IB, obj.TWB_RL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Link2TRD_OB,    'TRD_OB+Link',    obj.Body.TRD,    obj.TRD_OB, Orient(obj.TRD_IB, obj.TRD_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Link2PRD_OB,    'PRD_OB+Link',    obj.Body.PRD,    obj.PRD_OB, Orient(obj.PRD_IB, obj.PRD_OB) );
+			%% OB lug
+			obj.Xml.DefineMarker(obj.Mrkr.LWB_FL_OBLug  , 'LWB_OB_Lug', obj.Body.LWB_FL, obj.LWB_FL_OB, OrientSimAxis( obj.LWB_FL_OB, obj.LWB_FL_IB, obj.LWB_RL_IB) );
+			obj.Xml.DefineMarker(obj.Mrkr.TWB_FL_OBLug  , 'TWB_OB_Lug', obj.Body.TWB_FL, obj.TWB_FL_OB, OrientSimAxis( obj.TWB_FL_OB, obj.TWB_FL_IB, obj.TWB_RL_IB) );
+			%% Upr
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2LWB_FL_OB,     'LWB_FL_OB+Upr',      obj.Body.Upr, obj.LWB_FL_OB, Orient(obj.LWB_FL_IB, obj.LWB_FL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2LWB_RL_OB,     'LWB_RL_OB+Upr',      obj.Body.Upr, obj.LWB_RL_OB, Orient(obj.LWB_RL_IB, obj.LWB_RL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2TWB_FL_OB,     'TWB_FL_OB+Upr',      obj.Body.Upr, obj.TWB_FL_OB, Orient(obj.TWB_FL_IB, obj.TWB_FL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2TWB_RL_OB,     'TWB_RL_OB+Upr',      obj.Body.Upr, obj.TWB_RL_OB, Orient(obj.TWB_RL_IB, obj.TWB_RL_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2TRD_OB,        'TRD_OB+Upr',         obj.Body.Upr, obj.TRD_OB,    Orient(obj.TRD_IB, obj.TRD_OB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2PRD_OB,        'PRD_OB+Upr',         obj.Body.Upr, obj.PRD_OB,    Orient(obj.PRD_IB, obj.PRD_OB) );
+			%%
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2TCP,            'TCP+Upr',             obj.Body.Upr, obj.TCP );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2WC,             'WC+Upr',              obj.Body.Upr, obj.WC );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2WC_Hub ,        'WC_Hub+Upr',         obj.Body.Upr, obj.WC, Orient( obj.WCatCL, obj.WC)  );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2LWB_FL_OB_Gra, 'Gra_LWB_FL_OB+Upr', obj.Body.Upr, obj.LWB_FL_OB, Orient(obj.WC, obj.LWB_FL_OB)  );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2LWB_RL_OB_Gra, 'Gra_LWB_RL_OB+Upr', obj.Body.Upr, obj.LWB_RL_OB, Orient(obj.WC, obj.LWB_RL_OB)  );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2TWB_FL_OB_Gra, 'Gra_TWB_FL_OB+Upr', obj.Body.Upr, obj.TWB_FL_OB, Orient(obj.WC, obj.TWB_FL_OB)  );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2TWB_RL_OB_Gra, 'Gra_TWB_RL_OB+Upr', obj.Body.Upr, obj.TWB_RL_OB, Orient(obj.WC, obj.TWB_RL_OB)  );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2TRD_OB_Gra,    'Gra_TRD_OB+Upr',     obj.Body.Upr, obj.TRD_OB, Orient(obj.WC, obj.TRD_OB)  );
+			obj.Xml.DefineMarker(obj.Mrkr.Upr2PRD_OB_Gra,    'Gra_PRD_OB+Upr',     obj.Body.Upr, obj.PRD_OB, Orient(obj.WC, obj.PRD_OB)  );
+			%% Rkr
+			obj.Xml.DefineMarker(obj.Mrkr.Rkr2Rkr_B1,   'Rkr_B1+Rkr', obj.Body.Rkr, obj.Rkr_B1, Orient(obj.Rkr_B2, obj.Rkr_B1) );
+			obj.Xml.DefineMarker(obj.Mrkr.Rkr2Rkr_B2,   'Rkr_B2+Rkr', obj.Body.Rkr, obj.Rkr_B2, Orient(obj.PRD_IB, obj.Rkr_B2) );
+			obj.Xml.DefineMarker(obj.Mrkr.Rkr2PRD_IB,   'PRD_IB+Rkr', obj.Body.Rkr, obj.PRD_IB,  [0 0 1; 0 1 0; 1 0 0] );
+			obj.Xml.DefineMarker(obj.Mrkr.Rkr2ArbLink , 'Rkr_Link+Rkr', obj.Body.Rkr, obj.Rkr_Arb,  OrientB(obj.Rkr_B2, obj.Rkr_Arb) );
+			obj.Xml.DefineMarker(obj.Mrkr.Rkr2ArbLink2, 'Rkr_Link+Rkr', obj.Body.Rkr, obj.Rkr_B2,  Orient(obj.Rkr_B2, obj.Rkr_Arb) );
+			obj.Xml.DefineMarker(obj.Mrkr.Rkr2Damper , 'Damper+Rkr', obj.Body.Rkr, obj.Rkr_Damper,           [1 0 0; 0 1 0; 0 0 1]  );
+			%% Rack
+			obj.Xml.DefineMarker(obj.Mrkr.Rack2Rack_IB,      'Rack_IB+Rack',    obj.Body.Rack, obj.Rack, [1 0 0; 0 0 1; 0 1 0]' );
+			obj.Xml.DefineMarker(obj.Mrkr.Rack2TRD_IB,       'TRD_IB+Rack',      obj.Body.Rack, obj.TRD_IB, Orient(obj.Rack, obj.TRD_IB) );
+			obj.Xml.DefineMarker(obj.Mrkr.Rack2TRD_IB_Perp, 'TRD_IB+Rack',       obj.Body.Rack, obj.TRD_IB, [1 0 0; 0 1 0; 0 0 1] );				
+			%% ArbArm 
+			obj.Xml.DefineMarker(obj.Mrkr.Arb_Link , 'Arb_Link+Arb', obj.Body.Arb, obj.Arb_Link,           Orient(obj.Arb_Bear1, obj.Arb_Link)  );
+			obj.Xml.DefineMarker(obj.Mrkr.Arb_Bear1 , 'Arb_Bear1+Arb', obj.Body.Arb, obj.Arb_Bear1,        Orient(obj.Arb_Bear1, obj.Arb_Bear2) );
+			obj.Xml.DefineMarker(obj.Mrkr.Arb_Bear2 , 'Arb_Bear2+Arb', obj.Body.Arb, obj.Arb_Bear2,        Orient(obj.Arb_Bear1, obj.Arb_Bear2) );
+			obj.Xml.DefineMarker(obj.Mrkr.ArbLink2Link , 'Arb_Link+Link', obj.Body.ArbLink, obj.Arb_Link,  Orient(obj.Arb_Link, obj.Rkr_Arb)  );
+			obj.Xml.DefineMarker(obj.Mrkr.ArbLink2Rkr , 'Rkr+Link', obj.Body.ArbLink, obj.Rkr_Arb,         OrientB(obj.Arb_Link, obj.Rkr_Arb) );			
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function JointDef(obj)
+			obj.Xml.DefineJoint(obj.Joint.LWB_FL_IB_Sph, 'LWB_FL_IB_Sph', 'UNIVERSAL',     obj.Mrkr.Link2LWB_FL_IB, obj.Mrkr.Grnd2LWB_FL_IB);
+			obj.Xml.DefineJoint(obj.Joint.LWB_RL_IB_Sph, 'LWB_RL_IB_Sph', 'UNIVERSAL',     obj.Mrkr.Link2LWB_RL_IB, obj.Mrkr.Grnd2LWB_RL_IB);
+			obj.Xml.DefineJoint(obj.Joint.TWB_FL_IB_Sph, 'TWB_FL_IB_Sph', 'UNIVERSAL',     obj.Mrkr.Link2TWB_FL_IB, obj.Mrkr.Grnd2TWB_FL_IB);
+			obj.Xml.DefineJoint(obj.Joint.TWB_RL_IB_Sph, 'TWB_RL_IB_Sph', 'UNIVERSAL',     obj.Mrkr.Link2TWB_RL_IB, obj.Mrkr.Grnd2TWB_RL_IB);
+			obj.Xml.DefineJoint(obj.Joint.TRD_IB_Sph,    'TRD_IB_Sph', 'UNIVERSAL',        obj.Mrkr.Link2TRD_IB,    obj.Mrkr.Rack2TRD_IB_Perp);
+			obj.Xml.DefineJoint(obj.Joint.PRD_IB_Sph,    'PRD_IB_Sph', 'UNIVERSAL',        obj.Mrkr.Link2PRD_IB,    obj.Mrkr.Rkr2PRD_IB);
+			%%-----%% 
+			obj.Xml.DefineJoint(obj.Joint.LWB_FL_OB_Sph, 'LWB_FL_OB_Sph', 'SPHERICAL',     obj.Mrkr.Link2LWB_FL_OB, obj.Mrkr.Upr2LWB_FL_OB);
+			obj.Xml.DefineJoint(obj.Joint.LWB_RL_OB_Sph, 'LWB_RL_OB_Sph', 'SPHERICAL',     obj.Mrkr.Link2LWB_RL_OB, obj.Mrkr.Upr2LWB_RL_OB);
+			obj.Xml.DefineJoint(obj.Joint.TWB_FL_OB_Sph, 'TWB_FL_OB_Sph', 'SPHERICAL',     obj.Mrkr.Link2TWB_FL_OB, obj.Mrkr.Upr2TWB_FL_OB);
+			obj.Xml.DefineJoint(obj.Joint.TWB_RL_OB_Sph, 'TWB_RL_OB_Sph', 'SPHERICAL',     obj.Mrkr.Link2TWB_RL_OB, obj.Mrkr.Upr2TWB_RL_OB);
+			obj.Xml.DefineJoint(obj.Joint.TRD_OB_Sph,    'TRD_OB_Sph', 'SPHERICAL',        obj.Mrkr.Link2TRD_OB,    obj.Mrkr.Upr2TRD_OB);
+			obj.Xml.DefineJoint(obj.Joint.PRD_OB_Sph,    'PRD_OB_Sph', 'SPHERICAL',        obj.Mrkr.Link2PRD_OB,    obj.Mrkr.Upr2PRD_OB);	
+			%
+			%%----%%
+			obj.Xml.DefineJoint(obj.Joint.Rack_Tr,       'Rack_Trans', 'TRANSLATIONAL',    obj.Mrkr.Rack2Rack_IB,   obj.Mrkr.Grnd2Rack_IB);
+			obj.Xml.DefineJoint(obj.Joint.Rkr_B1_Inl,    'Rkr_B1_Inl', 'INLINE',           obj.Mrkr.Rkr2Rkr_B1,     obj.Mrkr.Grnd2Rkr_B1);
+			obj.Xml.DefineJoint(obj.Joint.Rkr_B2_Sph,    'Rkr_B2_Inl', 'SPHERICAL',        obj.Mrkr.Rkr2Rkr_B2,     obj.Mrkr.Grnd2Rkr_B2);		
+			%
+			%%----%%			
+			obj.Xml.DefineJoint(obj.Joint.Arb_B1_Sph,    'Arb_B1_Sph', 'INLINE',           obj.Mrkr.Arb_Bear1,     obj.Mrkr.Grnd2Arb_Bear1 );
+			obj.Xml.DefineJoint(obj.Joint.Arb_B2_Inl,    'Arb_B2_Inl',  'SPHERICAL',        obj.Mrkr.Arb_Bear2,     obj.Mrkr.Grnd2Arb_Bear2 );
+			obj.Xml.DefineJoint(obj.Joint.Arb2Link_Sph,  'Arb2Lin_Sph', 'SPHERICAL',        obj.Mrkr.Arb_Link,      obj.Mrkr.ArbLink2Link );
+			obj.Xml.DefineJoint(obj.Joint.Link2Rkr_Sph,  'Rkr2Lin_Sph', 'UNIVERSAL',        obj.Mrkr.ArbLink2Rkr,   obj.Mrkr.Rkr2ArbLink );
+			%%----%%
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function GraphicDef(obj)
+			obj.Xml.DefineGraphicCylinder(5030101, 'LWB_FL_Cyl', '43:102:235',  obj.Mrkr.Link2LWB_FL_OB, 5,    norm(obj.LWB_FL_IB-obj.LWB_FL_OB));
+			obj.Xml.DefineGraphicCylinder(5030201, 'LWB_RL_Cyl', '43:102:235',  obj.Mrkr.Link2LWB_RL_OB, 5,    norm(obj.LWB_RL_IB-obj.LWB_RL_OB));
+			obj.Xml.DefineGraphicCylinder(5030301, 'TWB_FL_Cyl', '43:102:235',  obj.Mrkr.Link2TWB_FL_OB, 5,    norm(obj.TWB_FL_IB-obj.TWB_FL_OB));
+			obj.Xml.DefineGraphicCylinder(5030401, 'TWB_RL_Cyl', '43:102:235',  obj.Mrkr.Link2TWB_RL_OB, 5,    norm(obj.TWB_RL_IB-obj.TWB_RL_OB));
+			obj.Xml.DefineGraphicCylinder(5030501, 'TRD_Cyl', '43:102:235',     obj.Mrkr.Link2TRD_OB, 5,       norm(obj.TRD_IB-obj.TRD_OB));
+			obj.Xml.DefineGraphicCylinder(5030601, 'PRD_Cyl', '43:102:235',     obj.Mrkr.Link2PRD_OB, 5,       norm(obj.PRD_IB-obj.PRD_OB));
+			obj.Xml.DefineGraphicCylinder(5030901, 'Rack_Cyl', '43:102:235',    obj.Mrkr.Rack2TRD_IB, 5,       norm(obj.TRD_IB-obj.Rack));
+			obj.Xml.DefineGraphicCylinder(5030801, 'Rkr_Cyl1', '43:102:235',    obj.Mrkr.Rkr2Rkr_B1, 5,        norm(obj.Rkr_B1-obj.Rkr_B2));
+			obj.Xml.DefineGraphicCylinder(5030802, 'Rkr_Cyl2', '43:102:235',    obj.Mrkr.Rkr2Rkr_B2, 5,        norm(obj.Rkr_B2-obj.PRD_IB));
+			obj.Xml.DefineGraphicCylinder(5030803, 'Rkr_Cyl3', '43:102:235',    obj.Mrkr.Rkr2ArbLink2, 5,      -norm(obj.Rkr_B2-obj.Rkr_Arb));
+			obj.Xml.DefineGraphicCylinder(5030701, 'Upr_Cyl1', '43:102:235',    obj.Mrkr.Upr2LWB_FL_OB_Gra, 6, norm(obj.WC-obj.LWB_FL_OB));
+			obj.Xml.DefineGraphicCylinder(5030702, 'Upr_Cyl2', '43:102:235',    obj.Mrkr.Upr2LWB_RL_OB_Gra, 6, norm(obj.WC-obj.LWB_RL_OB));
+			obj.Xml.DefineGraphicCylinder(5030703, 'Upr_Cyl3', '43:102:235',    obj.Mrkr.Upr2TWB_FL_OB_Gra, 6, norm(obj.WC-obj.TWB_FL_OB));
+			obj.Xml.DefineGraphicCylinder(5030704, 'Upr_Cyl4', '43:102:235',    obj.Mrkr.Upr2TWB_RL_OB_Gra, 6, norm(obj.WC-obj.TWB_RL_OB));
+			obj.Xml.DefineGraphicCylinder(5030705, 'Upr_Cyl5', '43:102:235',    obj.Mrkr.Upr2TRD_OB_Gra, 6,    norm(obj.WC-obj.TRD_OB));
+			obj.Xml.DefineGraphicCylinder(5030706, 'Upr_Cyl6', '43:102:235',    obj.Mrkr.Upr2PRD_OB_Gra, 6,    norm(obj.WC-obj.PRD_OB));
+			obj.Xml.DefineGraphicCylinder(5031011, 'Arb_Cyl1', '43:102:235',    obj.Mrkr.Arb_Bear1, 6,         -norm(obj.Arb_Bear1-obj.Arb_Bear2));
+			obj.Xml.DefineGraphicCylinder(5031012, 'Arb_Cyl2', '43:102:235',    obj.Mrkr.Arb_Link , 6,         norm(obj.Arb_Bear1-obj.Arb_Link));
+			obj.Xml.DefineGraphicCylinder(5031110, 'ArbLink_Cyl1', '255:10:10', obj.Mrkr.ArbLink2Link , 4,     -norm(obj.Arb_Link-obj.Rkr_Arb));
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function OutPutDef(obj)
+			obj.Xml.DefinePostRequest(obj.Output.LWB_FL_IB, 'Pos_LWB_FL_IB', 'AbsPosition' , obj.Mrkr.Link2LWB_FL_IB );
+			obj.Xml.DefinePostRequest(obj.Output.LWB_RL_IB, 'Pos_LWB_RL_IB', 'AbsPosition' , obj.Mrkr.Link2LWB_RL_IB );
+			obj.Xml.DefinePostRequest(obj.Output.TWB_FL_IB, 'Pos_TWB_FL_IB', 'AbsPosition' , obj.Mrkr.Link2TWB_FL_IB );
+			obj.Xml.DefinePostRequest(obj.Output.TWB_RL_IB, 'Pos_TWB_RL_IB', 'AbsPosition' , obj.Mrkr.Link2TWB_RL_IB );
+			obj.Xml.DefinePostRequest(obj.Output.TRD_IB, 'Pos_TRD_IB', 'AbsPosition' ,       obj.Mrkr.Link2TRD_IB );
+			obj.Xml.DefinePostRequest(obj.Output.PRD_IB, 'Pos_PRD_IB', 'AbsPosition' ,       obj.Mrkr.Link2PRD_IB );
+			obj.Xml.DefinePostRequest(obj.Output.LWB_FL_OB, 'Pos_LWB_FL_OB', 'AbsPosition' , obj.Mrkr.Link2LWB_FL_OB );
+			obj.Xml.DefinePostRequest(obj.Output.LWB_RL_OB, 'Pos_LWB_RL_OB', 'AbsPosition' , obj.Mrkr.Link2LWB_RL_OB );
+			obj.Xml.DefinePostRequest(obj.Output.TWB_FL_OB, 'Pos_TWB_FL_OB', 'AbsPosition' , obj.Mrkr.Link2TWB_FL_OB );
+			obj.Xml.DefinePostRequest(obj.Output.TWB_RL_OB, 'Pos_TWB_RL_OB', 'AbsPosition' , obj.Mrkr.Link2TWB_RL_OB );
+			obj.Xml.DefinePostRequest(obj.Output.TRD_OB, 'Pos_TRD_OB', 'AbsPosition' ,       obj.Mrkr.Link2TRD_OB );
+			obj.Xml.DefinePostRequest(obj.Output.PRD_OB, 'Pos_PRD_OB', 'AbsPosition' ,       obj.Mrkr.Link2PRD_OB );
+			obj.Xml.DefinePostRequest(obj.Output.UprtWC, 'Pos_WC', 'AbsPosition' ,           obj.Mrkr.Upr2WC );
+			obj.Xml.DefinePostRequest(obj.Output.UprtTCP, 'Pos_TCP', 'AbsPosition' ,         obj.Mrkr.Upr2TCP );
+			obj.Xml.DefinePostRequest(obj.Output.UprtRot, 'Rot_Uprt', 'AbsRotation' ,        obj.Mrkr.Upr2WC_Hub );
+			obj.Xml.DefinePostRequest(obj.Output.UprtRot2, 'Rot_Uprt2', 'AbsRotation' ,        obj.Mrkr.Upr2WC );
+			obj.Xml.DefinePostRequest(obj.Output.RackDisp, 'Rack', 'AbsPosition' ,           obj.Mrkr.Rack2Rack_IB );
+			obj.Xml.DefinePostRequest(obj.Output.UprtRH, 'RH', 'General' , {sprintf('-DZ(%2.0f,%2.0f,%2.0f)',obj.Mrkr.Upr2TCP, obj.Mrkr.Grnd2Floor, obj.Mrkr.Grnd2Floor  ),'0','0'} );
+			obj.Xml.DefinePostRequest(obj.Output.RkrRot, 'RkrRot', 'General' , {sprintf('AZ(%2.0f,%2.0f)',obj.Mrkr.Rkr2Rkr_B1, obj.Mrkr.Grnd2Rkr_B1),'0','0'} );
+			obj.Xml.DefinePostRequest(obj.Output.ArbRot, 'ArbRot', 'General' , {sprintf('AZ(%2.0f,%2.0f)',obj.Mrkr.Arb_Bear1, obj.Mrkr.Grnd2Arb_Bear1 ),'0','0'} );
+			obj.Xml.DefinePostRequest(obj.Output.F_LWB_FL, 'Force_LWB_FL', 'JointForce' ,  [obj.Mrkr.Upr2LWB_FL_OB, obj.Mrkr.Link2LWB_FL_OB, obj.Mrkr.Link2LWB_FL_OB]  );
+			obj.Xml.DefinePostRequest(obj.Output.F_LWB_RL, 'Force_LWB_RL', 'JointForce' ,  [obj.Mrkr.Upr2LWB_RL_OB, obj.Mrkr.Link2LWB_RL_OB, obj.Mrkr.Link2LWB_RL_OB]  );
+			obj.Xml.DefinePostRequest(obj.Output.F_TWB_FL, 'Force_TWB_FL', 'JointForce' ,  [obj.Mrkr.Upr2TWB_FL_OB, obj.Mrkr.Link2TWB_FL_OB, obj.Mrkr.Link2TWB_FL_OB]  );
+			obj.Xml.DefinePostRequest(obj.Output.F_TWB_RL, 'Force_TWB_RL', 'JointForce' ,  [obj.Mrkr.Upr2TWB_RL_OB, obj.Mrkr.Link2TWB_RL_OB, obj.Mrkr.Link2TWB_RL_OB]  );
+			obj.Xml.DefinePostRequest(obj.Output.F_TRD, 'Force_TRD', 'JointForce' ,  [obj.Mrkr.Upr2TRD_OB, obj.Mrkr.Link2TRD_OB, obj.Mrkr.Link2TRD_OB]  );
+			obj.Xml.DefinePostRequest(obj.Output.F_PRD, 'Force_PRD', 'JointForce' ,  [obj.Mrkr.Upr2PRD_OB, obj.Mrkr.Link2PRD_OB, obj.Mrkr.Link2PRD_OB]  );
+			obj.Xml.DefinePostRequest(obj.Output.F_LWB_FL_OBLug, 'Force_LWB_FL_OBLug', 'JointForce' ,  [obj.Mrkr.Upr2LWB_FL_OB, obj.Mrkr.Link2LWB_FL_OB, obj.Mrkr.LWB_FL_OBLug]  );
+			obj.Xml.DefinePostRequest(obj.Output.F_LWB_RL_OBLug, 'Force_LWB_RL_OBLug', 'JointForce' ,  [obj.Mrkr.Upr2LWB_RL_OB, obj.Mrkr.Link2LWB_RL_OB, obj.Mrkr.LWB_FL_OBLug]  );
+			obj.Xml.DefinePostRequest(obj.Output.F_TWB_FL_OBLug, 'Force_TWB_FL_OBLug', 'JointForce' ,  [obj.Mrkr.Upr2TWB_FL_OB, obj.Mrkr.Link2TWB_FL_OB, obj.Mrkr.TWB_FL_OBLug]  );
+			obj.Xml.DefinePostRequest(obj.Output.F_TWB_RL_OBLug, 'Force_TWB_RL_OBLug', 'JointForce' ,  [obj.Mrkr.Upr2TWB_RL_OB, obj.Mrkr.Link2TWB_RL_OB, obj.Mrkr.TWB_FL_OBLug]  );
+			obj.Xml.DefinePostRequest(obj.Output.Len_Damper,     'Len_Damper', 'General' ,  {sprintf('DM(%2.0f,%2.0f)',obj.Mrkr.Grnd2Damper , obj.Mrkr.Rkr2Damper),'0','0'}  );
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function VertTravelMot(obj, MinRH, MaxRH, DeltaTime)
+			DeltaRH = MaxRH-MinRH;
+			Expr = sprintf('%2.2f*Time*%2.2f-%2.2f', DeltaRH, 1/DeltaTime, MaxRH);
+		    obj.Xml.DefineMotionJoint( obj.Motion.Rack , 'RackDisp', '0.0', obj.Joint.Rack_Tr);
+	        obj.Xml.DefineMotionMarker( obj.Motion.RH, 'RHDisp', Expr, obj.Mrkr.Upr2TCP, obj.Mrkr.Grnd2Floor, 'Z');
+			obj.Xml.DefineSimulation(DeltaTime, DeltaTime/10);
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function SteeringMot(obj, MaxSteer, DeltaTime)
+			Expr = sprintf('%2.2f*Time*%2.2f-%2.2f', MaxSteer*2, 1/DeltaTime, MaxSteer);
+			obj.Xml.DefineMotionJoint( obj.Motion.Rack , 'RackDisp', Expr, obj.Joint.Rack_Tr);
+			obj.Xml.DefineMotionMarker( obj.Motion.RH, 'Rkr_Rot', '0.0', obj.Mrkr.Rkr2Rkr_B1,obj.Mrkr.Grnd2Rkr_B1, 'B3');	
+            obj.Xml.DefineSimulation(DeltaTime, DeltaTime/10);			
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function FixedPosRkrMot(obj, Time, RkrAngle, RackDisp)
+			
+			RkrA = RkrAngle.*3.14/180;
+			obj.Xml.DefineSpline(1011, 'CrvRkrA', [Time, RkrA]);
+			obj.Xml.DefineVariable(2011, 'VarRkrA', 'LINSPL(TIME,0,1011,0)');
+			
+			obj.Xml.DefineSpline(1012, 'CrvRackDisp', [Time, -RackDisp]);
+			obj.Xml.DefineVariable(2012, 'VarRackDisp', 'LINSPL(TIME,0,1012,0)');
+			
+			
+			obj.Xml.DefineMotionJoint( obj.Motion.Rack , 'RackDisp', 'VARVAL(2012)', obj.Joint.Rack_Tr);
+			obj.Xml.DefineMotionMarker( obj.Motion.RH, 'Rkr_Rot', 'VARVAL(2011)', obj.Mrkr.Rkr2Rkr_B1,obj.Mrkr.Grnd2Rkr_B1, 'B3');	
+			
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function Motion(obj)
+			switch obj.Mode
+				case 'Travel'
+					obj.VertTravelMot();
+				case 'Steer'
+					obj.SteeringMot();
+				case 'FixedPosRocker'
+					obj.FixedPosRkrMot();
+			end
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function ForceAtWC(obj, Time, Fx, Fy, Fz, Mx, My, Mz)
+			
+			obj.Xml.DefineSpline(1001, 'CrvFx', [Time Fx]);
+			obj.Xml.DefineSpline(1002, 'CrvFy', [Time Fy]);
+			obj.Xml.DefineSpline(1003, 'CrvFz', [Time Fz]);
+			obj.Xml.DefineSpline(1004, 'CrvMx', [Time Mx.*1000]);
+			obj.Xml.DefineSpline(1005, 'CrvMy', [Time My.*1000]);
+			obj.Xml.DefineSpline(1006, 'CrvMz', [Time Mz.*1000]);
+			
+			obj.Xml.DefineVariable(2001, 'VarFx', 'AKISPL(TIME,0,1001,0)');
+			obj.Xml.DefineVariable(2002, 'VarFy', 'AKISPL(TIME,0,1002,0)');
+			obj.Xml.DefineVariable(2003, 'VarFz', 'AKISPL(TIME,0,1003,0)');
+			obj.Xml.DefineVariable(2004, 'VarMx', 'AKISPL(TIME,0,1004,0)');
+			obj.Xml.DefineVariable(2005, 'VarMy', 'AKISPL(TIME,0,1005,0)');
+			obj.Xml.DefineVariable(2006, 'VarMz', 'AKISPL(TIME,0,1006,0)');
+			
+			obj.Xml.DefineForceOnBody(3001, 'Force', obj.Mrkr.Upr2WC, obj.Mrkr.Grnd, {'VARVAL(2001)','VARVAL(2002)','VARVAL(2003)'}, 'ForceOnly');
+			obj.Xml.DefineForceOnBody(3004, 'Moment', obj.Mrkr.Upr2WC, obj.Mrkr.Grnd, {'VARVAL(2004)','VARVAL(2005)','VARVAL(2006)'}, 'TorqueOnly');
+	
+			obj.Xml.DefineSimulation(Time, 1);
+									
+	    end	
+		%%-------------------------------------------------------------------------------------%%
+		function CloseXml(obj)
+			obj.Xml.WriteXml();
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function ChcLoad(obj, ChcKin)
+			%%%-------------------------------------------------------------------------------------%%%
+			%%%-------------------------------------------------------------------------------------%%%
+			obj.DefPoint('LWB_FL_IB',     [ChcKin.LWB_FL_IB.X;ChcKin.LWB_FL_IB.Y;ChcKin.LWB_FL_IB.Z]);
+			obj.DefPoint('LWB_RL_IB',     [ChcKin.LWB_RL_IB.X;ChcKin.LWB_RL_IB.Y;ChcKin.LWB_RL_IB.Z]);
+			obj.DefPoint('TWB_FL_IB',     [ChcKin.TWB_FL_IB.X;ChcKin.TWB_FL_IB.Y;ChcKin.TWB_FL_IB.Z]);
+			obj.DefPoint('TWB_RL_IB',     [ChcKin.TWB_RL_IB.X;ChcKin.TWB_RL_IB.Y;ChcKin.TWB_RL_IB.Z]);
+			obj.DefPoint('TRD_IB',        [ChcKin.TRD_IB.X;ChcKin.TRD_IB.Y;ChcKin.TRD_IB.Z]);
+			obj.DefPoint('PRD_IB',        [ChcKin.PRD_IB.X;ChcKin.PRD_IB.Y;ChcKin.PRD_IB.Z]);
+			obj.DefPoint('LWB_FL_OB',     [ChcKin.LWB_FL_OB.X;ChcKin.LWB_FL_OB.Y;ChcKin.LWB_FL_OB.Z]);
+			obj.DefPoint('LWB_RL_OB',     [ChcKin.LWB_RL_OB.X;ChcKin.LWB_RL_OB.Y;ChcKin.LWB_RL_OB.Z]);
+			obj.DefPoint('TWB_FL_OB',     [ChcKin.TWB_FL_OB.X;ChcKin.TWB_FL_OB.Y;ChcKin.TWB_FL_OB.Z]);
+			obj.DefPoint('TWB_RL_OB',     [ChcKin.TWB_RL_OB.X;ChcKin.TWB_RL_OB.Y;ChcKin.TWB_RL_OB.Z]);
+			obj.DefPoint('TRD_OB',        [ChcKin.TRD_OB.X;ChcKin.TRD_OB.Y;ChcKin.TRD_OB.Z]);
+			obj.DefPoint('PRD_OB',        [ChcKin.PRD_OB.X;ChcKin.PRD_OB.Y;ChcKin.PRD_OB.Z]);
+			obj.DefPoint('WC',            [ChcKin.WC.X;ChcKin.WC.Y;ChcKin.WC.Z]);
+			obj.DefPoint('WCatCL',        [ChcKin.WC.X;0;ChcKin.WC.Z]);
+			obj.DefPoint('TCP',           [ChcKin.TCP.X;ChcKin.TCP.Y;ChcKin.TCP.Z]);
+			obj.DefPoint('Rkr_B1',        [ChcKin.Rkr_1.X;ChcKin.Rkr_1.Y;ChcKin.Rkr_1.Z]);
+			obj.DefPoint('Rkr_B2',        [ChcKin.Rkr_2.X;ChcKin.Rkr_2.Y;ChcKin.Rkr_2.Z]);
+			obj.DefPoint('Rack',          [ChcKin.TRD_IB.X;0;ChcKin.TRD_IB.Z]);
+			obj.DefPoint('Floor',         [ChcKin.Floor.X;ChcKin.Floor.Y;ChcKin.Floor.Z]);	
+			obj.DefPoint('Rkr_Arb',       [ChcKin.Rkr_Arb.X;ChcKin.Rkr_Arb.Y;ChcKin.Rkr_Arb.Z]);				
+			obj.DefPoint('ArbArm_BearIB', [ChcKin.ArbArm_BearIB.X;ChcKin.ArbArm_BearIB.Y;ChcKin.ArbArm_BearIB.Z]);
+			obj.DefPoint('ArbArm_BearOB', [ChcKin.ArbArm_BearOB.X;ChcKin.ArbArm_BearOB.Y;ChcKin.ArbArm_BearOB.Z]);
+			obj.DefPoint('ArbArm_Link',   [ChcKin.ArbArm_Link.X;ChcKin.ArbArm_Link.Y;ChcKin.ArbArm_Link.Z]);
+			obj.DefPoint('Rkr_Damper',    [ChcKin.Rkr_Damper.X;ChcKin.Rkr_Damper.Y;ChcKin.Rkr_Damper.Z]);
+			obj.DefPoint('Chs_Damper',    [ChcKin.Chs_Damper.X;ChcKin.Chs_Damper.Y;ChcKin.Chs_Damper.Z]);
+			%%%-------------------------------------------------------------------------------------%%%
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function DefineSim(obj, EndTime, PrintInt)
+			obj.Xml.DefineSimulation(EndTime, PrintInt);
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function RunAnalysis(obj)
+			XmlBatchPath = ['"' getenv('ALTAIR_INSTALL_PATH') '/hwsolvers/scripts/motionsolve.bat"'];
+			ModelRunString = sprintf('call %s  %s', XmlBatchPath, obj.XmlPath);
+			system(ModelRunString);	
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function ReadOutPut(obj)
+		
+			
+			obj.Out.Time       = readvector(obj.AbfPath,'Time','Time','Time');
+			obj.Out.RH         = AbfReader(obj.AbfPath, 'Expressions', 'RH', 'F2');
+			obj.Out.Camber     = 180/pi*(AbfReader(obj.AbfPath, 'Expressions', 'Rot_Uprt', 'F2')+pi/2);
+			obj.Out.Toe        = -180/pi*(AbfReader(obj.AbfPath, 'Expressions', 'Rot_Uprt2', 'F4'));
+			
+			obj.Out.Rx       = (AbfReader(obj.AbfPath, 'Expressions', 'Rot_Uprt2', 'F2'));
+			obj.Out.Ry       = (AbfReader(obj.AbfPath, 'Expressions', 'Rot_Uprt2', 'F3'));
+			obj.Out.Rz       = (AbfReader(obj.AbfPath, 'Expressions', 'Rot_Uprt2', 'F4'));
+
+			obj.Out.Dx       = (AbfReader(obj.AbfPath, 'Expressions', 'Pos_WC', 'F2'));
+			obj.Out.Dy       = (AbfReader(obj.AbfPath, 'Expressions', 'Pos_WC', 'F3'));
+			obj.Out.Dz       = (AbfReader(obj.AbfPath, 'Expressions', 'Pos_WC', 'F4'));
+			
+			
+			obj.Out.Dx_TCP       = (AbfReader(obj.AbfPath, 'Expressions', 'Pos_TCP', 'F2'));
+			obj.Out.Dy_TCP       = (AbfReader(obj.AbfPath, 'Expressions', 'Pos_TCP', 'F3'));
+			obj.Out.Dz_TCP       = (AbfReader(obj.AbfPath, 'Expressions', 'Pos_TCP', 'F4'));
+			
+			obj.Out.Rack       = AbfReader(obj.AbfPath, 'Expressions', 'Rack', 'F3');
+			obj.Out.RkrRot     = AbfReader(obj.AbfPath, 'Expressions', 'RkrRot', 'F2')*180/pi;	
+			obj.Out.ArbRot     = AbfReader(obj.AbfPath, 'Expressions', 'ArbRot', 'F2')*180/pi;				
+			
+			obj.Out.Len_Damper = AbfReader(obj.AbfPath, 'Expressions', 'Len_Damper', 'F2');
+		
+			if strcmp(obj.Mode,'Steer')== 1
+				
+				ToeOpp  = -interp1(-obj.Out.Rack,-obj.Out.Toe, obj.Out.Rack, 'extrap', 'linear');
+				RHOpp   = interp1(-obj.Out.Rack, obj.Out.RH, obj.Out.Rack, 'extrap', 'linear');
+				obj.Out.DeltaToe = (obj.Out.Toe + ToeOpp);
+				obj.Out.SteerAvrg = (obj.Out.Toe - ToeOpp)/2;
+				obj.Out.DeltaRH   = -(obj.Out.RH - RHOpp);
+									
+			end
+			
+			if strcmp(obj.Mode,'CambGain')== 1
+				
+				obj.Out.React_Fx      = AbfReader(obj.AbfPath, 'Expressions', 'WC_Reaction', 'F2');
+				obj.Out.React_Fy      = AbfReader(obj.AbfPath, 'Expressions', 'WC_Reaction', 'F3');
+				obj.Out.React_Fz      = AbfReader(obj.AbfPath, 'Expressions', 'WC_Reaction', 'F4');
+				obj.Out.React_Mx      = AbfReader(obj.AbfPath, 'Expressions', 'WC_Reaction', 'F6');
+				obj.Out.React_My      = AbfReader(obj.AbfPath, 'Expressions', 'WC_Reaction', 'F7');
+				obj.Out.React_Mz      = AbfReader(obj.AbfPath, 'Expressions', 'WC_Reaction', 'F8');
+				
+			end
+
+
+			obj.Out.LWB_FL_IB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_FL_IB', 'F2');
+			obj.Out.LWB_FL_IB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_FL_IB', 'F3');
+			obj.Out.LWB_FL_IB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_FL_IB', 'F4');
+
+			obj.Out.LWB_RL_IB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_RL_IB', 'F2');
+			obj.Out.LWB_RL_IB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_RL_IB', 'F3');
+			obj.Out.LWB_RL_IB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_RL_IB', 'F4');
+
+			obj.Out.TWB_FL_IB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_FL_IB', 'F2');
+			obj.Out.TWB_FL_IB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_FL_IB', 'F3');
+			obj.Out.TWB_FL_IB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_FL_IB', 'F4');
+
+			obj.Out.TWB_RL_IB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_RL_IB', 'F2');
+			obj.Out.TWB_RL_IB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_RL_IB', 'F3');
+			obj.Out.TWB_RL_IB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_RL_IB', 'F4');
+
+			obj.Out.LWB_FL_OB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_FL_OB', 'F2');
+			obj.Out.LWB_FL_OB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_FL_OB', 'F3');
+			obj.Out.LWB_FL_OB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_FL_OB', 'F4');
+
+			obj.Out.LWB_RL_OB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_RL_OB', 'F2');
+			obj.Out.LWB_RL_OB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_RL_OB', 'F3');
+			obj.Out.LWB_RL_OB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_LWB_RL_OB', 'F4');
+
+			obj.Out.TWB_FL_OB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_FL_OB', 'F2');
+			obj.Out.TWB_FL_OB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_FL_OB', 'F3');
+			obj.Out.TWB_FL_OB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_FL_OB', 'F4');
+
+			obj.Out.TWB_RL_OB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_RL_OB', 'F2');
+			obj.Out.TWB_RL_OB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_RL_OB', 'F3');
+			obj.Out.TWB_RL_OB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TWB_RL_OB', 'F4');
+
+			obj.Out.TRD_OB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TRD_OB', 'F2');
+			obj.Out.TRD_OB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TRD_OB', 'F3');
+			obj.Out.TRD_OB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TRD_OB', 'F4');
+
+			obj.Out.TRD_IB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TRD_IB', 'F2');
+			obj.Out.TRD_IB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TRD_IB', 'F3');
+			obj.Out.TRD_IB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TRD_IB', 'F4');
+
+			obj.Out.PRD_OB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_PRD_OB', 'F2');
+			obj.Out.PRD_OB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_PRD_OB', 'F3');
+			obj.Out.PRD_OB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_PRD_OB', 'F4');
+
+			obj.Out.PRD_IB.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_PRD_IB', 'F2');
+			obj.Out.PRD_IB.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_PRD_IB', 'F3');
+			obj.Out.PRD_IB.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_PRD_IB', 'F4');
+
+			obj.Out.WC.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_WC', 'F2');
+			obj.Out.WC.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_WC', 'F3');
+			obj.Out.WC.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_WC', 'F4');
+
+			obj.Out.TCP.X = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TCP', 'F2');
+			obj.Out.TCP.Y = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TCP', 'F3');
+			obj.Out.TCP.Z = AbfReader(obj.AbfPath, 'Expressions', 'Pos_TCP', 'F4');
+			
+			obj.Out.LWB_FL.Force = AbfReader(obj.AbfPath, 'Expressions', 'Force_LWB_FL', 'F4');
+			obj.Out.LWB_RL.Force = AbfReader(obj.AbfPath, 'Expressions', 'Force_LWB_RL', 'F4');
+			obj.Out.TWB_FL.Force = AbfReader(obj.AbfPath, 'Expressions', 'Force_TWB_FL', 'F4');
+			obj.Out.TWB_RL.Force = AbfReader(obj.AbfPath, 'Expressions', 'Force_TWB_RL', 'F4');
+			obj.Out.TRD.Force = AbfReader(obj.AbfPath, 'Expressions', 'Force_TRD', 'F4');
+			obj.Out.PRD.Force = AbfReader(obj.AbfPath, 'Expressions', 'Force_PRD', 'F4');
+			
+			obj.Out.LWB_FL_OBLug.Fx= AbfReader(obj.AbfPath, 'Expressions', 'Force_LWB_FL_OBLug', 'F2');
+			obj.Out.LWB_FL_OBLug.Fy= AbfReader(obj.AbfPath, 'Expressions', 'Force_LWB_FL_OBLug', 'F3');
+			obj.Out.LWB_FL_OBLug.Fz= AbfReader(obj.AbfPath, 'Expressions', 'Force_LWB_FL_OBLug', 'F4');
+			
+			obj.Out.LWB_RL_OBLug.Fx= AbfReader(obj.AbfPath, 'Expressions', 'Force_LWB_RL_OBLug', 'F2');
+			obj.Out.LWB_RL_OBLug.Fy= AbfReader(obj.AbfPath, 'Expressions', 'Force_LWB_RL_OBLug', 'F3');
+			obj.Out.LWB_RL_OBLug.Fz= AbfReader(obj.AbfPath, 'Expressions', 'Force_LWB_RL_OBLug', 'F4');
+			
+			obj.Out.TWB_FL_OBLug.Fx= AbfReader(obj.AbfPath, 'Expressions', 'Force_TWB_FL_OBLug', 'F2');
+			obj.Out.TWB_FL_OBLug.Fy= AbfReader(obj.AbfPath, 'Expressions', 'Force_TWB_FL_OBLug', 'F3');
+			obj.Out.TWB_FL_OBLug.Fz= AbfReader(obj.AbfPath, 'Expressions', 'Force_TWB_FL_OBLug', 'F4');
+			
+			obj.Out.TWB_RL_OBLug.Fx= AbfReader(obj.AbfPath, 'Expressions', 'Force_TWB_RL_OBLug', 'F2');
+			obj.Out.TWB_RL_OBLug.Fy= AbfReader(obj.AbfPath, 'Expressions', 'Force_TWB_RL_OBLug', 'F3');
+			obj.Out.TWB_RL_OBLug.Fz= AbfReader(obj.AbfPath, 'Expressions', 'Force_TWB_RL_OBLug', 'F4');
+			
+			obj.Out.LWB_OBLug.Fx = obj.Out.LWB_FL_OBLug.Fx + obj.Out.LWB_RL_OBLug.Fx;
+			obj.Out.LWB_OBLug.Fy = obj.Out.LWB_FL_OBLug.Fy + obj.Out.LWB_RL_OBLug.Fy;
+			obj.Out.LWB_OBLug.Fz = obj.Out.LWB_FL_OBLug.Fz + obj.Out.LWB_RL_OBLug.Fz;
+			
+			obj.Out.TWB_OBLug.Fx = obj.Out.TWB_FL_OBLug.Fx + obj.Out.TWB_RL_OBLug.Fx;
+			obj.Out.TWB_OBLug.Fy = obj.Out.TWB_FL_OBLug.Fy + obj.Out.TWB_RL_OBLug.Fy;
+			obj.Out.TWB_OBLug.Fz = obj.Out.TWB_FL_OBLug.Fz + obj.Out.TWB_RL_OBLug.Fz;
+			
+			obj.Out.LWB_OBLug.F = sqrt(obj.Out.LWB_OBLug.Fx.^2 + obj.Out.LWB_OBLug.Fy .^2 );
+			obj.Out.LWB_OBLug.A = atan(obj.Out.LWB_OBLug.Fy./obj.Out.LWB_OBLug.Fx)*180/pi;
+			obj.Out.LWB_OBLug.A(isnan(obj.Out.LWB_OBLug.A)) = 90;
+			
+			obj.Out.TWB_OBLug.F = sqrt(obj.Out.TWB_OBLug.Fx.^2 + obj.Out.TWB_OBLug.Fy .^2 );
+			obj.Out.TWB_OBLug.A = atan(obj.Out.TWB_OBLug.Fy./obj.Out.TWB_OBLug.Fx)*180/pi;
+			obj.Out.TWB_OBLug.A(isnan(obj.Out.TWB_OBLug.A)) = 90;
+
+			releasefileinfo(obj.AbfPath)			
+			
+	    end
+		%%-------------------------------------------------------------------------------------%%
+		function CalcParam(obj)
+			for k = 1:numel(obj.Out.RH)
+				
+				fprintf('Calc elem %2.0f on %2.0f\n', k, numel(obj.Out.RH));
+				
+				Pos(k).SSM = StaticSuspModel('Test');
+				Pos(k).SSM.HardPointInput('WC',       [ obj.Out.WC.X(k);          obj.Out.WC.Y(k);           obj.Out.WC.Z(k) ]);
+				Pos(k).SSM.HardPointInput('TCP',      [ obj.Out.TCP.X(k);         obj.Out.TCP.Y(k);          obj.Out.TCP.Z(k)]);
+				Pos(k).SSM.HardPointInput('TWB_FL_IB',[ obj.Out.TWB_FL_IB.X(k);   obj.Out.TWB_FL_IB.Y(k);    obj.Out.TWB_FL_IB.Z(k)]);
+				Pos(k).SSM.HardPointInput('TWB_RL_IB',[ obj.Out.TWB_RL_IB.X(k);   obj.Out.TWB_RL_IB.Y(k);    obj.Out.TWB_RL_IB.Z(k)]);
+				Pos(k).SSM.HardPointInput('LWB_FL_IB',[ obj.Out.LWB_FL_IB.X(k);   obj.Out.LWB_FL_IB.Y(k);    obj.Out.LWB_FL_IB.Z(k)]);
+				Pos(k).SSM.HardPointInput('LWB_RL_IB',[ obj.Out.LWB_RL_IB.X(k);   obj.Out.LWB_RL_IB.Y(k);    obj.Out.LWB_RL_IB.Z(k)]);
+				Pos(k).SSM.HardPointInput('TWB_FL_OB',[ obj.Out.TWB_FL_OB.X(k);   obj.Out.TWB_FL_OB.Y(k);    obj.Out.TWB_FL_OB.Z(k)]);
+				Pos(k).SSM.HardPointInput('TWB_RL_OB',[ obj.Out.TWB_RL_OB.X(k);   obj.Out.TWB_RL_OB.Y(k);    obj.Out.TWB_RL_OB.Z(k)]);
+				Pos(k).SSM.HardPointInput('LWB_FL_OB',[ obj.Out.LWB_FL_OB.X(k);   obj.Out.LWB_FL_OB.Y(k);    obj.Out.LWB_FL_OB.Z(k)]);
+				Pos(k).SSM.HardPointInput('LWB_RL_OB',[ obj.Out.LWB_RL_OB.X(k);   obj.Out.LWB_RL_OB.Y(k);    obj.Out.LWB_RL_OB.Z(k)]);
+				
+				Pos(k).SSM.OBPointDistance();
+				Pos(k).SSM.LinkGenerate();
+				Pos(k).SSM.FindSteerAxis();
+				Pos(k).SSM.FindIstRotAxis();			
+				
+				Param(k).SK = SuspKin('Test');
+				Param(k).SK.AssignWC(Pos(k).SSM.WC);
+				Param(k).SK.AssignTCP(Pos(k).SSM.TCP);
+				Param(k).SK.AssignSteeringAxis(Pos(k).SSM.SteerAxis);
+				Param(k).SK.AssignInstRotAxis(Pos(k).SSM.InstRotAxis);
+				Param(k).SK.CalcInstRotLat();
+				Param(k).SK.CalcInstRotLong();
+				Param(k).SK.CalcInstRollCenter();
+				Param(k).SK.CalcCamberGain();
+				Param(k).SK.CalcSquat();
+				Param(k).SK.CalcDive();
+				Param(k).SK.CalcIRLong();
+				Param(k).SK.CalcIRLat();
+				Param(k).SK.CalcScrub();
+				Param(k).SK.CalcTrail();
+				Param(k).SK.CalcCaster();
+				Param(k).SK.CalcKingPin();
+				
+				
+				
+				obj.Out.CamberGain(k) = Param(k).SK.CamberGain;
+				obj.Out.Squat(k)      = Param(k).SK.Squat;
+				obj.Out.Dive(k)       = Param(k).SK.Dive;
+				obj.Out.Caster(k)     = Param(k).SK.Caster*180/3.14;
+				obj.Out.KingPin(k)    = Param(k).SK.KingPin*180/3.14;
+				obj.Out.Trail(k)      = Param(k).SK.Trail;
+				obj.Out.Scrub(k)      = Param(k).SK.Scrub;
+				obj.Out.RC_z(k)       = Param(k).SK.P_RC(3);
+				obj.Out.WC_x(k)       = Param(k).SK.P_WC(1);
+				obj.Out.WC_y(k)       = Param(k).SK.P_WC(2);
+		
+					
+			end			
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function CalcCamberGain(obj, MinDisp, MaxDisp, DeltaTime)
+			
+			DeltaDisp = MaxDisp-MinDisp;
+			Expr = sprintf('%2.2f*Time*%2.2f-%2.2f', DeltaDisp, 1/DeltaTime, MaxDisp);
+		    obj.Xml.DefineMotionJoint( obj.Motion.Rack , 'RackDisp', '0.0', obj.Joint.Rack_Tr);
+	        obj.Xml.DefineMotionMarker( obj.Motion.RH, 'WCDisp', Expr, obj.Mrkr.Upr2WC, obj.Mrkr.Grnd2WC, 'Z');
+			
+			obj.Xml.DefinePostRequest( obj.Output.UprtWCLoad, 'WC_Reaction', 'MotionForce', [obj.Mrkr.Upr2WC, obj.Mrkr.Grnd2WC, 0] )
+			
+			obj.Xml.DefineForceTwoBodyVect(3001, 'WC_Force', obj.Mrkr.Upr2WC, obj.Mrkr.Grnd2WC, {'0', '0', '0', '1000', '0', '0'});
+			
+			obj.Xml.DefineSimulation(DeltaTime, DeltaTime/10);
+		end 
+		%%-------------------------------------------------------------------------------------%%
+	end
+	
+end

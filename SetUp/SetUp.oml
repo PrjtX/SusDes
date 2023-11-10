@@ -1,0 +1,111 @@
+classdef SetUp < handle
+	
+	properties
+	
+		Name
+		ActLen
+		RH
+		ArbAngle
+		dActLen
+		dRH	
+        dArbAngle	
+		RCh
+		
+		Car
+		
+		K
+		X
+		L0
+		P0
+		
+		ActR
+		SprR
+		
+		ActA
+		SprA
+		
+		FzCorner
+		
+	end	
+	
+	methods
+		%%------------------------------------%%
+		function obj = SetUp(SuspName)
+			
+			obj.Name = SuspName;
+			
+		end
+		%%------------------------------------%%
+		function CarData(obj, Data)
+			
+			obj.Car = Data;
+			
+		end
+		%%------------------------------------%%		
+		function ActuatorMR(obj, ActuatorLen, RideHeight)
+			
+			obj.ActLen  = ActuatorLen;
+			obj.RH      = RideHeight;	
+
+			obj.dRH     = diff(obj.ActLen);
+			obj.dActLen = diff(obj.RH)
+			
+		end
+		%%------------------------------------%%
+		function ArbMR(obj, Arb_Angle, RideHeight)
+			
+			obj.ArbAngle = Arb_Angle;
+			obj.RH       = RideHeight;	
+
+			obj.dRH       = diff(obj.RH);
+			obj.dArbAngle = diff(obj.ArbAngle)
+			
+		end
+		%%------------------------------------%%
+		function RollCenter(obj, RollCenterH, RideHeight)
+						
+			obj.RCh = interp1(RideHeight, RollCenterH, obj.RH, 'extrap', 'linear');
+			
+		end
+		%%------------------------------------%%
+		function ActProp(obj, R)
+			
+			obj.ActR = R;
+			obj.ActA = pi*R^2;
+			
+		end
+		%%------------------------------------%%
+		function SpringProp(obj, K1, K2, K3, X1, X2, Lstatic, R, PressStatic)
+			
+			obj.K(1) = K1;
+			obj.K(2) = K2;
+			obj.K(3) = K3;
+			
+			obj.X(1) = X1;
+			obj.X(2) = X2;
+			
+			obj.L0   = Lstatic;
+			obj.P0   = PressStatic;
+			
+			obj.SprR = R;
+			obj.SprA = pi*R^2;
+			
+		end
+		%%------------------------------------%%
+		function Out = FzEquilibrium(obj, FzCorner)
+			
+			x0 = zeros(5,1);
+			fun = @(x) HeaveEquation(x, FzCorner, obj.SprA,  obj.ActA, obj.ActLen, obj.RH, obj.dActLen, obj.dRH, obj.K, obj.X, obj.L0, obj.P0);
+			[x,y,info,output] = fsolve(fun, x0);			
+			
+			Out.p  = x(1,1);
+			Out.F  = x(2,1);
+			Out.RH = x(3,1);
+			Out.l  = x(4,1);
+			Out.d  = x(5,1);		
+	
+		end
+		%%------------------------------------%%
+	end
+
+end

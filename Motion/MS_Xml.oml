@@ -1,0 +1,689 @@
+classdef MS_Xml < handle
+
+	properties
+		Name 
+		Body
+		Marker
+		Joint
+		Bushing
+		CylinderGra
+		MotionJoint
+		MotionMarker		
+		PostRequest
+		Spline
+		ForceOneBody
+		ForceTwoBodyVect
+		Fid
+		Variable
+		Simulation
+	end
+	
+	methods
+	    %%%-------------------------------------------------------%%%
+		function obj = MS_Xml(FileName)	
+			obj.Name = FileName;
+			obj.Fid = fopen(obj.Name, 'w');
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineBody(obj, ID, Label, isGround, CgMrk)
+			
+			if isempty(obj.Body) == 1
+				I = 1;
+			else
+				N = numel(obj.Body);
+				I = N + 1;
+			end				
+			
+			if isGround == 0
+			
+				obj.Body(I).ID = ID;
+				obj.Body(I).Label = Label;
+				obj.Body(I).CgMrk = CgMrk;
+				obj.Body(I).Mass = 0.1;
+				obj.Body(I).Ixx = 0.1;
+				obj.Body(I).Iyy = 0.1;
+				obj.Body(I).Izz = 0.1;
+				obj.Body(I).isGround = 0;
+				
+			else
+				
+				obj.Body(I).ID = ID;
+				obj.Body(I).Label = Label;
+				obj.Body(I).CgMrk = '';
+				obj.Body(I).Mass = 0;
+				obj.Body(I).Ixx = 0;
+				obj.Body(I).Iyy = 0;
+				obj.Body(I).Izz = 0;
+				obj.Body(I).isGround = 1;
+
+				
+			end
+						
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineMarker(obj, ID, Label, BodyId, Pos, Orient)
+			
+			if nargin == 5
+				Orient = [1 0 0; 0 1 0; 0 0 1];
+			end
+			
+			if isempty(obj.Marker) == 1
+				I = 1;
+			else
+				N = numel(obj.Marker);
+				I = N + 1;
+			end		
+			
+			obj.Marker(I).ID = ID;
+			obj.Marker(I).Label = Label;
+			obj.Marker(I).BodyId = BodyId;
+			obj.Marker(I).Pos = Pos;
+			obj.Marker(I).Orient = Orient;
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineJoint(obj, ID, Label, Type, MrkI, MrkJ)
+			
+			if isempty(obj.Joint) == 1
+				I = 1;
+			else
+				N = numel(obj.Joint);
+				I = N + 1;
+			end		
+			
+			obj.Joint(I).ID = ID;
+			obj.Joint(I).Label = Label;
+			obj.Joint(I).Type = Type;
+			obj.Joint(I).MrkI = MrkI;
+			obj.Joint(I).MrkJ = MrkJ;
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineMotionJoint(obj, ID, Label, Expr, JointID)
+			
+			if isempty(obj.MotionJoint) == 1
+				I = 1;
+			else
+				N = numel(obj.MotionJoint);
+				I = N + 1;
+			end		
+			
+			obj.MotionJoint(I).ID       = ID;
+			obj.MotionJoint(I).Label   = Label;
+			obj.MotionJoint(I).Expr    = Expr;
+			obj.MotionJoint(I).JointID = JointID;		
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineMotionMarker(obj, ID, Label, Expr, MrkI, MrkJ, Dir)
+			
+			if isempty(obj.MotionMarker) == 1
+				I = 1;
+			else
+				N = numel(obj.MotionMarker);
+				I = N + 1;
+			end		
+			
+			obj.MotionMarker(I).ID        = ID;
+			obj.MotionMarker(I).Label    = Label;
+			obj.MotionMarker(I).Expr     = Expr;
+			obj.MotionMarker(I).MrkI     = MrkI;
+			obj.MotionMarker(I).MrkJ     = MrkJ;
+			obj.MotionMarker(I).Dir      = Dir;
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineGraphicCylinder(obj, ID, Label, Color, Mrk, Rad, Len)
+			
+			if isempty(obj.CylinderGra) == 1
+				I = 1;
+			else
+				N = numel(obj.CylinderGra);
+				I = N + 1;
+			end		
+			
+			obj.CylinderGra(I).ID        = ID;
+			obj.CylinderGra(I).Label    = Label;
+			obj.CylinderGra(I).Color    = Color;
+			obj.CylinderGra(I).Mrk      = Mrk;
+			obj.CylinderGra(I).Rad      = Rad;
+			obj.CylinderGra(I).Len      = Len;
+
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function DefinePostRequest(obj, ID, Label, Type, Input )
+			
+			if isempty(obj.PostRequest) == 1
+				I = 1;
+			else
+				N = numel(obj.PostRequest);
+				I = N + 1;
+			end		
+			
+			obj.PostRequest(I).ID        = ID;
+			obj.PostRequest(I).Label     = Label;
+			switch Type
+				case 'General'
+					obj.PostRequest(I).F2        = Input{1};
+					obj.PostRequest(I).F3        = Input{2};
+					obj.PostRequest(I).F4        = Input{3};
+					obj.PostRequest(I).F6        = '0';
+					obj.PostRequest(I).F7        = '0';
+					obj.PostRequest(I).F8        = '0';
+				case 'AbsPosition'
+					obj.PostRequest(I).F2        = sprintf('DX(%2.0f,0,0)', Input );
+					obj.PostRequest(I).F3        = sprintf('DY(%2.0f,0,0)', Input );
+					obj.PostRequest(I).F4        = sprintf('DZ(%2.0f,0,0)', Input );
+					obj.PostRequest(I).F6        = '0';
+					obj.PostRequest(I).F7        = '0';
+					obj.PostRequest(I).F8        = '0';
+				case 'AbsRotation'
+					obj.PostRequest(I).F2        = sprintf('AX(%2.0f,0)', Input );
+					obj.PostRequest(I).F3        = sprintf('AY(%2.0f,0)', Input );
+					obj.PostRequest(I).F4        = sprintf('AZ(%2.0f,0)', Input );
+					obj.PostRequest(I).F6        = '0';
+					obj.PostRequest(I).F7        = '0';
+					obj.PostRequest(I).F8        = '0';
+				case 'AbsRotation2'
+					obj.PostRequest(I).F2        = sprintf('AX(0,%2.0f)', Input );
+					obj.PostRequest(I).F3        = sprintf('AY(0,%2.0f)', Input );
+					obj.PostRequest(I).F4        = sprintf('AZ(0,%2.0f)', Input );	
+					obj.PostRequest(I).F6        = '0';
+					obj.PostRequest(I).F7        = '0';
+					obj.PostRequest(I).F8        = '0';
+				case 'JointForce'
+					obj.PostRequest(I).F2        = sprintf('Fx(%2.0f,%2.0f,%2.0f)', Input(1), Input(2), Input(3) );
+					obj.PostRequest(I).F3        = sprintf('Fy(%2.0f,%2.0f,%2.0f)', Input(1), Input(2), Input(3) );
+					obj.PostRequest(I).F4        = sprintf('Fz(%2.0f,%2.0f,%2.0f)', Input(1), Input(2), Input(3) );	
+					obj.PostRequest(I).F6        = '0';
+					obj.PostRequest(I).F7        = '0';
+					obj.PostRequest(I).F8        = '0';
+				case 'MotionForce'
+					obj.PostRequest(I).F2        = sprintf('Fx(%2.0f,%2.0f,%2.0f)', Input(1), Input(2), Input(3) );
+					obj.PostRequest(I).F3        = sprintf('Fy(%2.0f,%2.0f,%2.0f)', Input(1), Input(2), Input(3) );
+					obj.PostRequest(I).F4        = sprintf('Fz(%2.0f,%2.0f,%2.0f)', Input(1), Input(2), Input(3) );	
+                    obj.PostRequest(I).F6        = sprintf('Tx(%2.0f,%2.0f,%2.0f)', Input(1), Input(2), Input(3) );	
+					obj.PostRequest(I).F7        = sprintf('Ty(%2.0f,%2.0f,%2.0f)', Input(1), Input(2), Input(3) );
+					obj.PostRequest(I).F8        = sprintf('Tz(%2.0f,%2.0f,%2.0f)', Input(1), Input(2), Input(3) );				
+			end
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineSpline(obj, ID, Label, Data)
+			
+			if isempty(obj.Spline) == 1
+				I = 1;
+			else
+				N = numel(obj.Spline);
+				I = N + 1;
+			end		
+			
+			obj.Spline(I).ID        = ID;
+			obj.Spline(I).Label     = Label;
+			obj.Spline(I).Data      = Data;
+			
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineForceOnBody(obj, ID, Label, Marker, RefMarker, Expressions, Type)
+			
+			if isempty(obj.ForceOneBody) == 1
+				I = 1;
+			else
+				N = numel(obj.ForceOneBody);
+				I = N + 1;
+			end		
+			
+			obj.ForceOneBody(I).ID             = ID;
+			obj.ForceOneBody(I).Label          = Label;
+			obj.ForceOneBody(I).Marker         = Marker;
+			obj.ForceOneBody(I).RefMarker     = RefMarker;
+			obj.ForceOneBody(I).Type           = Type;
+			obj.ForceOneBody(I).x_expr        = Expressions{1};
+			obj.ForceOneBody(I).y_expr        = Expressions{2};
+			obj.ForceOneBody(I).z_expr        = Expressions{3};
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineForceTwoBodyVect(obj, ID, Label, MarkerI, MarkerJ, Expressions)
+			if isempty(obj.ForceTwoBodyVect) == 1
+				I = 1;
+			else
+				N = numel(obj.ForceTwoBodyVect);
+				I = N + 1;
+			end	
+			
+			obj.ForceTwoBodyVect(I).ID             = ID;
+			obj.ForceTwoBodyVect(I).Label          = Label;
+			obj.ForceTwoBodyVect(I).MarkerI        = MarkerI;
+			obj.ForceTwoBodyVect(I).MarkerJ        = MarkerJ;
+			for k = 1:6
+				obj.ForceTwoBodyVect(I).Expr{k}        = Expressions{k};
+			end
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineVariable(obj, ID, Label, Expr )
+			
+			if isempty(obj.Variable) == 1
+				I = 1;
+			else
+				N = numel(obj.Variable);
+				I = N + 1;
+			end		
+			
+			obj.Variable(I).ID            = ID;
+			obj.Variable(I).Label         = Label;
+			obj.Variable(I).Expr          = Expr;
+						
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineSimulation(obj, EndTime, PrintInt)
+			obj.Simulation.EndTime = EndTime;
+			obj.Simulation.PrintInt = PrintInt;
+		end
+		%%%-------------------------------------------------------%%%
+		function DefineBushing(obj, ID, Label, MrkI, MrkJ, Kt, Kr)
+			
+			if isempty(obj.Bushing) == 1
+				I = 1;
+			else
+				N = numel(obj.Bushing);
+				I = N + 1;
+			end		
+			
+			obj.Bushing(I).ID = ID;
+			obj.Bushing(I).Label = Label;
+			obj.Bushing(I).MrkI = MrkI;
+			obj.Bushing(I).MrkJ = MrkJ;
+			obj.Bushing(I).Kx = Kt(1,1);
+			obj.Bushing(I).Ky = Kt(2,1);
+			obj.Bushing(I).Kz = Kt(3,1);
+			obj.Bushing(I).Ktx = Kr(1,1);
+			obj.Bushing(I).Kty = Kr(2,1);
+			obj.Bushing(I).Ktz = Kr(3,1);			
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function WriteBodyBlock(obj, Index)
+			
+			if obj.Body(Index).isGround == 0
+				fprintf(obj.Fid, '  <Body_Rigid\n');
+				fprintf(obj.Fid, '     id                  = "%5.0f"\n', obj.Body(Index).ID );
+				fprintf(obj.Fid, '     label               = "%s"\n', obj.Body(Index).Label );
+				fprintf(obj.Fid, '     cg_id               = "%5.0f"\n', obj.Body(Index).CgMrk );
+				fprintf(obj.Fid, '     im_id               = "%5.0f"\n', obj.Body(Index).CgMrk );
+				fprintf(obj.Fid, '     mass                = "0.5"\n' );
+				fprintf(obj.Fid, '     inertia_xx          = "100.0"\n' );
+				fprintf(obj.Fid, '     inertia_yy          = "100.0"\n' );
+				fprintf(obj.Fid, '     inertia_zz          = "100.0"\n' );
+				fprintf(obj.Fid, '  />\n');
+			else
+				fprintf(obj.Fid, '  <Body_Rigid\n');
+				fprintf(obj.Fid, '     id                  = "%5.0f"\n', obj.Body(Index).ID );
+				fprintf(obj.Fid, '     label               = "%s"\n', obj.Body(Index).Label );
+				fprintf(obj.Fid, '     IsGround            = "TRUE"\n');
+				fprintf(obj.Fid, '  />\n');
+			end
+		end
+		%%%-------------------------------------------------------%%%		
+		function WriteMarkerBlock(obj, Index)
+			fprintf(obj.Fid, '  <Reference_Marker\n');
+			fprintf(obj.Fid, '     id                  = "%5.0f"\n', obj.Marker(Index).ID );
+			fprintf(obj.Fid, '     label               = "%s"\n', obj.Marker(Index).Label );
+			fprintf(obj.Fid, '     body_id             = "%5.0f"\n', obj.Marker(Index).BodyId );
+			fprintf(obj.Fid, '     body_type           = "RigidBody"\n');
+			fprintf(obj.Fid, '     pos_x               = "%3.3f"\n', obj.Marker(Index).Pos(1));
+			fprintf(obj.Fid, '     pos_y               = "%3.3f"\n', obj.Marker(Index).Pos(2));
+			fprintf(obj.Fid, '     pos_z               = "%3.3f"\n', obj.Marker(Index).Pos(3));
+			fprintf(obj.Fid, '     a00                 = "%1.6f"\n', obj.Marker(Index).Orient(1,1));
+			fprintf(obj.Fid, '     a10                 = "%1.6f"\n', obj.Marker(Index).Orient(1,2));
+			fprintf(obj.Fid, '     a20                 = "%1.6f"\n', obj.Marker(Index).Orient(1,3));
+			fprintf(obj.Fid, '     a01                 = "%1.6f"\n', obj.Marker(Index).Orient(2,1));
+			fprintf(obj.Fid, '     a11                 = "%1.6f"\n', obj.Marker(Index).Orient(2,2));
+			fprintf(obj.Fid, '     a21                 = "%1.6f"\n', obj.Marker(Index).Orient(2,3));
+			fprintf(obj.Fid, '     a02                 = "%1.6f"\n', obj.Marker(Index).Orient(3,1));
+			fprintf(obj.Fid, '     a12                 = "%1.6f"\n', obj.Marker(Index).Orient(3,2));
+			fprintf(obj.Fid, '     a22                 = "%1.6f"\n', obj.Marker(Index).Orient(3,3));
+			fprintf(obj.Fid, '  />\n');
+		end
+		%%%-------------------------------------------------------%%%	
+		function WriteJointBlock(obj, Index)
+			fprintf(obj.Fid, '  <Constraint_Joint\n');
+			fprintf(obj.Fid, '     id                  = "%5.0f"\n', obj.Joint(Index).ID );
+			fprintf(obj.Fid, '     label               = "%s"\n', obj.Joint(Index).Label );
+            fprintf(obj.Fid, '     type                = "%s"\n', obj.Joint(Index).Type );
+			fprintf(obj.Fid, '     i_marker_id         = "%5.0f"\n', obj.Joint(Index).MrkI );
+			fprintf(obj.Fid, '     j_marker_id         = "%5.0f"\n', obj.Joint(Index).MrkJ );
+			fprintf(obj.Fid, '  />\n');
+		end
+		%%%-------------------------------------------------------%%%	
+		function WriteBushingBlock(obj, Index)
+			
+			fprintf(obj.Fid, '  <Force_Bushing\n');
+			fprintf(obj.Fid, '     id                  = "%5.0f"\n', obj.Bushing(Index).ID );
+			fprintf(obj.Fid, '     label               = "%s"\n', obj.Bushing(Index).Label );
+			fprintf(obj.Fid, '     i_marker_id         = "%5.0f"\n', obj.Bushing(Index).MrkI );
+			fprintf(obj.Fid, '     j_marker_id         = "%5.0f"\n', obj.Bushing(Index).MrkJ );
+			fprintf(obj.Fid, '     kx          = "%5.0f"  ky          = "%5.0f"  kz          = "%5.0f" \n', obj.Bushing(Index).Kx, obj.Bushing(Index).Ky, obj.Bushing(Index).Kz  );
+			fprintf(obj.Fid, '     ktx         = "%5.0f"  kty         = "%5.0f"  ktz         = "%5.0f" \n', obj.Bushing(Index).Ktx, obj.Bushing(Index).Kty, obj.Bushing(Index).Ktz  );
+			fprintf(obj.Fid, '     cx          = "%5.0f"  cy          = "%5.0f"  cz          = "%5.0f" \n', 0,0,0 );
+			fprintf(obj.Fid, '     ctx         = "%5.0f"  cty         = "%5.0f"  ctz         = "%5.0f" \n', 0,0,0 );
+			fprintf(obj.Fid, '     preload_x   = "%5.0f"  preload_y   = "%5.0f"  preload_z   = "%5.0f" \n', 0,0,0 );
+			fprintf(obj.Fid, '     preload_tx  = "%5.0f"  preload_ty  = "%5.0f"  preload_tz  = "%5.0f" \n', 0,0,0 );
+			fprintf(obj.Fid, '  />\n');			
+					
+		end
+		%%%-------------------------------------------------------%%%	
+		function WriteMotionJointBlock(obj, Index)
+			fprintf(obj.Fid, '  <Motion_Joint\n');
+			fprintf(obj.Fid, '     id                  = "%2.0f"\n', obj.MotionJoint(Index).ID );
+			fprintf(obj.Fid, '     label               = "%s"\n', obj.MotionJoint(Index).Label );
+			fprintf(obj.Fid, '     type                = "EXPRESSION"\n' );
+			fprintf(obj.Fid, '     val_type            = "D"\n' );
+			fprintf(obj.Fid, '     expr                = "%s"\n', obj.MotionJoint(Index).Expr );
+			fprintf(obj.Fid, '     joint_id            = "%5.0f"\n', obj.MotionJoint(Index).JointID );
+			fprintf(obj.Fid, '     motion_type         = "T"\n' );
+			fprintf(obj.Fid, '  />\n');
+		end
+		%%%-------------------------------------------------------%%%	
+		function WriteCylinderBlock(obj, Index)
+			fprintf(obj.Fid, '  <Post_Graphic\n');
+			fprintf(obj.Fid, '     id                  = "%2.0f"\n', obj.CylinderGra(Index).ID );
+			fprintf(obj.Fid, '     label               = "%s"\n', obj.CylinderGra(Index).Label );
+			fprintf(obj.Fid, '     color               = "%s"\n', obj.CylinderGra(Index).Color );
+			fprintf(obj.Fid, '     type                = "Frustum"\n' );
+			fprintf(obj.Fid, '     center_marker_id    = "%5.0f"\n', obj.CylinderGra(Index).Mrk );
+			fprintf(obj.Fid, '     top_radius          = "%2.2f"\n', obj.CylinderGra(Index).Rad );
+			fprintf(obj.Fid, '     bottom_radius       = "%2.2f"\n', obj.CylinderGra(Index).Rad );
+			fprintf(obj.Fid, '     length              = "%2.2f"\n', obj.CylinderGra(Index).Len );
+			fprintf(obj.Fid, '     ends_type           = "CLOSED"\n' );
+			fprintf(obj.Fid, '     refinement_level    = "3"\n' );
+			fprintf(obj.Fid, '     is_material_inside  = "TRUE"\n' );
+			fprintf(obj.Fid, '  />\n');
+		end
+		%%%-------------------------------------------------------%%%	
+		function WriteMotionMarkerBlock(obj, Index)
+			fprintf(obj.Fid, '  <Motion_Marker\n');
+			fprintf(obj.Fid, '     id                  = "%2.0f"\n', obj.MotionMarker(Index).ID );
+			fprintf(obj.Fid, '     label               = "%s"\n', obj.MotionMarker(Index).Label );
+			fprintf(obj.Fid, '     type                = "EXPRESSION"\n' );
+			fprintf(obj.Fid, '     val_type            = "D"\n' );
+			fprintf(obj.Fid, '     expr                = "%s"\n', obj.MotionMarker(Index).Expr );
+			fprintf(obj.Fid, '     i_marker_id         = "%5.0f"\n', obj.MotionMarker(Index).MrkI );
+			fprintf(obj.Fid, '     j_marker_id         = "%5.0f"\n', obj.MotionMarker(Index).MrkJ );
+			fprintf(obj.Fid, '     direction           = "%s"\n', obj.MotionMarker(Index).Dir );
+			fprintf(obj.Fid, '  />\n');
+		end
+		%%%-------------------------------------------------------%%%	
+		function WritePostRequestBlock(obj, Index)
+			fprintf(obj.Fid, '  <Post_Request\n');
+			fprintf(obj.Fid, '     id                  = "%2.0f"\n', obj.PostRequest(Index).ID );
+			fprintf(obj.Fid, '     label               = "%s"\n', obj.PostRequest(Index).Label );
+			fprintf(obj.Fid, '     type                = "EXPRESSION"\n' );
+			fprintf(obj.Fid, '     expr1               = "NULL"\n' );
+			fprintf(obj.Fid, '     expr2               = "%s"\n', obj.PostRequest(Index).F2 );
+			fprintf(obj.Fid, '     expr3               = "%s"\n', obj.PostRequest(Index).F3 );
+			fprintf(obj.Fid, '     expr4               = "%s"\n', obj.PostRequest(Index).F4 );
+			fprintf(obj.Fid, '     expr5               = "NULL"\n' );
+			fprintf(obj.Fid, '     expr6               = "%s"\n', obj.PostRequest(Index).F6 );
+			fprintf(obj.Fid, '     expr7               = "%s"\n', obj.PostRequest(Index).F7 );
+			fprintf(obj.Fid, '     expr8               = "%s"\n', obj.PostRequest(Index).F8 );
+			fprintf(obj.Fid, '  />\n');
+		end
+		%%%-------------------------------------------------------%%%	
+		function WriteSpline(obj, Index)
+			fprintf(obj.Fid, '  <Reference_Spline\n');
+			fprintf(obj.Fid, '     id                  = "%2.0f"\n', obj.Spline(Index).ID );
+			fprintf(obj.Fid, '     label               = "%s"\n', obj.Spline(Index).Label );
+			fprintf(obj.Fid, '     num_x               = "%2.0f"\n', numel(obj.Spline(Index).Data(:,1)) );
+			fprintf(obj.Fid, '     linear_extrap       = "FALSE">\n');
+			for k = 1:numel(obj.Spline(Index).Data(:,1))
+				fprintf(obj.Fid, '  %2.3f    %2.3f\n', obj.Spline(Index).Data(k,1), obj.Spline(Index).Data(k,2) );
+		    end
+			fprintf(obj.Fid, '  </Reference_Spline>\n');			
+		end
+		%%%-------------------------------------------------------%%%
+		function WriteForceOnBody(obj, Index)
+			
+			fprintf(obj.Fid, '  <Force_Vector_OneBody\n');
+			fprintf(obj.Fid, '     id                  = "%2.0f"\n', obj.ForceOneBody(Index).ID );
+			fprintf(obj.Fid, '     label               = "%s"\n', obj.ForceOneBody(Index).Label );
+			if strcmp(obj.ForceOneBody(Index).Type, 'ForceOnly') == 1
+		    	fprintf(obj.Fid, '     type                = "ForceOnly"\n' );
+		    elseif strcmp(obj.ForceOneBody(Index).Type, 'TorqueOnly') == 1
+				fprintf(obj.Fid, '     type                = "TorqueOnly"\n' );
+		    end
+			fprintf(obj.Fid, '     marker_id           = "%2.0f"\n', obj.ForceOneBody(Index).Marker );
+			fprintf(obj.Fid, '     ref_marker_id       = "%2.0f"\n', obj.ForceOneBody(Index).RefMarker );
+			if strcmp(obj.ForceOneBody(Index).Type, 'ForceOnly') == 1
+				fprintf(obj.Fid, '     fx_expression       = "%s"\n', obj.ForceOneBody(Index).x_expr );
+				fprintf(obj.Fid, '     fy_expression       = "%s"\n', obj.ForceOneBody(Index).y_expr );
+				fprintf(obj.Fid, '     fz_expression       = "%s"\n', obj.ForceOneBody(Index).z_expr );
+			elseif strcmp(obj.ForceOneBody(Index).Type, 'TorqueOnly') == 1
+				fprintf(obj.Fid, '     tx_expression       = "%s"\n', obj.ForceOneBody(Index).x_expr );
+				fprintf(obj.Fid, '     ty_expression       = "%s"\n', obj.ForceOneBody(Index).y_expr );
+				fprintf(obj.Fid, '     tz_expression       = "%s"\n', obj.ForceOneBody(Index).z_expr );
+			end
+			fprintf(obj.Fid, '  />\n');			
+						
+		end
+		%%%-------------------------------------------------------%%%
+		function WriteForceTwoBodyVect(obj, Index)
+			
+			fprintf(obj.Fid, '  <Force_Vector_TwoBody\n');
+			fprintf(obj.Fid, '     id                   = "%2.0f"\n', obj.ForceTwoBodyVect(Index).ID );
+			fprintf(obj.Fid, '     label                = "%s"\n', obj.ForceTwoBodyVect(Index).Label );
+			fprintf(obj.Fid, '     i_marker_id          = "%2.0f"\n', obj.ForceTwoBodyVect(Index).MarkerI );
+			fprintf(obj.Fid, '     j_floating_marker_id = "%2.0f"\n', obj.ForceTwoBodyVect(Index).MarkerJ );
+			fprintf(obj.Fid, '     type                 = "ForceAndTorque"\n' );
+			fprintf(obj.Fid, '     fx_expression        = "%s"\n', obj.ForceTwoBodyVect(Index).Expr{1} );
+			fprintf(obj.Fid, '     fy_expression        = "%s"\n', obj.ForceTwoBodyVect(Index).Expr{2} );
+			fprintf(obj.Fid, '     fz_expression        = "%s"\n', obj.ForceTwoBodyVect(Index).Expr{3} );
+			fprintf(obj.Fid, '     tx_expression        = "%s"\n', obj.ForceTwoBodyVect(Index).Expr{4} );
+			fprintf(obj.Fid, '     ty_expression        = "%s"\n', obj.ForceTwoBodyVect(Index).Expr{5} );
+			fprintf(obj.Fid, '     tz_expression        = "%s"\n', obj.ForceTwoBodyVect(Index).Expr{6} );
+			fprintf(obj.Fid, '  />\n');		
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function WriteVariable(obj, Index)
+			
+			fprintf(obj.Fid, '  <Reference_Variable\n');
+			fprintf(obj.Fid, '     id                  = "%2.0f"\n', obj.Variable(Index).ID );
+			fprintf(obj.Fid, '     label               = "%s"\n', obj.Variable(Index).Label );
+			fprintf(obj.Fid, '     type               = "EXPRESSION"\n' );
+			fprintf(obj.Fid, '     expr                = "%s"\n', obj.Variable(Index).Expr );
+			fprintf(obj.Fid, '  />\n');			
+						
+		end		
+		%%%-------------------------------------------------------%%%
+		function WriteSim(obj)
+			fprintf(obj.Fid,'<Simulate\n');
+			fprintf(obj.Fid,'     analysis_type       = "Static"\n');
+			fprintf(obj.Fid,'     end_time            = "%2.0f"\n', obj.Simulation.EndTime);
+			fprintf(obj.Fid,'     print_interval      = "%2.0f"\n', obj.Simulation.PrintInt);
+			fprintf(obj.Fid,'/>\n');
+		end
+		%%%-------------------------------------------------------%%%
+		function WriteXmlCore(obj)
+			
+			for k = 1:numel(obj.Body)
+				obj.WriteBodyBlock(k);
+			end
+			
+			for k = 1:numel(obj.Marker)
+				obj.WriteMarkerBlock(k);
+			end
+			
+			for k = 1:numel(obj.Joint)
+				obj.WriteJointBlock(k);
+			end
+						
+			for k = 1:numel(obj.MotionJoint)
+				obj.WriteMotionJointBlock(k);
+			end
+			
+			for k = 1:numel(obj.MotionMarker)
+				obj.WriteMotionMarkerBlock(k);
+			end
+			
+			for k = 1:numel(obj.CylinderGra)
+				obj.WriteCylinderBlock(k);
+			end
+			
+			for k = 1:numel(obj.PostRequest)
+				obj.WritePostRequestBlock(k);
+			end
+			
+			for k = 1:numel(obj.Spline)
+				obj.WriteSpline(k);
+		    end
+			
+			for k = 1:numel(obj.ForceOneBody)
+				obj.WriteForceOnBody(k);
+			end	
+			
+			for k = 1:numel(obj.ForceTwoBodyVect)
+				obj.WriteForceTwoBodyVect(k);
+			end		
+			
+			for k = 1:numel(obj.Variable)
+				obj.WriteVariable(k);
+			end		
+
+			for k = 1:numel(obj.Bushing)
+				obj.WriteBushingBlock(k);
+			end	
+			
+		end
+		%%%-------------------------------------------------------%%%
+		function WriteXml(obj)
+			obj.WriteHeader();
+			obj.WriteXmlCore();
+			obj.WriteEnding();
+			fclose all
+		end
+		%%%-------------------------------------------------------%%%
+		function WriteHeader(obj)
+			fprintf(obj.Fid,'<?xml version="1.0" encoding="UTF-8"?>\n');
+			fprintf(obj.Fid,'<?xml-stylesheet type="text/xsl"\n');
+			fprintf(obj.Fid,'href="http://www.altairhyperworks.com/motionsolve-xml/motionsolve_v1.xsl"?>\n');
+			fprintf(obj.Fid,'<MultiBodySystem\n');
+			fprintf(obj.Fid,'xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"\n');
+			fprintf(obj.Fid,'xs:noNamespaceSchemaLocation="http://www.altairhyperworks.com/motionsolve-xml/motionsolve_v1.xsd"\n');
+			fprintf(obj.Fid,'    hw_version          = "2021.2"\n');
+			fprintf(obj.Fid,'    build_number        = ".0.31">\n');
+			fprintf(obj.Fid,'<Messaging\n');
+			fprintf(obj.Fid,'    log_option          = "Overwrite"\n');
+			fprintf(obj.Fid,'/>\n');
+			fprintf(obj.Fid,'<!--\n');
+			fprintf(obj.Fid,'Model Hierarchy\n');
+			fprintf(obj.Fid,'   Model\n');
+			fprintf(obj.Fid,'       Misc\n');
+			fprintf(obj.Fid,'       Susp\n');
+			fprintf(obj.Fid,'       SuspTravel\n');
+			fprintf(obj.Fid,' -->\n');
+			fprintf(obj.Fid,' <Model>\n');
+			fprintf(obj.Fid,'  <Param_Simulation\n');
+			fprintf(obj.Fid,'     constr_tol          = "1.0000E-10"\n');
+			fprintf(obj.Fid,'     implicit_diff_tol   = "1.0000E-06"\n');
+			fprintf(obj.Fid,'     nr_converg_ratio    = "0.09"\n');
+			fprintf(obj.Fid,'     collision_engine    = "PCM"\n');
+			fprintf(obj.Fid,'     linsolver           = "HARWELL"\n');
+			fprintf(obj.Fid,'  />\n');
+			fprintf(obj.Fid,'  <Param_Transient\n');
+			fprintf(obj.Fid,'     integrator_type     = "DSTIFF"\n');
+			fprintf(obj.Fid,'     integr_tol          = "0.001"\n');
+			fprintf(obj.Fid,'     h_max               = "0.01"\n');
+			fprintf(obj.Fid,'     h0_max              = "1.0000E-08"\n');
+			fprintf(obj.Fid,'     h_min               = "1.0000E-06"\n');
+			fprintf(obj.Fid,'     max_order           = "5"\n');
+			fprintf(obj.Fid,'     vel_tol_factor      = "1000."\n');
+			fprintf(obj.Fid,'     dae_constr_tol      = "1.0000E-05"\n');
+			fprintf(obj.Fid,'     dae_corrector_maxit = "4"\n');
+			fprintf(obj.Fid,'     dae_corrector_minit = "0"\n');
+			fprintf(obj.Fid,'     dae_index           = "3"\n');
+			fprintf(obj.Fid,'     dae_vel_ctrl        = "FALSE"\n');
+			fprintf(obj.Fid,'  />\n');
+			fprintf(obj.Fid,'  <Param_Static\n');
+			fprintf(obj.Fid,'     method              = "FIM_D"\n');
+			fprintf(obj.Fid,'     max_error           = "0.0001"\n');
+			fprintf(obj.Fid,'     max_imbalance       = "0.0001"\n');
+			fprintf(obj.Fid,'     stability           = "1.0000E-10"\n');
+			fprintf(obj.Fid,'     max_ke_tol          = "1.0000E-05"\n');
+			fprintf(obj.Fid,'     max_dq_tol          = "0.001"\n');
+			fprintf(obj.Fid,'     max_num_iter        = "75"\n');
+			fprintf(obj.Fid,'  />\n');
+			fprintf(obj.Fid,'  <Param_Linear\n');
+			fprintf(obj.Fid,'     anim_scale          = "1."\n');
+			fprintf(obj.Fid,'     write_simulinkmdl   = "FALSE"\n');
+			fprintf(obj.Fid,'     write_matlabfiles   = "FALSE"\n');
+			fprintf(obj.Fid,'     write_oml           = "FALSE"\n');
+			fprintf(obj.Fid,'     write_eig_info      = "TRUE"\n');
+			fprintf(obj.Fid,'  />\n');
+			fprintf(obj.Fid,'  <H3DOutput\n');
+			fprintf(obj.Fid,'     switch_on           = "TRUE"\n');
+			fprintf(obj.Fid,'  />\n');
+			fprintf(obj.Fid,'  <ResOutput\n');
+			fprintf(obj.Fid,'     abf_file            = "TRUE"\n');
+			fprintf(obj.Fid,'     plt_file            = "TRUE"\n');
+			fprintf(obj.Fid,'     angle_type          = "YPR"\n');
+			fprintf(obj.Fid,'     capture_max_pd      = "TRUE"\n');
+			fprintf(obj.Fid,'     contact_gra_output  = "TRUE"\n');
+			fprintf(obj.Fid,'     abf_unique_time     = "LAST"\n');
+			fprintf(obj.Fid,'     azero               = "1.0000E-10"\n');
+			fprintf(obj.Fid,'     dzero               = "1.0000E-10"\n');
+			fprintf(obj.Fid,'     fzero               = "1.0000E-10"\n');
+			fprintf(obj.Fid,'     vzero               = "1.0000E-10"\n');
+			fprintf(obj.Fid,'  />\n');
+			fprintf(obj.Fid,'  <Param_Unit\n');
+			fprintf(obj.Fid,'     force_unit          = "NEWTON"\n');
+			fprintf(obj.Fid,'     mass_unit           = "KILOGRAM"\n');
+			fprintf(obj.Fid,'     length_unit         = "MILLIMETER"\n');
+			fprintf(obj.Fid,'     time_unit           = "SECOND"\n');
+			fprintf(obj.Fid,'  />\n');
+		end
+		%%%-------------------------------------------------------%%%
+		function WriteEnding(obj)
+			fprintf(obj.Fid,'  <Force_Gravity\n');
+			fprintf(obj.Fid,'     grav_x              = "0."\n');
+			fprintf(obj.Fid,'     grav_y              = "0."\n');
+			fprintf(obj.Fid,'     grav_z              = "0."\n');
+			fprintf(obj.Fid,'  />\n');
+			fprintf(obj.Fid,'</Model>\n');
+			fprintf(obj.Fid,' <Command>\n');
+			fprintf(obj.Fid,'  <ResOutput\n');
+			fprintf(obj.Fid,'     mrf_file            = "TRUE"\n');
+			fprintf(obj.Fid,'     abf_file            = "TRUE"\n');
+			fprintf(obj.Fid,'     plt_file            = "TRUE"\n');
+			fprintf(obj.Fid,'     angle_type          = "YPR"\n');
+			fprintf(obj.Fid,'     flex_vel_acc_output = "FALSE"\n');
+			fprintf(obj.Fid,'     contact_gra_output  = "TRUE"\n');
+			fprintf(obj.Fid,'     abf_unique_time     = "LAST"\n');
+			fprintf(obj.Fid,'     plt_unique_time     = "LAST"\n');
+			fprintf(obj.Fid,'     azero               = "1.0000E-10"\n');
+			fprintf(obj.Fid,'     dzero               = "1.0000E-10"\n');
+			fprintf(obj.Fid,'     fzero               = "1.0000E-10"\n');
+			fprintf(obj.Fid,'     vzero               = "1.0000E-10"\n');
+			fprintf(obj.Fid,'     req_comment_only    = "FALSE"\n');
+			fprintf(obj.Fid,'     capture_max_pd      = "TRUE"\n');
+			fprintf(obj.Fid,'  />\n');
+			fprintf(obj.Fid,'  <H3DOutput\n');
+			fprintf(obj.Fid,'     switch_on           = "TRUE"\n');
+			fprintf(obj.Fid,'     increment           = "1"\n');
+			fprintf(obj.Fid,'     format_option       = "AUTO"\n');
+			fprintf(obj.Fid,'     stress_option       = "TENSOR"\n');
+			fprintf(obj.Fid,'     strain_option       = "TENSOR"\n');
+			fprintf(obj.Fid,'  />\n');
+			fprintf(obj.Fid,'\n');
+			obj.WriteSim();
+			fprintf(obj.Fid,'<Stop/>\n');
+			fprintf(obj.Fid,' </Command>\n');
+			fprintf(obj.Fid,'</MultiBodySystem>\n');
+		end
+		%%%-------------------------------------------------------%%%
+	end
+
+end

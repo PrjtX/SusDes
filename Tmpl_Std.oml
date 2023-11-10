@@ -1,0 +1,3 @@
+ChcInputPath  = 'W:\675\SUSP\REAR\P1\_chc\230228_675_A1F1_P1R1.chc';
+ChcOutputPath = 'C:\Output.chc';
+Axle           = 'Front';

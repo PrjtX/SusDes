@@ -1,0 +1,36 @@
+function [d, t1, t2] = distance(Line1, Line2)
+	
+	x01 = Line1.X0;
+	y01 = Line1.Y0;
+	z01 = Line1.Z0;
+	
+	x02 = Line2.X0;
+	y02 = Line2.Y0;
+	z02 = Line2.Z0;	
+	
+	l1 = Line1.l;
+	m1 = Line1.m;
+	n1 = Line1.n;
+	
+	l2 = Line2.l;
+	m2 = Line2.m;
+	n2 = Line2.n;	
+	
+	
+	A = [l1^2+m1^2+n1^2, -l1*l2-m1*m2-n1*n2; l1*l2+m1*m2+n1*n2, -l2^2-m2^2-n2^2];
+	B = [-x01*l1+x02*l1-y01*m1+y02*m1-z01*n1+z02*n1; -x01*l2+x02*l2-y01*m2+y02*m2-z01*n2+n2*z02];
+	
+	x = inv(A)*B;
+	
+	t1 = x(1);
+	t2 = x(2);
+	
+	dX = Line1.ParamPoint( t1, 'X') - Line2.ParamPoint( t2, 'X');
+	dY = Line1.ParamPoint( t1, 'Y') - Line2.ParamPoint( t2, 'Y');
+	dZ = Line1.ParamPoint( t1, 'Z') - Line2.ParamPoint( t2, 'Z');
+	
+	d = sqrt(dX^2 + dY^2 + dZ^2);
+	
+	
+	
+end

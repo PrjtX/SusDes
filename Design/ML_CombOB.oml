@@ -1,0 +1,106 @@
+classdef ML_CombOB < handle
+
+	properties
+		SA
+		IR
+		FL
+		RL 
+		FL_IB_Y
+		FL_IB_X
+		RL_IB_Y
+		RL_IB_X	
+		FL_OB_Z		
+		OB_DeltaX
+		OB_DeltaY
+		OB_DeltaZ
+		P_FL_IB
+		P_FL_OB
+		P_RL_IB
+		P_RL_OB
+		OptInfo
+	end
+	
+	methods 
+		%%%-----------------------------------------------------------------------------------------------------%%%
+		function obj = ML_CombOB(SteerAxis, InstRotAxis)
+			obj.SA = SteerAxis;
+			obj.IR = InstRotAxis;
+		
+		end
+		%%%-----------------------------------------------------------------------------------------------------%%%
+		function FL_IB_Pos(obj, X, Y)
+			obj.FL_IB_Y = Y;
+			obj.FL_IB_X = X;
+		end		
+		%%%-----------------------------------------------------------------------------------------------------%%%
+		function RL_IB_Pos(obj, X, Y)
+			obj.RL_IB_Y = Y;
+			obj.RL_IB_X = X;
+		end		
+		%%%-----------------------------------------------------------------------------------------------------%%%
+		function FL_OB_ZPos(obj, Z)
+			obj.FL_OB_Z = Z;
+		end				
+		%%%-----------------------------------------------------------------------------------------------------%%%		
+		function OB_DeltaPos(obj, DX, DY, DZ)
+			obj.OB_DeltaX = DX;
+			obj.OB_DeltaY = DY;
+			obj.OB_DeltaZ = DZ;
+		end		
+		%%%-----------------------------------------------------------------------------------------------------%%%	
+		function Err = CalcLinks(obj, FL_OB_Y)		
+
+			FL = ConnectLine(obj.SA, obj.IR);
+			RL = ConnectLine(obj.SA, obj.IR);				
+			
+			FL.IniX = obj.FL_IB_X;
+			FL.IniZ = obj.FL_OB_Z;
+			RL.IniX = obj.RL_IB_X;
+			RL.IniZ = obj.FL_OB_Z;
+			
+						
+			FL.ConstrainedPosition('Y', obj.FL_IB_Y, 'X', obj.FL_IB_X);
+			FL.ConstrainedPosition('Y', FL_OB_Y, 'Z', obj.FL_OB_Z);
+			t = FL.FindLine();
+			RL.ConstrainedPosition('Y', obj.RL_IB_Y, 'X', obj.RL_IB_X);
+			RL.ConstrainedPosition('Y', FL_OB_Y+obj.OB_DeltaY, 'Z', obj.FL_OB_Z+obj.OB_DeltaZ);
+			t = RL.FindLine();		
+			
+			FL_tIB = FL.VirtualLink.findParam(obj.FL_IB_Y, 'Y');
+			FL_tOB = FL.VirtualLink.findParam(obj.FL_OB_Z, 'Z');
+			
+			RL_tIB = RL.VirtualLink.findParam(obj.RL_IB_Y, 'Y');
+			RL_tOB = RL.VirtualLink.findParam(obj.FL_OB_Z+obj.OB_DeltaZ, 'Z');			
+			
+			DeltaXOut = RL.VirtualLink.Xp(RL_tOB) - FL.VirtualLink.Xp(FL_tOB);
+			
+			Err = (DeltaXOut - obj.OB_DeltaX)^2;
+						
+			obj.P_FL_IB(1,1) = FL.VirtualLink.Xp(FL_tIB);
+			obj.P_FL_IB(2,1) = FL.VirtualLink.Yp(FL_tIB);
+			obj.P_FL_IB(3,1) = FL.VirtualLink.Zp(FL_tIB);
+			
+			obj.P_FL_OB(1,1) = FL.VirtualLink.Xp(FL_tOB);
+			obj.P_FL_OB(2,1) = FL.VirtualLink.Yp(FL_tOB);
+			obj.P_FL_OB(3,1) = FL.VirtualLink.Zp(FL_tOB);			
+			
+			obj.P_RL_IB(1,1) = RL.VirtualLink.Xp(RL_tIB);
+			obj.P_RL_IB(2,1) = RL.VirtualLink.Yp(RL_tIB);
+			obj.P_RL_IB(3,1) = RL.VirtualLink.Zp(RL_tIB);
+			
+			obj.P_RL_OB(1,1) = RL.VirtualLink.Xp(RL_tOB);
+			obj.P_RL_OB(2,1) = RL.VirtualLink.Yp(RL_tOB);
+			obj.P_RL_OB(3,1) = RL.VirtualLink.Zp(RL_tOB);				
+			
+		end
+		%%%-----------------------------------------------------------------------------------------------------%%%			
+		function Err = FindLinks(obj)
+			t = obj.SA.findParam(obj.FL_OB_Z,'Z');
+			Y0 = obj.SA.Yp(t);
+			[yout,fval,info,output] = fminsearch(@(y) obj.CalcLinks(y), Y0);
+			obj.OptInfo = info;
+			Err = fval;		
+		end
+		%%%-----------------------------------------------------------------------------------------------------%%%	
+	end
+end

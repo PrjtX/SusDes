@@ -1,0 +1,91 @@
+classdef DataPanel < handle
+
+	properties
+	
+		Tab
+		handle
+		Ref
+		Opt1
+		Opt2
+		Opt3
+		Colors
+		 
+		ValRef = 0
+		ValOpt1 = 0
+		ValOpt2 = 0
+		ValOpt3 = 0
+		
+	end
+	
+	methods
+		%%------------------------------------------------------------------------------------------------%%
+		function obj = DataPanel(Tab, Colors)			
+			
+			obj.Tab = Tab;		
+						
+		end
+		%%------------------------------------------------------------------------------------------------%%
+		function Create(obj, Name, Position)
+			
+			obj.handle = uipanel(obj.Tab, 'units', 'normalized', 'position', Position);	
+			uicontrol(obj.handle,'Style','text', 'units', 'normalized', 'Position',[0.35  0.05  0.5 0.2],'String',Name);	
+			obj.Ref.Value  = uicontrol(obj.handle,'Style','edit','String', '', 'units', 'normalized', 'position', [0.1  0.15  0.4 0.15]);
+			obj.Opt1.Value = uicontrol(obj.handle,'Style','edit','String', '', 'units', 'normalized', 'position', [0.1  0.35  0.4 0.15]);
+			obj.Opt2.Value = uicontrol(obj.handle,'Style','edit','String', '', 'units', 'normalized', 'position', [0.1  0.55  0.4 0.15]);
+			obj.Opt3.Value = uicontrol(obj.handle,'Style','edit','String', '', 'units', 'normalized', 'position', [0.1  0.75  0.4 0.15]);
+			
+			obj.Opt1.Delta = uicontrol(obj.handle,'Style','edit','String', '', 'units', 'normalized', 'position', [0.5  0.35  0.4 0.15],'horizontalalignment', 'right');
+			obj.Opt2.Delta = uicontrol(obj.handle,'Style','edit','String', '', 'units', 'normalized', 'position', [0.5  0.55  0.4 0.15],'horizontalalignment', 'right');
+			obj.Opt3.Delta = uicontrol(obj.handle,'Style','edit','String', '', 'units', 'normalized', 'position', [0.5  0.75  0.4 0.15],'horizontalalignment', 'right');			
+			
+		end
+		%%------------------------------------------------------------------------------------------------%%
+		function WriteField(obj, Susp, Type, String, Color)
+			
+			switch Susp
+				case 'Ref'
+					Field1 = 'Ref';
+				case 'Opt1'
+					Field1 = 'Opt1';
+				case 'Opt2'
+					Field1 = 'Opt2';
+				case 'Opt3'								
+					Field1 = 'Opt3';
+			end
+			
+			switch Type
+				case 'Value'
+					Field2 = 'Value';
+				case 'Delta'
+					Field2 = 'Delta';
+			end
+				
+			set(obj.(Field1).(Field2), 'string', String)
+			set(obj.(Field1).(Field2), 'foregroundcolor', Color)
+			
+		end
+		%%------------------------------------------------------------------------------------------------%%
+		function SusValueInput(obj, SuspIndex, Value, Color)
+			
+			switch SuspIndex
+				case 1
+					obj.WriteField( 'Ref', 'Value', sprintf('%2.2fkN', Value), Color );
+					obj.ValRef = Value;
+				case 2
+					obj.WriteField( 'Opt1', 'Value', sprintf('%2.2fkN', Value), Color );
+					obj.WriteField( 'Opt1', 'Delta', sprintf('%2.2f%%', 100*(Value - obj.ValRef)/obj.ValRef), [0 0 0] );
+					obj.ValOpt1 = Value;
+				case 3
+					obj.WriteField( 'Opt2', 'Value', sprintf('%2.2fkN', Value), Color );
+					obj.WriteField( 'Opt2', 'Delta', sprintf('%2.2f%%', 100*(Value - obj.ValRef)/obj.ValRef), [0 0 0] );
+					obj.ValOpt2 = Value;
+				case 4		
+					obj.WriteField( 'Opt3', 'Value', sprintf('%2.2fkN', Value), Color );
+					obj.WriteField( 'Opt3', 'Delta', sprintf('%2.2f%%', 100*(Value - obj.ValRef)/obj.ValRef), [0 0 0] );
+					obj.ValOpt3 = Value;
+			end
+									
+		end
+		%%------------------------------------------------------------------------------------------------%%
+	end
+end

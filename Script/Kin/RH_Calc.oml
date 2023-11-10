@@ -1,0 +1,229 @@
+%%%------------------------------------------------------------------------------------%%%
+clear all
+close all
+clc
+%%---------------------------------------------------------------------------%%
+R = addpath('..\..\Design', '..\..\Tools', '..\..\Motion', '..\..\Loads', '..\..\GUI', '..\..\SetUp');
+%%---------------------------------------------------------------------------%%
+Path         = 'C:\Scratch\TestLoad';
+%%---------------------------------------------------------------------------%%
+Kin(1).Axle  = 'Front';
+Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\PerformanceModel\Study006\Models\Kinematic\Kin_F013.mdl';
+Kin(1).Col   = 'r';
+Kin(1).Name  = 'F013';
+
+Kin(2).Axle  = 'Rear';
+Kin(2).Path  = 'C:\Users\nikif\OneDrive\ProjectX\PerformanceModel\Study006\Models\Kinematic\Kin_R019.mdl';
+Kin(2).Col   = 'b';
+Kin(2).Name  = 'R019';
+%%---------------------------------------------------------------------------%%
+RHMin = -20;
+RHMax = 110;
+%%---------------------------------------------------------------------------%%
+Car.Sx       = 1.80;
+Car.Cx       = 0.67;
+Car.Cz       = -3.62;
+Car.Ab       = 0.41;
+Car.Wb       = 2800;
+Car.Mass     = 1016;
+Car.WeighBal = 0.49;
+Car.KinstF   = 1/(1/5000+1/400);
+Car.KinstR   = 1/(1/5000+1/400);
+Car.Hg       = 316;
+Car.mu       = 1.5;
+Car.KarbF    = 23*1000*180/pi;
+Car.KarbR    = 25.2*1000*180/pi;
+
+Speed = (0:1:350)/3.6;
+Faero = 0.5*1.2*Car.Sx.*Car.Cz.*Speed.^2;
+Ff = -Faero.*Car.Ab + Car.Mass*9.81*Car.WeighBal;
+Fr = -Faero.*(1-Car.Ab) + Car.Mass*9.81*(1-Car.WeighBal);
+
+Fsu = SetUp('Front');
+Fsu.ActProp(30);
+Fsu.SpringProp(75, 150, 300, 10, 20, 260, 30, 0.715);
+Fsu.CarData(Car);
+
+Rsu = SetUp('Rear');
+Rsu.ActProp(30);
+Rsu.SpringProp(75, 150, 500, 25, 40, 260, 30, 0.758);
+Rsu.CarData(Car);
+%%---------------------------------------------------------------------------%%
+for k = 1:numel(Kin)
+	clear KinIn LT
+	KinIn = KinReader(Kin(k).Path);
+	KinIn.DataRead();
+	%%---------------------------------------------------------------------------%%
+	LT = KinCalc(KinIn.FKin, Path);
+	LT.SusTravel(RHMin,RHMax, 1.0);
+	%%---------------------------------------------------------------------------%%
+	Data(k).Travel.Out    = LT.Out;
+	Data(k).Travel.KinOut = LT.KinOut;
+	if k == 1
+		Car.Tf      = -2*KinIn.FKin.TCP.Y;
+		Car.FloorZf = KinIn.FParam.Floor_Z;
+	elseif k == 2;
+		Car.Tr      = -2*KinIn.FKin.TCP.Y;
+		Car.FloorZr = KinIn.FParam.Floor_Z;
+	end
+end
+%%---------------------------------------------------------------------------%%
+Fsu.ActuatorMR( Data(1).Travel.Out.Len_Damper, Data(1).Travel.Out.RH);
+Fsu.ArbMR(Data(1).Travel.Out.ArbRot, Data(1).Travel.Out.RH);
+Fsu.RollCenter(Data(1).Travel.KinOut.RCz-Car.FloorZf+Data(1).Travel.KinOut.RH, Data(1).Travel.KinOut.RH);
+
+Rsu.ActuatorMR( Data(2).Travel.Out.Len_Damper, Data(2).Travel.Out.RH);
+Rsu.ArbMR(Data(2).Travel.Out.ArbRot, Data(2).Travel.Out.RH);
+Rsu.RollCenter(Data(2).Travel.KinOut.RCz-Car.FloorZr+Data(2).Travel.KinOut.RH, Data(2).Travel.KinOut.RH);
+%%---------------------------------------------------------------------------%%
+for k = 1:numel(Speed)
+	
+	x0 = zeros(5,1);
+	Fz = Ff(k)/2;
+	Out = Fsu.FzEquilibrium(Fz);
+		
+	Front.Fz(k) = Fz;
+	Front.p(k)  = Out.p;
+	Front.F(k)  = Out.F;
+	Front.RH(k) = Out.RH-Fz/Car.KinstF;
+	Front.l(k)  = Out.l;
+	Front.d(k)  = Out.d;	
+	
+
+	Fz = Fr(k)/2;
+	Out = Rsu.FzEquilibrium(Fz);
+	
+	Rear.Fz(k) = Fz;
+ 	Rear.p(k)  = Out.p;
+	Rear.F(k)  = Out.F;
+	Rear.RH(k) = Out.RH-Fz/Car.KinstF;
+	Rear.l(k)  = Out.l;
+	Rear.d(k)  = Out.d;		
+	
+end
+Pitch = atan((Rear.RH-Front.RH)/Car.Wb)*180/pi;
+
+Front.K = -[0 diff(Front.Fz)./diff(Front.RH)];
+Rear.K  = -[0 diff(Rear.Fz)./diff(Rear.RH)];
+
+Front.Travel = Front.RH - Front.RH(1);
+Rear.Travel  = Rear.RH - Rear.RH(1);
+AvgTravel    = (Front.Travel + Rear.Travel)/2;
+Cogh         = Car.Hg + AvgTravel;
+
+Front.RCh    = interp1(Fsu.RH, Fsu.RCh, Front.RH);
+Rear.RCh     = interp1(Rsu.RH, Rsu.RCh, Rear.RH);
+
+ay = 2*(Front.Fz+Rear.Fz)*Car.mu/Car.Mass;
+
+for k = 1:numel(ay)
+	
+	Nf = numel(Fsu.RH);
+	Nr = numel(Rsu.RH);
+	
+	MRarbF(k) = interp1(Fsu.RH(2:Nf), Fsu.dArbAngle*pi/180, Front.RH(k))/interp1(Fsu.RH(2:Nf), Fsu.dRH, Front.RH(k));
+	MRarbR(k) = interp1(Rsu.RH(2:Nr), Rsu.dArbAngle*pi/180, Rear.RH(k))/interp1(Rsu.RH(2:Nr), Rsu.dRH, Rear.RH(k));
+	
+	KrollF(k) = 1/(1/(2*Car.KarbF*MRarbF(k)^2)+1/Car.KinstF)*0.5*Car.Tf^2;
+	KrollR(k) = 1/(1/(2*Car.KarbR*MRarbR(k)^2)+1/Car.KinstR)*0.5*Car.Tr^2;
+	
+	x0 = ones(3,1);
+	fun = @(x) RollEquation(x, ay(k), Car.Mass, Car.WeighBal, Cogh(k)/1000, Front.RCh(k)/1000, Rear.RCh(k)/1000, KrollF(k)/1000, KrollR(k)/1000, Car.Tf/1000, Car.Tr/1000);
+	[x,y,info,output] = fsolve(fun, x0);
+	
+	Front.DeltaFz(k) = x(2,1);
+	Rear.DeltaFz(k)  = x(3,1);
+	Roll(k)          = x(1,1)*180/pi;
+	RollBalance(k)   = Front.DeltaFz(k)*Car.Tf/(Front.DeltaFz(k)*Car.Tf + Rear.DeltaFz(k)*Car.Tr);
+	RollGain(k)      = Roll(k)/(ay(k)/9.81);
+	
+end
+	
+%%---------------------------------------------------------------------------%%
+figure()
+
+subplot(3,1,1)
+
+hold on
+grid on
+
+xlabel('Speed [kph]')
+ylabel('RH [mm]')
+
+plot(Speed*3.6, Front.RH, 'r')
+plot(Speed*3.6, Rear.RH, 'b')
+
+legend({'Front', 'Rear'})
+
+subplot(3,1,2)
+
+hold on
+grid on
+
+xlabel('Speed [kph]')
+ylabel('Corner Stiffness [N/mm]')
+
+plot(Speed*3.6, Front.K, 'r')
+plot(Speed*3.6, Rear.K, 'b')
+
+legend({'Front', 'Rear'})
+
+subplot(3,1,3)
+
+hold on
+grid on
+
+xlabel('Speed [kph]')
+ylabel('Pitch [deg]')
+
+plot(Speed*3.6, Pitch, 'r')
+%%---------------------------------------------------------------------------%%
+figure()
+
+subplot(2,2,1)
+
+hold on
+grid on
+
+xlabel('Speed [kph]')
+ylabel('Delta Fz [N]')
+
+plot(Speed*3.6, Front.DeltaFz, 'r')
+plot(Speed*3.6, Rear.DeltaFz, 'b')
+
+legend({'Front', 'Rear'})
+
+
+subplot(2,2,2)
+
+hold on
+grid on
+
+xlabel('Speed [kph]')
+ylabel('Roll Balance [-]')
+
+plot(Speed*3.6, RollBalance, 'r')
+
+
+subplot(2,2,3)
+
+hold on
+grid on
+
+xlabel('Speed [kph]')
+ylabel('Roll gain [deg/g]')
+
+plot(Speed*3.6, RollGain, 'r')
+
+
+subplot(2,2,4)
+
+hold on
+grid on
+
+xlabel('Speed [kph]')
+ylabel('ay [g]')
+
+plot(Speed*3.6, ay/9.81, 'r')
+
+

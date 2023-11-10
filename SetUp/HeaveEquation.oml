@@ -1,0 +1,30 @@
+function y = HeaveEquation(x, FzCorn, SprA, ActA, ActLen, RHCrv, dActLen, dRH, K, X, L0, P0)
+	
+			p    = x(1,1);
+			F    = x(2,1);
+			rh   = x(3,1);
+			l    = x(4,1);
+			d    = x(5,1);			
+				
+			
+			if d <= X(1)
+				ForceSpr = K(1)*d;
+			elseif d > X(1) && d < X(2)
+				ForceSpr = K(1)*d + K(2)*(d-X(1));
+			elseif d >= X(2)
+				ForceSpr = K(1)*d + K(2)*(d-X(1)) + K(3)*(d-X(2));				
+			end
+			
+			rh_int = interp1(ActLen, RHCrv, l, 'extrap', 'linear');
+			
+			N = numel(ActLen);			
+			MR = interp1(ActLen(1,2:N), dRH, l, 'extrap', 'linear')./interp1(ActLen(1,2:N), dActLen, l, 'extrap', 'linear');			
+						
+			a(1,1) = rh - rh_int;
+			a(2,1) = FzCorn*MR - p*ActA;
+			a(3,1) = F/SprA - p + P0;
+			a(4,1) = F - ForceSpr;
+			a(5,1) = d*SprA - 2*(L0-l)*ActA;		
+						
+			y = a;	
+end

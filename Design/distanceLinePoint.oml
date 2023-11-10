@@ -1,0 +1,23 @@
+function [d, t] = distanceLinePoint(Line, Point)
+	
+	l = Line.l;
+	m = Line.m;
+	n = Line.n;
+	x0 = Line.X0;
+	y0 = Line.Y0;
+	z0 = Line.Z0;
+	x_ = Point(1);
+	y_ = Point(2);
+	z_ = Point(3);
+	
+	A = [0 l m n; l -1 0 0; m 0 -1 0; n 0 0 -1];
+	B = [l*x_+m*y_+n*z_; -x0; -y0; -z0];
+	
+	X = inv(A)*B;
+	
+	P = [X(2);X(3);X(4)];
+	
+	d = norm(Point-P);
+	t = X(1);
+	
+end

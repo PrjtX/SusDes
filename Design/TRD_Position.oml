@@ -1,0 +1,160 @@
+classdef TRD_Position < handle
+
+	properties
+		A_SA
+		A_IR
+		Offset_IR
+		Offset_SA
+		X_IB
+		Y_IB
+		Z_IB
+		Line
+		Ref_D_IRA
+		Ref_D_SA
+		Ref_X_IRA
+		Ref_DeltaD_TRD		
+	end
+	
+	methods 
+		%%%%-------------------------------------------------------------%%%%
+		function obj = TRD_Position(SteeringAxis, InstRotAxis)
+			obj.A_SA = SteeringAxis;
+			obj.A_IR = InstRotAxis;
+		end
+		%%%%-------------------------------------------------------------%%%%	
+		function IRA_Dist(obj, Dist)
+			obj.Offset_IR = Dist;
+		end
+		%%%%-------------------------------------------------------------%%%%		
+		function SA_Dist(obj, Dist)
+			obj.Offset_SA = Dist;
+		end
+		%%%%-------------------------------------------------------------%%%%
+		function  InboardPosition(obj, X, Y, Z)
+			    obj.X_IB = X;
+				obj.Y_IB = Y;
+				obj.Z_IB = Z;
+		end
+		%%%%-------------------------------------------------------------%%%%	
+		function Err = LineDef(obj, t_IR, Dz_IR, MakeLine)
+
+						
+			P_IR = [obj.A_IR.Xp(t_IR); obj.A_IR.Yp(t_IR); obj.A_IR.Zp(t_IR) + Dz_IR];
+			P_IB = [obj.X_IB, obj.Y_IB, obj.Z_IB];			
+			
+			D = obj.TRDDist(P_IR, P_IB);
+				
+			E(1) = (obj.Offset_IR - D(1))^2;
+			E(2) = (obj.Offset_SA - D(2))^2;
+			
+			if MakeLine == 1
+				obj.Line = Link(P_IR, P_IB);
+			end
+		
+			Err = sum(E);
+			
+		end
+		%%%%-------------------------------------------------------------%%%%	
+		function TRDRef(obj, PIB, POB)
+			
+			D     = obj.TRDDist(PIB, POB);
+			obj.Ref_D_IRA       = D(1);
+			obj.Ref_D_SA        = D(2);
+			obj.Ref_X_IRA       = obj.A_IR.findParam(D(3), 'X');
+			obj.Ref_DeltaD_TRD = D(4);
+			obj.IRA_Dist(obj.Ref_D_IRA);
+			obj.SA_Dist(obj.Ref_D_SA);
+			
+		end
+		%%%%-------------------------------------------------------------%%%%	
+		function D = TRDDist(obj, PIB, POB)
+			
+			L = Link(PIB, POB);
+			[d_IR, t1, t2] = distance(obj.A_IR, L);
+			[d_SA, t3, t4] = distance(obj.A_SA, L);
+			
+			if obj.A_IR.Zp(t1) > L.Zp(t2)
+				s_IR = -1;
+			else
+				s_IR = 1;
+			end
+			
+			if obj.A_SA.Xp(t3) > L.Xp(t4)
+				s_SA = 1;
+			else
+				s_SA = -1;
+			end			
+			
+			X_IRA = obj.A_IR.Xp(t1);
+			
+			deltaD_TRD = norm([POB(1)-L.Xp(t4); POB(2)-L.Yp(t4); POB(3)-L.Zp(t4)]);
+			
+			if POB(2) > L.Yp(t4)
+				s_deltaD_TRD = 1;
+			else
+				s_deltaD_TRD = -1;
+			end
+			
+			
+			D(1,1) = s_IR * d_IR;
+			D(2,1) = s_SA * d_SA;
+			D(3,1) = X_IRA;
+			D(4,1) = s_deltaD_TRD*deltaD_TRD;
+			
+		end
+		%%%%-------------------------------------------------------------%%%%	
+		function Err = OptFunAxis(obj, x)
+			
+			t_IR  = x(1);
+			Dz_IR = x(2);
+			Err = obj.LineDef(t_IR, Dz_IR, 0);
+			
+		end
+		%%%%-------------------------------------------------------------%%%%
+		function Err = FindTRDAxis(obj)
+			
+			
+			x0(1) = obj.A_IR.findParam(obj.Ref_X_IRA, 'X');
+			x0(2) = obj.Ref_D_IRA;
+			
+			[xout,fval,info,output] = fminsearch(@(x) obj.OptFunAxis(x), x0);
+			Err = fval;
+			obj.LineDef( xout(1), xout(2), 1);
+			
+		end
+		%%%%-------------------------------------------------------------%%%%		
+		function Err = OptFunPOB(obj, t)
+			
+			P_IB = [obj.X_IB, obj.Y_IB, obj.Z_IB];
+			P_OB = [obj.Line.Xp(t), obj.Line.Yp(t), obj.Line.Zp(t)]
+			
+			D = obj.TRDDist(P_IB, P_OB);
+			
+			Err = (obj.Ref_DeltaD_TRD - D(4))^2 + (obj.Ref_D_SA - D(2))^2
+			
+		end
+		%%%%-------------------------------------------------------------%%%%		
+		function Pos = Find_TRD_OB(obj)
+			
+			[d,t1,t2] = distance(obj.Line, obj.A_SA);
+			[xout,fval,info,output] = fminsearch(@(x) obj.OptFunPOB(x), t1);
+			
+			Pos(1) = obj.Line.Xp(xout);
+			Pos(2) = obj.Line.Yp(xout);
+			Pos(3) = obj.Line.Zp(xout);
+			
+		end
+		%%%%-------------------------------------------------------------%%%%		
+		function GetRefValues(obj, D_IRA, Ref_D_SA, Ref_X_IRA, Ref_DeltaD_TRD)
+			
+			obj.Ref_D_IRA       = D_IRA;
+			obj.Ref_D_SA        = Ref_D_SA;
+			obj.Ref_X_IRA       = Ref_X_IRA;
+			obj.Ref_DeltaD_TRD = Ref_DeltaD_TRD;
+			obj.IRA_Dist(obj.Ref_D_IRA);
+			obj.SA_Dist(obj.Ref_D_SA);			
+			
+		end
+		%%%%-------------------------------------------------------------%%%%		
+	end
+end

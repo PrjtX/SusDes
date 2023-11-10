@@ -1,0 +1,164 @@
+classdef Link < handle
+
+	properties
+		PIB
+		POB
+		YIB = 10000;
+		YOB = -2000;
+		tIB
+		tOB
+		l
+		m
+		n
+		X0
+		Y0
+		Z0
+	end
+	
+	methods
+		%%----------------------------------------------------%%
+		function obj = Link(P1, P2, Norm)
+
+				obj.PIB = P1;
+				obj.POB = P2;
+				
+				l_ = (obj.PIB(1) - obj.POB(1));
+				m_ = (obj.PIB(2) - obj.POB(2));
+				n_ = (obj.PIB(3) - obj.POB(3));
+			
+				if nargin>2
+					
+					switch Norm
+						case 'X'					
+							obj.l = l_/l_;
+							obj.m = m_/l_;
+							obj.n = n_/l_;														
+						case 'Z'					
+							obj.l = l_/n_;
+							obj.m = m_/n_;
+							obj.n = n_/n_;														
+						end
+					
+				else
+					
+					obj.l = l_;
+					obj.m = m_;
+					obj.n = n_;						
+					
+				end
+				
+				obj.tIB = (obj.YIB - obj.PIB(2))/obj.m;
+				obj.tOB = (obj.YOB - obj.PIB(2))/obj.m;
+				
+				obj.X0 = obj.PIB(1);
+				obj.Y0 = obj.PIB(2);
+				obj.Z0 = obj.PIB(3);
+			
+		end
+	    %%----------------------------------------------------%%
+		function  Comp = ParamPoint(obj, t, Component)		
+			
+			X = obj.X0 + t.*obj.l;
+			Y = obj.Y0 + t.*obj.m;
+			Z = obj.Z0 + t.*obj.n;
+			
+			switch Component
+				case 'X'
+					Comp = X;
+				case 'Y'
+					Comp = Y;
+				case 'Z'
+					Comp = Z;
+			end			
+			
+		end
+		%%----------------------------------------------------%%
+		function Comp = CompleteLine(obj, Component)
+				
+			T1 = min([obj.tIB; obj.tOB]);
+			T2 = max([obj.tIB; obj.tOB]);
+			tdelta = (T2 - T1)/100;
+			
+			t = (T1:tdelta:T2);
+			
+			Comp = obj.ParamPoint(t, Component);
+						
+		end
+		%%----------------------------------------------------%%
+		function Comp = X(obj)
+			Comp = obj.CompleteLine('X');
+		end
+		%%----------------------------------------------------%%
+		function Comp = Y(obj)
+			Comp = obj.CompleteLine('Y');
+		end
+		%%----------------------------------------------------%%		
+		function Comp = Z(obj)
+			Comp = obj.CompleteLine('Z');
+		end
+		%%----------------------------------------------------%%
+		function Comp = Xp(obj, t)
+			Comp = obj.ParamPoint(t, 'X');
+		end
+		%%----------------------------------------------------%%
+		function Comp = Yp(obj, t)
+			Comp = obj.ParamPoint(t, 'Y');
+		end
+		%%----------------------------------------------------%%		
+		function Comp = Zp(obj, t)
+			Comp = obj.ParamPoint(t, 'Z');
+		end
+		%%----------------------------------------------------%%		
+		function Point = Point(obj,t)
+			
+			Point(1,1) = obj.Xp(t);
+			Point(2,1) = obj.Yp(t);
+			Point(3,1) = obj.Zp(t);
+			
+		end
+		%%----------------------------------------------------%%
+		function t = findParam(obj, Value, Comp)
+			
+			switch Comp
+				case 'X'
+					t = (Value - obj.X0)/obj.l;				
+				case 'Y'
+					t = (Value - obj.Y0)/obj.m;
+				case 'Z'
+					t = (Value - obj.Z0)/obj.n;
+			end
+			
+		end
+		%%----------------------------------------------------%%	
+		function SetRefPoint(obj, RefPoint)
+			obj.X0 = RefPoint(1,1);
+			obj.Y0 = RefPoint(2,1);
+			obj.Z0 = RefPoint(3,1);			
+		end
+		%%----------------------------------------------------%%		
+		function SetSlopes(obj, l, m, n)
+			obj.l = l;			
+			obj.m = m;
+			obj.n = n;
+			
+			obj.tIB = obj.findParam(obj.YIB, 'Y');
+			obj.tOB = obj.findParam(obj.YOB, 'Y');
+		end
+		%%----------------------------------------------------%%
+		function Val = CreateLine(obj, Comp)
+						
+			t = [-1,0];
+			
+			switch Comp
+				case 'X'
+					Val = obj.Xp(t);
+				case 'Y'
+					Val = obj.Yp(t);
+				case 'Z'
+					Val = obj.Zp(t);
+			end
+			
+		end
+		%%----------------------------------------------------%%			
+	end
+end

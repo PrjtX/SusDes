@@ -1,0 +1,45 @@
+%%%------------------------------------------------------------------------------------%%%
+clear all
+close all
+clc
+%%---------------------------------------------------------------------------%%
+R = addpath('..\..\Design', '..\..\Tools', '..\..\Motion', '..\..\Loads', '..\..\GUI');
+%%---------------------------------------------------------------------------%%
+ChcPath = 'W:\676\SUSP\FRONT\F2.11\_chc\230510_676_F2_11.chc';
+%%---------------------------------------------------------------------------%%
+ChcIn = ChcReader(ChcPath);
+ChcIn.FindSections();
+ChcIn.KinRead(1);
+ChcIn.KinRead(2);
+ChcIn.FrontKinDefine();
+ChcIn.RearKinDefine();
+ChcIn.TemplateDef(1);
+ChcIn.TemplateDef(2);	
+%%---------------------------------------------------------------------------%%
+SK = SuspKinParamCalc(ChcIn.FKin);
+obj.Param.CamberGain  = SK.CamberGain;
+obj.Param.RCz         = SK.P_RC(3);
+obj.Param.Squat       = SK.Squat;
+obj.Param.Dive        = SK.Dive;		
+obj.Param.Caster      = SK.Caster;				
+obj.Param.KingPin     = SK.KingPin;
+obj.Param.Trail       = SK.Trail;
+obj.Param.Scrub       = SK.Scrub;
+%%---------------------------------------------------------------------------%%
+SA = SK.A_SA;
+IR = SK.A_IR;
+%%---------------------------------------------------------------------------%%
+% Leg = ConnectLine(SA, IR);
+% Leg.ConstrainedPosition('X', ChcIn.FKin.TWB_FL_IB.X, 'Y', ChcIn.FKin.TWB_FL_IB.Y );
+% Leg.ConstrainedPosition('Y', ChcIn.FKin.TWB_FL_OB.Y, 'Z', ChcIn.FKin.TWB_FL_OB.Z );
+% Leg.FindLine();
+% P1 = Leg.FindPoint(1);
+% P2 = Leg.FindPoint(2);
+%%---------------------------------------------------------------------------%%
+LegB = ConnectLineB(SA, IR);
+LegB.PointCoord( ChcIn.FKin.TWB_FL_IB.X, ChcIn.FKin.TWB_FL_IB.Y, nan);
+LegB.PointCoord( nan, ChcIn.FKin.TWB_FL_OB.Y, ChcIn.FKin.TWB_FL_OB.Z);
+LegB.Suggest( 1, ChcIn.FKin.TWB_FL_OB.Z/2);
+LegB.Suggest( 2, ChcIn.FKin.TWB_FL_OB.X/2);
+Points = LegB.findline();
+%%---------------------------------------------------------------------------%%

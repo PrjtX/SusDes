@@ -1,0 +1,108 @@
+  // --- //  
+  *SetReal( Geom.Camber, -2.5 )
+  *SetReal( Geom.Toe,  0.0)
+  // --- // 
+  *SetReal( Wheel.Radius, 338.9 )
+  // --- //  
+  *SetReal( Floor.Z, -270 )   
+  // --- //  
+  *SetReal( WC.X,                    0.00)
+  *SetReal( WC.Y,                   -830.0 )
+  *SetReal( WC.Z,                    0.0 )
+  // --- //  
+  *SetReal( TCP.X,                    0.00)
+  *SetReal( TCP.Y,                   -830.0 )
+  *SetReal( TCP.Z,                   -338.9 )  
+  // --- //
+  *SetReal( TWB_FL_IB.X,              -390.630)
+  *SetReal( TWB_FL_IB.Y,              -410.883)
+  *SetReal( TWB_FL_IB.Z,                32.547)  
+  // --- //
+  *SetReal( TWB_RL_IB.X,                86.563)
+  *SetReal( TWB_RL_IB.Y,              -204.800)
+  *SetReal( TWB_RL_IB.Z,                62.629)  
+  // --- //
+  *SetReal( LWB_FL_IB.X,              -287.262)
+  *SetReal( LWB_FL_IB.Y,              -341.596)
+  *SetReal( LWB_FL_IB.Z,              -117.507)  
+  // --- //
+  *SetReal( LWB_RL_IB.X,                71.119)
+  *SetReal( LWB_RL_IB.Y,              -199.994)
+  *SetReal( LWB_RL_IB.Z,              -113.324)  
+  // --- //
+  *SetReal( TRD_IB.X,                  130.000)
+  *SetReal( TRD_IB.Y,                 -195.000)
+  *SetReal( TRD_IB.Z,                  -12.000) 
+  // --- //
+  *SetReal( TRD_OB.X,                  120.000)
+  *SetReal( TRD_OB.Y,                 -758.731)
+  *SetReal( TRD_OB.Z,                   30.500)  
+  // --- //  
+  *SetReal( PRD_IB.X,                 -314.338)
+  *SetReal( PRD_IB.Y,                 -281.384)
+  *SetReal( PRD_IB.Z,                  206.750)       
+  // --- //
+  *SetReal( PRD_OB.X,                  -0.884)
+  *SetReal( PRD_OB.Y,                 -728.345)
+  *SetReal( PRD_OB.Z,                  -99.555)     
+  // --- //  
+  *SetReal( LWB_FL_OB.X,               -47.549)
+  *SetReal( LWB_FL_OB.Y,              -728.442)
+  *SetReal( LWB_FL_OB.Z,              -101.109)  
+  // --- //
+  *SetReal( LWB_RL_OB.X,                50.441)
+  *SetReal( LWB_RL_OB.Y,              -728.249)
+  *SetReal( LWB_RL_OB.Z,               -98.878)  
+  // --- //
+  *SetReal( TWB_FL_OB.X,               -42.428)
+  *SetReal( TWB_FL_OB.Y,              -706.223)
+  *SetReal( TWB_FL_OB.Z,               105.981)
+  // --- //
+  *SetReal( TWB_RL_OB.X,                -2.466)
+  *SetReal( TWB_RL_OB.Y,              -706.165)
+  *SetReal( TWB_RL_OB.Z,               107.721)  
+  // --- //
+  *SetReal( Rkr_Bear_fwd.X,           -335.555)
+  *SetReal( Rkr_Bear_fwd.Y,           -230.000)
+  *SetReal( Rkr_Bear_fwd.Z,            121.900)  
+  // --- //
+  *SetReal( Rkr_Bear_rwd.X,           -261.309)
+  *SetReal( Rkr_Bear_rwd.Y,           -230.000)
+  *SetReal( Rkr_Bear_rwd.Z,            196.146)  
+  // --- //
+  *SetReal(Rkr_Mono.X,                -323.534)
+  *SetReal(Rkr_Mono.Y,                -227.500)
+  *SetReal(Rkr_Mono.Z,                 215.946) 
+  // --- //
+  *SetReal( Rkr_Arb.X,                 -307.802)
+  *SetReal( Rkr_Arb.Y,                 -155.000)
+  *SetReal( Rkr_Arb.Z,                  149.653)  
+  // --- //
+  *SetReal( Rkr_Damper.X,            -287.345)
+  *SetReal( Rkr_Damper.Y,            -123.872)
+  *SetReal( Rkr_Damper.Z,             129.196)  
+  // --- //
+  *SetReal( Chs_Damper.X,            -108.605)
+  *SetReal( Chs_Damper.Y,            -192.779)
+  *SetReal( Chs_Damper.Z,             -49.545)  
+  // --- //              
+  *SetReal( ArbArm_Link.X,             -491.650)
+  *SetReal( ArbArm_Link.Y,             -155.000)
+  *SetReal( ArbArm_Link.Z,              333.501)    
+  // --- //              
+  *SetReal( ArbArm_BearIB.X,           -562.360)
+  *SetReal( ArbArm_BearIB.Y,           -180.000)
+  *SetReal( ArbArm_BearIB.Z,            262.790)  
+  // --- //              
+  *SetReal( ArbArm_BearOB.X,           -562.360)
+  *SetReal( ArbArm_BearOB.Y,           -130.000)
+  *SetReal( ArbArm_BearOB.Z,            262.790)  
+  // --- //
+  *SetReal(CV_CentIB.X,   10.338)
+  *SetReal(CV_CentIB.Y,   -143.5)
+  *SetReal(CV_CentIB.Z,   -27.011)
+  // ---- //
+  *SetReal(CV_CentOB.X,   0.000)
+  *SetReal(CV_CentOB.Y,   -718.068)
+  *SetReal(CV_CentOB.Z,   -3.909)
+  // ---- //

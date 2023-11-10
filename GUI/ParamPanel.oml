@@ -1,0 +1,123 @@
+classdef ParamPanel < handle
+
+	properties
+	
+		Tab
+		handle
+		Tar
+		Chc	
+		Dif
+		ColActive   = [0 1 0];
+		ColUnActive = [1 1 0];
+		
+	    TarVal
+		ChcVal
+		
+	end
+	
+	methods
+		%%------------------------------------------------------------------------------------------------%%
+		function obj = ParamPanel(Tab)	
+			
+			obj.Tab = Tab;		
+			
+			obj.Chc.Value = 0;
+			
+			obj.Tar.Value = 0;
+				
+		end
+		%%------------------------------------------------------------------------------------------------%%
+		function Create(obj, Name, Position)
+			
+			obj.handle = uipanel(obj.Tab, 'units', 'normalized', 'position', Position);	
+			uicontrol(obj.handle,'Style','text', 'units', 'normalized', 'Position',[0.1  0.1  0.8 0.8],'String', Name);	
+			uicontrol(obj.handle,'Style','pushbutton', 'units', 'normalized', 'String', ' ', 'position', [0.5 0.15 0.2 0.7], 'backgroundcolor', obj.ColActive);
+			obj.Tar    = uicontrol(obj.handle,'Style','edit','String', 'none', 'units', 'normalized', 'position', [0.5 0.15 0.2 0.7], 'backgroundcolor', 'transparent');
+			obj.Chc = uicontrol(obj.handle,'Style','edit','String', 'none', 'units', 'normalized', 'position', [0.75 0.15 0.2 0.7], 'enable', 'off');
+			obj.Dif = uicontrol(obj.handle,'Style','pushbutton', 'units', 'normalized', 'String', ' ', 'position', [0.71 0.15 0.025 0.7], 'backgroundcolor', [0.9 1 0.9]);			
+			
+		end
+		%%------------------------------------------------------------------------------------------------%%
+		function SetValue(obj, Type, Value)
+			
+			switch Type
+				case 'Chc'
+					obj.ChcVal = Value;
+				case 'Tar'
+					obj.TarVal = Value;
+				case 'Both'
+					obj.ChcVal = Value;
+					obj.TarVal = Value;
+			end
+									
+		end
+		%%------------------------------------------------------------------------------------------------%%
+		function FieldWrite(obj, FieldHandle, Value)
+			String = sprintf('%2.2f', Value);
+			set(FieldHandle, 'string', String);
+		end		
+		%%------------------------------------------------------------------------------------------------%%
+		function WriteAllField(obj)
+			
+			obj.FieldWrite(obj.Chc, obj.ChcVal);		
+			obj.FieldWrite(obj.Tar, obj.TarVal);
+						
+		end	
+		%%------------------------------------------------------------------------------------------------%%		
+		function Value = ReadField(obj, FieldHandle)
+			String = get(FieldHandle, 'string');
+			Value = str2num(String);
+		end		
+		%%------------------------------------------------------------------------------------------------%%
+		function Value = ReadData(obj, Type)
+			
+			switch Type
+				case 'Tar'
+					Value = obj.ReadField(obj.Tar);
+					obj.TarVal = Value;
+				case 'Chc'
+					Value = obj.ReadField(obj.Chc);
+					obj.ChcVal = Value;
+			end
+								
+		end
+		%%------------------------------------------------------------------------------------------------%%
+		function CompDiff(obj, Comp)
+			
+			obj.getChc();
+			obj.getTar();
+			
+			Delta = abs(obj.ChcVal - obj.TarVal);
+			
+			Diff = 0;
+			if Delta>=0.001
+				Diff = 1;
+			end
+
+			if Diff == 1
+				set(obj.Dif, 'backgroundcolor', [1 0 0]);
+			else
+				set(obj.Dif, 'backgroundcolor', [0.9 1 0.9]);
+			end
+			
+		end		
+		%%------------------------------------------------------------------------------------------------%%
+		function Value = getChc(obj)
+			
+			Value = obj.ReadField(obj.Chc);
+			
+			obj.ChcVal = Value;
+												
+			
+		end
+		%%------------------------------------------------------------------------------------------------%%	
+		function Point = getTar(obj)
+			
+			Value = obj.ReadField(obj.Tar);
+			
+			obj.TarVal = Value;
+			
+		end		
+	end
+	
+end

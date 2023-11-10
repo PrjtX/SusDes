@@ -1,0 +1,55 @@
+function Err = SuspRun(SuspName, Path, ChcKin, SubPlot, Col)
+		
+	
+	Modes = {'Travel'; 'Steer'};
+	%%%-------------------------------------------------%%%
+	for k = 1:numel(Modes)
+		%%%-------------------------------------------------%%%
+		Mode = Modes{k};
+		%%%---------------------------------------------------%%%
+		%%%---------------------------------------------------%%%
+		M(k).Sus = SuspXml(SuspName, Path);
+		M(k).Sus.SetMode(Mode);
+		M(k).Sus.XmlInit();
+		%%%-------------------------------------------------%%%	
+		M(k).Sus.ChcLoad(ChcKin);
+		%%%-------------------------------------------------%%%
+		M(k).Sus.BodyDef();
+		M(k).Sus.MarkerDef();
+		M(k).Sus.JointDef();
+		M(k).Sus.GraphicDef();
+		M(k).Sus.OutPutDef();
+		%%%---------------------------------------------%%%
+		%%-----%%
+		%% Motion
+		%%-----%% 
+		M(k).Sus.Motion();
+		%%%-------------------------------------------------%%%
+		%%%-------------------------------------------------%%%
+		M(k).Sus.CloseXml();
+		%%%
+		M(k).Sus.RunAnalysis();
+		%%%
+		M(k).Sus.ReadOutPut();
+		%%%-------------------------------------------------%%%
+	end	
+	
+	SteerError  = abs(interp1(M(2).Sus.Out.Rack, M(2).Sus.Out.SteerAvrg, 25)-25*0.587);
+	ToeError    = abs(interp1(M(1).Sus.Out.RH, M(1).Sus.Out.Toe, min(M(1).Sus.Out.RH))) + abs(interp1(M(1).Sus.Out.RH, M(1).Sus.Out.Toe, max(M(1).Sus.Out.RH)));
+	DToeError   = abs(interp1(M(2).Sus.Out.Rack, M(2).Sus.Out.DeltaToe, 25)-0.225);
+	DRHError    = abs(interp1(M(2).Sus.Out.Rack, M(2).Sus.Out.DeltaRH, 20)-10);
+	
+	Err(1) = SteerError;
+	Err(2) = ToeError;
+    Err(3) = DToeError;
+	Err(4) = DRHError;
+	
+	
+	%%%-------------------------------------------------------%%%-------------------------------------------------------%%%
+	plot(SubPlot(1), M(1).Sus.Out.RH, M(1).Sus.Out.Toe, Col);
+    plot(SubPlot(2), M(2).Sus.Out.Rack, M(2).Sus.Out.SteerAvrg, Col)
+	plot(SubPlot(3), M(2).Sus.Out.Rack, M(2).Sus.Out.DeltaToe, Col)
+	plot(SubPlot(4), M(2).Sus.Out.Rack, M(2).Sus.Out.DeltaRH, Col)
+	plot(SubPlot(5), M(1).Sus.Out.RH, M(1).Sus.Out.RkrRot, Col)
+	%%%-------------------------------------------------------%%%
+end

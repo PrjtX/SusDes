@@ -1,0 +1,12 @@
+function M = OrientB(P1, P2)
+	
+	
+	d = norm([P1-P2]);
+	V1 = [P1-P2]/d;
+	V2 = [0;0;1];
+	
+	V3 = cross(V1,V2);
+	
+	M = [V1,V2,V3]';
+	
+end

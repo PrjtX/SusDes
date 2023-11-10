@@ -1,0 +1,136 @@
+%%%------------------------------------------------------------------------------------%%%
+clear all
+close all
+clc
+%%---------------------------------------------------------------------------%%
+tic
+%%---------------------------------------------------------------------------%%
+R = addpath('..\Design', '..\Tools', '..\Motion', '..\Loads');
+%%---------------------------------------------------------------------------%%
+SuspName = 'Test'
+Path = 'C:\Scratch\TestLoad';
+Mode = 'FixedPosRocker';
+Load = load('C:\Tools\SusAn\Load.mat');
+Time = (1:1:numel(Load.Fx))';
+%%---------------------------------------------------------------------------%%
+SD = StaticDesign();
+SD.ActiveHSPanel   = 0;
+SD.Open();
+%%---------------------------------------------------------------------------%%
+run('../Tmpl_Std');
+%ChcInputPath  = 'C:\Suspensions\676\Front\F2.9\230414_676_F2_9B.chc';
+%%---------------------------------------------------------------------------%%
+if strcmp(Axle, 'Front') == 1
+	set(SD.Buttons.FrontRadio, 'Value',1)
+elseif strcmp(Axle, 'Rear') == 1
+	set(SD.Buttons.RearRadio, 'Value',1)
+end
+
+set(SD.ChcPathField, 'String', ChcInputPath )
+set(SD.ChcPathFieldOut, 'String', ChcOutputPath )
+
+SD.ChcRead('', '')
+%%---------------------------------------------------------------------------%%
+SusT = SuspXml(SuspName, Path);
+SusT.SetMode('Travel');
+SusT.XmlInit();
+%%%-------------------------------------------------%%%	
+SusT.ChcLoad(SD.CurKin);
+%%%-------------------------------------------------%%%
+SusT.BodyDef();
+SusT.MarkerDef();
+SusT.JointDef();
+SusT.GraphicDef();
+SusT.OutPutDef();
+SusT.VertTravelMot(-5, 60, 1);
+SusT.CloseXml();
+SusT.RunAnalysis();
+SusT.ReadOutPut();
+%%%-------------------------------------------------%%%
+%%%-------------------------------------------------%%%
+SusS = SuspXml(SuspName, Path);
+SusS.SetMode('Steer');
+SusS.XmlInit();
+%%%-------------------------------------------------%%%	
+SusS.ChcLoad(SD.CurKin);
+%%%-------------------------------------------------%%%
+SusS.BodyDef();
+SusS.MarkerDef();
+SusS.JointDef();
+SusS.GraphicDef();
+SusS.OutPutDef();
+SusS.SteeringMot(25, 1);
+SusS.CloseXml();
+SusS.RunAnalysis();
+SusS.ReadOutPut();
+%%%-------------------------------------------------%%%
+a = figure();
+undock(a);
+subplot(2,1,1)
+hold on
+grid on
+plot(SusT.Out.RH, SusT.Out.RkrRot)
+xlabel('RH [mm]')
+ylabel('Rocker Rot [deg]')
+
+subplot(2,1,2)
+hold on
+grid on
+plot(SusS.Out.Rack, SusS.Out.SteerAvrg)
+plot(SusS.Out.Rack, SusS.Out.Toe)
+xlabel('Rack [mm]')
+ylabel('Steer Avrg [deg]')
+%%%-------------------------------------------------%%%
+%%%-------------------------------------------------%%%
+for k = 1:numel(Load.AvrgSteer)
+	if sign(Load.AvrgSteer(k)) > 0
+		if Load.AvrgSteer(k) > max(SusS.Out.SteerAvrg)
+			Load.AvrgSteer(k) = max(SusS.Out.SteerAvrg);
+		end
+	else
+		if Load.AvrgSteer(k) < min(SusS.Out.SteerAvrg)
+			Load.AvrgSteer(k) = min(SusS.Out.SteerAvrg);
+		end
+	end
+end
+RkrAngle = interp1(SusT.Out.RH, SusT.Out.RkrRot, Load.RH);
+RackDisp = interp1(SusS.Out.SteerAvrg, SusS.Out.Rack, Load.AvrgSteer, 'linear', 'extrap');
+%%%-------------------------------------------------%%%	
+Susb = SuspXml(SuspName, Path);
+Susb.SetMode('FixedPosRocker');
+Susb.XmlInit();
+%%%-------------------------------------------------%%%	
+Susb.ChcLoad(SD.CurKin);
+%%%-------------------------------------------------%%%
+Susb.BodyDef();
+Susb.MarkerDef();
+Susb.JointDef();
+Susb.GraphicDef();
+Susb.OutPutDef();
+Susb.ForceAtWC(Time, Load.Fx, Load.Fy, Load.Fz, Load.Mx, Load.My, Load.Mz);
+Susb.FixedPosRkrMot(Time, RkrAngle, RackDisp);
+Susb.DefineSim(max(Time), 1);
+Susb.CloseXml();
+Susb.RunAnalysis();
+Susb.ReadOutPut();
+
+b = figure()
+undock(b)
+
+subplot(2,1,1)
+hold on
+grid on
+plot(Time, Susb.Out.RH(2:end), 'b')
+plot(Time, Load.RH, 'r')
+xlabel('Time')
+ylabel('RideHeight [mm]')
+
+subplot(2,1,2)
+hold on
+grid on
+plot(Time, Susb.Out.Toe(2:end), 'b')
+plot(Time, -Load.AvrgSteer, 'r')
+%%---------------------------------------------------------------------------%%
+L = LoadSorting(Load, Susb.Out);
+%%---------------------------------------------------------------------------%%☺
+toc

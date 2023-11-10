@@ -1,0 +1,144 @@
+classdef ConnectLineB < handle
+
+	properties
+		SA
+		IR
+		P1 = []
+		P2 = []
+		P1Var
+		P2Var
+		P1Sugg
+		P2Sugg
+		DebugMode     = 1
+		DebugFilePath = 'C:\SusAnScratch\'
+		DebugFileName = 'ConnectLineDebugB.dat'
+		Dfile
+	end
+	
+	methods 
+	    %%%------------------------------------------------------------------------%%%
+		function obj = ConnectLineB(SteerAxis, InstRotAxis)
+			obj.SA = SteerAxis;
+			obj.IR = InstRotAxis;			
+			if obj.DebugMode == 1
+				obj.OpenDebugFile();
+			end
+		end	
+		%%%------------------------------------------------------------------------%%%
+		function SetDebugMode(obj, OnOff)
+			switch OnOff							
+				case 'On'	
+					obj.DebugMode = 1;
+				case 'Off'
+					obj.DebugMode = 0;
+			end
+		end
+		%%%------------------------------------------------------------------------%%%
+		function OpenDebugFile(obj)
+			if exist(obj.DebugFilePath) ~= 7
+				mkdir(obj.DebugFilePath)
+			end
+			
+			if exist([obj.DebugFilePath obj.DebugFileName]) == 2
+				obj.Dfile = fopen([obj.DebugFilePath obj.DebugFileName],'a');
+				t = clock;
+				fprintf(obj.Dfile, 'File modified at time %2.0f/%01.0f/%1.0f - %01.0f:%01.0f:%01.0f\n', t(1), t(2), t(3), t(4), t(5), t(6));				
+			else
+				obj.Dfile = fopen([obj.DebugFilePath obj.DebugFileName],'w');
+				t = clock;
+				fprintf(obj.Dfile, 'File created at time %2.0f/%01.0f/%1.0f - %01.0f:%01.0f:%01.0f\n', t(1), t(2), t(3), t(4), t(5), t(6));				
+			end
+		end		
+		%%%------------------------------------------------------------------------%%%
+		function PointCoord(obj, Xcoord, Ycoord, Zcoord)
+			
+			P = [Xcoord;Ycoord;Zcoord];
+			e = 0;
+			for k = 1:3				
+				if isnan(P(k)) == 1
+					EmptyCoord = k;
+					e = e + 1;
+				end				
+			end
+			
+			
+			if e > 1
+				error('Too many variables');
+			end		
+			
+			if e == 0
+				error('Too few variables');
+			end		
+
+			if isempty(obj.P1) == 1
+				obj.P1 = [Xcoord; Ycoord; Zcoord];
+				obj.P1Var = EmptyCoord;
+			elseif isempty(obj.P2) == 1
+				obj.P2 = [Xcoord; Ycoord; Zcoord];
+				obj.P2Var = EmptyCoord;
+			else
+				error('both points have already been asigned');
+			end
+						
+		end	
+		%%%------------------------------------------------------------------------%%%
+		function err = LineDist(obj, CoordVar)
+			
+			A = zeros(3,1);
+			B = zeros(3,1);
+			
+			for j = 1:3
+				if j == obj.P1Var
+					A(j,1) = CoordVar(1);
+				else
+					A(j,1) = obj.P1(j);
+				end
+				
+				if j == obj.P2Var
+					B(j,1) = CoordVar(2);
+				else
+					B(j,1) = obj.P2(j);
+				end
+			end
+			
+			Line = Link(A, B);
+			
+			DIR = distance(obj.IR, Line);
+			DSA = distance(obj.SA, Line);
+			
+			err = DIR + DSA;
+						
+		end
+		%%%------------------------------------------------------------------------%%%
+		function Suggest(obj, PIndex, Coord)
+			
+			switch PIndex
+				case 1
+					obj.P1Sugg = Coord;
+				case 2
+					obj.P2Sugg = Coord;
+			end
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function Points = findline(obj)
+			
+			CoordVar0 = [obj.P1Sugg; obj.P2Sugg];
+			
+			lb = [obj.P1Sugg-1000; obj.P2Sugg-1000];
+			ub = [obj.P1Sugg+1000; obj.P2Sugg+1000];
+			
+			% [Coord,fval,info,output] = fmincon(@(Coord) obj.LineDist(Coord), CoordVar0,[],[],[],[], lb, ub);
+			[Coord,fval,info,output] = fminsearch(@(Coord) obj.LineDist(Coord), CoordVar0);	
+			
+			Points.P1 = obj.P1;
+			Points.P2 = obj.P2;
+			
+			Points.P1(obj.P1Var) = Coord(1);
+			Points.P2(obj.P2Var) = Coord(2);
+			
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+	end
+end

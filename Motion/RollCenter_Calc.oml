@@ -1,0 +1,196 @@
+%%%------------------------------------------------------------------------------------%%%
+clear all
+close all
+clc
+%%---------------------------------------------------------------------------%%
+tic
+%%---------------------------------------------------------------------------%%
+R = addpath('..\..\Design', '..\..\Tools', '..\..\Motion', '..\..\Loads', '..\..\GUI');
+%%---------------------------------------------------------------------------%%
+SuspName     = 'Test'
+Path         = 'C:\Scratch\TestLoad';
+Axle         = 'Front';
+ChcPath      = 'W:\676\SUSP\FRONT\F5.0\_chc\2300606_676_F5.chc';
+LoadListPath = 'W:\675\_LOADS\LoadDataBase\LoadDataBase1\EventListB.mat';
+%%---------------------------------------------------------------------------%%
+ChcIn = ChcReader(ChcPath);
+ChcIn.FindSections();
+ChcIn.KinRead(1);
+ChcIn.KinRead(2);
+ChcIn.FrontKinDefine();
+ChcIn.RearKinDefine();
+ChcIn.TemplateDef(1);
+ChcIn.TemplateDef(2);	
+
+RHrange  = ChcIn.FindVariable(1, 'RideHeightRange');
+RHstatic = ChcIn.FindVariable(1, 'RefHeight') - ChcIn.FindVariable(1, 'FloorThickness');
+
+RHMin = RHstatic-RHrange(2);
+RHMax = RHstatic+RHrange(1);
+
+PinionRadius       = ChcIn.FindVariable(1, 'SteeringPinionRadius');
+SteeringWheelLock  = ChcIn.FindVariable(1, 'SteeringWheelLock');
+
+SteerRackTravel = PinionRadius*SteeringWheelLock*pi/180;
+
+%%---------------------------------------------------------------------------%%
+%%---------------------------------------------------------------------------%%
+
+LT = KinCalc(ChcIn.FKin, Path);
+LT.SusTravel(RHMin,RHMax, 1.0);
+%LT.SusTravel(30,34, 1.0);
+
+% LS = KinCalc(ChcIn.FKin, Path);
+% LS.SusSteer(SteerRackTravel,1);
+
+
+%%---------------------------------------------------------------------------%%
+%%---------------------------------------------------------------------------%%
+
+% for k = 1:numel(LT.Out.Dx)
+	
+	% j = k - 1;
+
+	% Dx(k) = LT.Out.Dx(k);
+	% Dy(k) = LT.Out.Dy(k);
+	% Dz(k) = LT.Out.Dz(k);
+	
+	% Dx_TCP(k) = LT.Out.Dx_TCP(k);
+	% Dy_TCP(k) = LT.Out.Dy_TCP(k);
+	% Dz_TCP(k) = LT.Out.Dz_TCP(k);
+
+	% Rx(k) = LT.Out.Rx(k);
+	% Ry(k) = LT.Out.Ry(k);
+	% Rz(k) = LT.Out.Rz(k);
+	
+	% if j > 0
+		
+		% Dt = LT.Out.Time(k) - LT.Out.Time(k-1);
+		
+		% X(1,j) = Dx(k);
+		% X(2,j) = Dy(k);
+		% X(3,j) = Dz(k);
+		
+		% X_TCP(1,j) = Dx_TCP(k);
+		% X_TCP(2,j) = Dy_TCP(k);
+		% X_TCP(3,j) = Dz_TCP(k);
+		
+		% RH(j)  = LT.RH(k);
+		
+		% A(1,j) = Rx(k);
+		% A(2,j) = Ry(k);
+		% A(3,j) = Rz(k);
+	
+		% V(1,j) = (Dx(k) - Dx(k-1))/Dt;
+		% V(2,j) = (Dy(k) - Dy(k-1))/Dt;
+		% V(3,j) = (Dz(k) - Dz(k-1))/Dt;
+		
+		% W(1,j) = (Rx(k) - Rx(k-1))/Dt;
+		% W(2,j) = (Ry(k) - Ry(k-1))/Dt;
+		% W(3,j) = (Rz(k) - Rz(k-1))/Dt;
+		
+		% Xc(:,j) = cross(W(:,j), V(:,j))/norm(W(:,j))^2+X(:,j);
+		
+		% XcA(:,j) = Xc(:,j) + 10*W(:,j)/norm(W(:,j));
+		
+		% IA(j) = Link(Xc(:,j), XcA(:,j));
+		
+	% end
+	
+% end
+
+% for k = 1:numel(IA)
+	
+	% Param(k).SK = SuspKin('Test');
+	% Param(k).SK.AssignWC(X(:,k));
+	% Param(k).SK.AssignTCP(X_TCP(:,k));
+	% Param(k).SK.AssignInstRotAxis(IA(k));
+	% Param(k).SK.CalcInstRotLat();
+	% Param(k).SK.CalcInstRotLong();
+	% Param(k).SK.CalcInstRollCenter();
+	% Param(k).SK.CalcCamberGain();
+	% Param(k).SK.CalcSquat();
+	% Param(k).SK.CalcDive();
+	% Param(k).SK.CalcIRLong();
+	% Param(k).SK.CalcIRLat();
+	
+	% CamberGain(k) = Param(k).SK.CamberGain;
+	% RCz(k)        = Param(k).SK.P_RC(3);
+	% Dive(k)       = Param(k).SK.Dive;
+	% Squat(k)      = Param(k).SK.Squat;
+	% RH(k)         = RH(k);
+
+	
+% end
+
+% clear Dx Dy Dz Rx Ry Rz X A V W Xc XcA
+
+% for k = 1:numel(LS.Out.Dx)
+	
+	% j = k - 1;
+
+	% Dx(k) = LS.Out.Dx(k);
+	% Dy(k) = LS.Out.Dy(k);
+	% Dz(k) = LS.Out.Dz(k);
+	
+	% Dx_TCP(k) = LS.Out.Dx_TCP(k);
+	% Dy_TCP(k) = LS.Out.Dy_TCP(k);
+	% Dz_TCP(k) = LS.Out.Dz_TCP(k);
+
+	% Rx(k) = LS.Out.Rx(k);
+	% Ry(k) = LS.Out.Ry(k);
+	% Rz(k) = LS.Out.Rz(k);
+	
+	% if j > 0
+		
+		% Dt = LS.Out.Time(k) - LS.Out.Time(k-1);
+		
+		% X(1,j) = Dx(k);
+		% X(2,j) = Dy(k);
+		% X(3,j) = Dz(k);
+		
+		% X_TCP(1,j) = Dx_TCP(k);
+		% X_TCP(2,j) = Dy_TCP(k);
+		% X_TCP(3,j) = Dz_TCP(k);
+		
+		% A(1,j) = Rx(k);
+		% A(2,j) = Ry(k);
+		% A(3,j) = Rz(k);
+	
+		% V(1,j) = (Dx(k) - Dx(k-1))/Dt;
+		% V(2,j) = (Dy(k) - Dy(k-1))/Dt;
+		% V(3,j) = (Dz(k) - Dz(k-1))/Dt;
+		
+		% W(1,j) = (Rx(k) - Rx(k-1))/Dt;
+		% W(2,j) = (Ry(k) - Ry(k-1))/Dt;
+		% W(3,j) = (Rz(k) - Rz(k-1))/Dt;
+		
+		% Xc(:,j) = cross(W(:,j), V(:,j))/norm(W(:,j))^2+X(:,j);
+		
+		% XcA(:,j) = Xc(:,j) + W(:,j)/norm(W(:,j));
+		
+		% SA(j) = Link(Xc(:,j), XcA(:,j));
+		
+	% end
+	
+% end
+
+
+% for k = 1:numel(SA)
+	
+	% Param(k).SK = SuspKin('Test');
+	% Param(k).SK.AssignWC(X(:,k));
+	% Param(k).SK.AssignTCP(X_TCP(:,k));
+	% Param(k).SK.AssignSteeringAxis(SA(k));
+	% Param(k).SK.CalcScrub();
+	% Param(k).SK.CalcTrail();
+	% Param(k).SK.CalcCaster();
+	% Param(k).SK.CalcKingPin();
+	
+	% Scrub(k) = Param(k).SK.Scrub;
+	% Trail(k) = Param(k).SK.Trail;
+	% Caster(k) = Param(k).SK.Caster*180/pi;
+	% KingPin(k) = Param(k).SK.KingPin*180/pi;
+	
+% end
+

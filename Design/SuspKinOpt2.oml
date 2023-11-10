@@ -1,0 +1,19 @@
+function Err = SuspKinOpt2(x, xName, Constr, Point, Data)
+	
+	for k = 1:numel(x)
+		Data.(xName(k){1}) = x(k);
+	end
+	
+	POut = SuspKinCalc(Point, Data);
+	
+	Err = 0;
+	for j = 1:numel(Constr)		
+		Name  = Constr(j).Name;
+		Value = Constr(j).Value;
+		Err = (-POut.(Name) + Value)^2 + Err;
+	end
+	
+	fprintf('Iteration \n');	
+	fprintf('  %2.2f \n', Err);
+		
+end

@@ -1,0 +1,181 @@
+classdef KinCalc < handle
+
+	properties
+		Kin
+		Path
+		RH
+		RckrRot
+		RackDisp
+		SteerAvrg
+		Out
+		KinOut
+	end
+	
+	methods
+		%%%------------------------------------------------------------%%%
+		function obj = KinCalc(Kinematic, WorkPath)			
+			obj.Kin = Kinematic;
+			obj.Path = WorkPath;
+		end
+		%%%------------------------------------------------------------%%%
+		function CompPath = CreateFolder(obj,FoldName)	
+			CompPath = [obj.Path '/' FoldName ];
+			mkdir(CompPath);			
+		end
+		%%%------------------------------------------------------------%%%
+		function SusTravel(obj, MinRH, MaxRH, DeltaRH)
+			
+			CompPath = obj.CreateFolder('Travel');
+			
+			Sus = SuspXml('Travel', obj.Path);
+			Sus.SetMode('Travel');
+			Sus.XmlInit();
+			%%%-------------------------------------------------%%%	
+			Sus.ChcLoad(obj.Kin);
+			%%%-------------------------------------------------%%%
+			Sus.BodyDef();
+			Sus.MarkerDef();
+			Sus.JointDef();
+			Sus.GraphicDef();
+			Sus.OutPutDef();
+			Sus.VertTravelMot(MinRH, MaxRH, DeltaRH);
+			Sus.CloseXml();
+			Sus.RunAnalysis();
+			Sus.ReadOutPut();
+			
+			obj.RH = Sus.Out.RH;
+			obj.RckrRot = Sus.Out.RkrRot;
+			obj.Out = Sus.Out;
+			
+			obj.CalcIRAParam('Lat');
+			obj.CalcIRAParam('Long');
+			
+		end
+		%%%------------------------------------------------------------%%%
+		function SusSteer(obj, SteerMax, DeltaSteer)
+			
+			CompPath = obj.CreateFolder('Steer');
+			
+			Sus = SuspXml('Steer', obj.Path);
+			Sus.SetMode('Steer');
+			Sus.XmlInit();
+			%%%-------------------------------------------------%%%	
+			Sus.ChcLoad(obj.Kin);
+			%%%-------------------------------------------------%%%
+			Sus.BodyDef();
+			Sus.MarkerDef();
+			Sus.JointDef();
+			Sus.GraphicDef();
+			Sus.OutPutDef();
+			Sus.SteeringMot(SteerMax, DeltaSteer);
+			Sus.CloseXml();
+			Sus.RunAnalysis();
+			Sus.ReadOutPut();
+			
+			
+			obj.RackDisp  = Sus.Out.Rack;
+			obj.SteerAvrg = Sus.Out.SteerAvrg;	
+			obj.Out = Sus.Out;			
+			
+		end
+		%%%------------------------------------------------------------%%%
+		function CalcIRAParam(obj, LatLong)
+			
+			for k = 1:numel(obj.Out.Dx)
+				
+				j = k - 1;
+
+				Dx(k) = obj.Out.Dx(k);
+				Dy(k) = obj.Out.Dy(k);
+				Dz(k) = obj.Out.Dz(k);
+				
+				Dx_TCP(k) = obj.Out.Dx_TCP(k);
+				Dy_TCP(k) = obj.Out.Dy_TCP(k);
+				Dz_TCP(k) = obj.Out.Dz_TCP(k);
+
+				Rx(k) = obj.Out.Rx(k);
+				Ry(k) = obj.Out.Ry(k);
+				Rz(k) = obj.Out.Rz(k);
+				
+				if j > 0
+					
+					Dt = obj.Out.Time(k) - obj.Out.Time(k-1);
+					
+					X(1,j) = Dx(k);
+					X(2,j) = Dy(k);
+					X(3,j) = Dz(k);
+					
+					RH(j)  = obj.RH(k);
+					
+					A(1,j) = Rx(k);
+					A(2,j) = Ry(k);
+					A(3,j) = Rz(k);
+					
+					switch LatLong
+					case 'Lat'
+						X_TCP(1,j) = 0*Dx_TCP(k);
+						X_TCP(2,j) = Dy_TCP(k);
+						X_TCP(3,j) = Dz_TCP(k);
+						
+						V(1,j) = 0*(Dx(k) - Dx(k-1))/Dt;
+						V(2,j) = (Dy(k) - Dy(k-1))/Dt;
+						V(3,j) = (Dz(k) - Dz(k-1))/Dt;
+						
+						W(1,j) = (Rx(k) - Rx(k-1))/Dt;
+						W(2,j) = 0*(Ry(k) - Ry(k-1))/Dt;
+						W(3,j) = 0*(Rz(k) - Rz(k-1))/Dt;
+					case 'Long'
+						X_TCP(1,j) = Dx_TCP(k);
+						X_TCP(2,j) = 0*Dy_TCP(k);
+						X_TCP(3,j) = Dz_TCP(k);
+						
+						V(1,j) = (Dx(k) - Dx(k-1))/Dt;
+						V(2,j) = 0*(Dy(k) - Dy(k-1))/Dt;
+						V(3,j) = (Dz(k) - Dz(k-1))/Dt;
+						
+						W(1,j) = 0*(Rx(k) - Rx(k-1))/Dt;
+						W(2,j) = (Ry(k) - Ry(k-1))/Dt;
+						W(3,j) = 0*(Rz(k) - Rz(k-1))/Dt;
+					end
+					
+					Xc(:,j) = cross(W(:,j), V(:,j))/norm(W(:,j))^2+X(:,j);
+					
+					XcA(:,j) = Xc(:,j) + 10*W(:,j)/norm(W(:,j));
+					
+					IA(j) = Link(Xc(:,j), XcA(:,j));
+					
+				end
+				
+			end
+
+			for k = 1:numel(IA)
+				
+				Param(k).SK = SuspKin('Test');
+				Param(k).SK.AssignWC(X(:,k));
+				Param(k).SK.AssignTCP(X_TCP(:,k));
+				Param(k).SK.AssignInstRotAxis(IA(k));
+				Param(k).SK.CalcInstRotLat();
+				Param(k).SK.CalcInstRotLong();
+				Param(k).SK.CalcInstRollCenter();
+				Param(k).SK.CalcCamberGain();
+				Param(k).SK.CalcSquat();
+				Param(k).SK.CalcDive();
+				Param(k).SK.CalcIRLong();
+				Param(k).SK.CalcIRLat();
+				
+				switch LatLong
+				case 'Lat'
+					obj.KinOut.CamberGain(k) = Param(k).SK.CamberGain;
+					obj.KinOut.RCz(k)        = Param(k).SK.P_RC(3);
+				case 'Long'
+					obj.KinOut.Dive(k)       = Param(k).SK.Dive;
+					obj.KinOut.Squat(k)      = Param(k).SK.Squat;
+				end
+				
+				obj.KinOut.RH(k)         = RH(k);
+				
+			end
+		end
+		%%%------------------------------------------------------------%%%
+	end
+end

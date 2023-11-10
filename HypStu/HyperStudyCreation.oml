@@ -1,0 +1,633 @@
+classdef HyperStudyCreation < handle
+
+	properties
+		FilePath
+		Fid
+		Axle
+		Name
+		Path
+		DesignVariable
+		DataSource
+		Response
+		Goal
+		Model
+		RHMin
+		RHMax
+	end
+	
+	methods
+	    %%---------------------------------------------------------------------------------------%%
+		function obj = HyperStudyCreation(Path)
+			
+			obj.FilePath = Path;
+			obj.Fid = fopen(obj.FilePath, 'w');
+			
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function Files(obj, FileName, FilePath)
+			obj.Name = FileName;
+			obj.Path = FilePath;
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function Starter(obj)
+			fprintf(obj.Fid, '<?xml version="1.0" encoding="UTF-8"?>\n')
+			fprintf(obj.Fid, '<HyperStudy>\n')
+			fprintf(obj.Fid, '  <DocumentProperties>\n')			
+			fprintf(obj.Fid, '    <FileDate>2022-04-21 14:47:28 </FileDate>\n')
+			fprintf(obj.Fid, '    <Revision>0.0</Revision>\n')
+			fprintf(obj.Fid, '    <Author></Author>\n')
+			fprintf(obj.Fid, '    <System>Windows [Version 6.2.9200] (64 bit)</System>\n')
+			fprintf(obj.Fid, '    <CreatedBy>Altair HyperStudy(TM) v2021.2.0.31.2206626</CreatedBy>\n')
+			fprintf(obj.Fid, '  </DocumentProperties>\n')
+			fprintf(obj.Fid, '  <Revision>\n')
+			fprintf(obj.Fid, '    <Major>21</Major>\n')
+			fprintf(obj.Fid, '    <Minor>200</Minor>\n')
+			fprintf(obj.Fid, '    <Build>31</Build>\n')
+			fprintf(obj.Fid, '    <SubMinor>20210401</SubMinor>\n')
+			fprintf(obj.Fid, '    <BuildId>2206626</BuildId>\n')	
+			fprintf(obj.Fid, '</Revision>\n')	
+			fprintf(obj.Fid, '  <Updated></Updated>\n')	
+			fprintf(obj.Fid, '  <Study varname="s_1">\n')	
+			fprintf(obj.Fid, '    <Label>Study_1</Label>\n')	
+			fprintf(obj.Fid, '    <TimeCreated>1650468291</TimeCreated>\n')	
+			fprintf(obj.Fid, '    <Comment></Comment>\n')	
+			fprintf(obj.Fid, '    <Folder></Folder>\n')	
+			fprintf(obj.Fid, '    <ApproachList>\n')	
+			fprintf(obj.Fid, '      <Approach varname="setup_1" type="Nom">\n')	
+			fprintf(obj.Fid, '        <Label>Setup</Label>\n')	
+			fprintf(obj.Fid, '        <TimeCreated>1650468291</TimeCreated>\n')	
+			fprintf(obj.Fid, '        <Comment></Comment>\n')	
+			fprintf(obj.Fid, '        <Definition>\n')	
+			fprintf(obj.Fid, '          <ModelList>\n')	
+			for k = 1:numel(obj.Model)
+				obj.ModelWrite(k);
+			end
+			fprintf(obj.Fid, '          </ModelList>\n')
+			fprintf(obj.Fid, '          <DataSourceList>\n')
+			obj.WriteDataSource();
+			fprintf(obj.Fid, '          </DataSourceList>\n')			
+			fprintf(obj.Fid, '          <GradientList></GradientList>\n')			
+			fprintf(obj.Fid, '          <DesignVariableList>\n')
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function Ender(obj)
+			fprintf(obj.Fid, '          </DesignVariableList>\n')
+			fprintf(obj.Fid, '          <ResponseList>\n')
+			obj.WriteResponse();
+			fprintf(obj.Fid, '          </ResponseList>\n')
+            fprintf(obj.Fid, '          <GoalList>\n')
+			fprintf(obj.Fid, '            <ConstraintBoundaries>Standard</ConstraintBoundaries>\n')
+			fprintf(obj.Fid, '            <PercentTolerance> 0.5</PercentTolerance>\n')
+			fprintf(obj.Fid, '            <ToleranceAtZero> 0.005</ToleranceAtZero>\n')
+			obj.WriteGoal();
+			fprintf(obj.Fid, '          </GoalList>\n')
+			fprintf(obj.Fid, '          <ConditionList></ConditionList>\n')
+			fprintf(obj.Fid, '          <VariableConstraintList></VariableConstraintList>\n')
+			fprintf(obj.Fid, '        </Definition>\n')
+			fprintf(obj.Fid, '        <MatrixList></MatrixList>\n')
+			fprintf(obj.Fid, '        <MatrixFilterList></MatrixFilterList>\n')
+			fprintf(obj.Fid, '        <EvaluationParameterList></EvaluationParameterList>\n')
+			fprintf(obj.Fid, '        <CommandList></CommandList>\n')
+			fprintf(obj.Fid, '      </Approach>\n')
+			fprintf(obj.Fid, '    </ApproachList>\n')
+			fprintf(obj.Fid, '    <CommandList></CommandList>\n')
+			fprintf(obj.Fid, '    <GroupList></GroupList>\n')
+			fprintf(obj.Fid, '  </Study>\n')
+			fprintf(obj.Fid, '</HyperStudy>\n')
+			fprintf(obj.Fid, '\n')
+			fclose(obj.Fid);
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function AddDesignVariable(obj, VarName, MbdVarName, ModelIndex, NominalValue, LowBoundValue, UpperBoundValue)
+			 if isempty(obj.DesignVariable) == 1
+				 k = 1;
+			 else
+				 k = numel(obj.DesignVariable) + 1;
+			 end
+			 obj.DesignVariable(k).VarName = VarName;
+			 obj.DesignVariable(k).Label = VarName;
+			 obj.DesignVariable(k).NominalValue = NominalValue;
+			 if ModelIndex > 0
+				 obj.DesignVariable(k).ModelName = obj.Model(ModelIndex).Name;
+				 obj.DesignVariable(k).ModelVarName = obj.Model(ModelIndex).VarName;
+				 obj.DesignVariable(k).ModelIndex =  ModelIndex;
+				 obj.DesignVariable(k).MbdVarName = MbdVarName;
+			 else
+				 obj.DesignVariable(k).ModelName = 'None';
+				 obj.DesignVariable(k).ModelVarName = 'None';
+				 obj.DesignVariable(k).ModelIndex =  0;
+				 obj.DesignVariable(k).MbdVarName = 'None';
+			 end
+			 if nargin<7
+				 if NominalValue == 0
+					 obj.DesignVariable(k).LowBoundValue = -0.1;
+					 obj.DesignVariable(k).UpperBoundValue = 0.1;						 
+				 else
+					 obj.DesignVariable(k).LowBoundValue = NominalValue*(1-sign(NominalValue)*0.1);
+					 obj.DesignVariable(k).UpperBoundValue = NominalValue*(1+sign(NominalValue)*0.1);				 
+				 end
+			 else
+				 obj.DesignVariable(k).LowBoundValue = LowBoundValue;
+				 obj.DesignVariable(k).UpperBoundValue = UpperBoundValue;				 
+			 end
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function AddModelDesignVarible(obj, ModelIndex, Tmpl, Kin)
+			if strcmp(Tmpl.TWB,'Solid') == 1
+				obj.AddDesignVariable('Var_TWB_OB_X', 'MODEL.sys_S_SetUp.sys_OB_Data.TWB_OB.X.value',  ModelIndex, Kin.TWB_FL_OB.X)
+				obj.AddDesignVariable('Var_TWB_OB_Y', 'MODEL.sys_S_SetUp.sys_OB_Data.TWB_OB.Y.value',  ModelIndex, Kin.TWB_FL_OB.Y)
+				obj.AddDesignVariable('Var_TWB_OB_Z', 'MODEL.sys_S_SetUp.sys_OB_Data.TWB_OB.Z.value',  ModelIndex, Kin.TWB_FL_OB.Z)
+				
+			    obj.AddDesignVariable('Var_TWB_FL_IB_X', 'MODEL.sys_S_SetUp.sys_IB_Data.TWB_FL_IB.X.value',  ModelIndex, Kin.TWB_FL_IB.X)
+			    obj.AddDesignVariable('Var_TWB_FL_IB_Y', 'MODEL.sys_S_SetUp.sys_IB_Data.TWB_FL_IB.Y.value',  ModelIndex, Kin.TWB_FL_IB.Y)
+			    obj.AddDesignVariable('Var_TWB_FL_IB_Z', 'MODEL.sys_S_SetUp.sys_IB_Data.TWB_FL_IB.Z.value',  ModelIndex, Kin.TWB_FL_IB.Z)
+			    
+			    obj.AddDesignVariable('Var_TWB_RL_IB_X', 'MODEL.sys_S_SetUp.sys_IB_Data.TWB_RL_IB.X.value',  ModelIndex, Kin.TWB_RL_IB.X)
+			    obj.AddDesignVariable('Var_TWB_RL_IB_Y', 'MODEL.sys_S_SetUp.sys_IB_Data.TWB_RL_IB.Y.value',  ModelIndex, Kin.TWB_RL_IB.Y)
+			    obj.AddDesignVariable('Var_TWB_RL_IB_Z', 'MODEL.sys_S_SetUp.sys_IB_Data.TWB_RL_IB.Z.value',  ModelIndex, Kin.TWB_RL_IB.Z)
+			    			
+			else
+				obj.AddDesignVariable('Var_TWB_FL_OB_X',  'MODEL.sys_S_SetUp.sys_OB_Data.TML_FL_OB.X.value',  ModelIndex, Kin.TWB_FL_OB.X)
+				obj.AddDesignVariable('Var_TWB_FL_OB_Y',  'MODEL.sys_S_SetUp.sys_OB_Data.TML_FL_OB.Y.value',  ModelIndex, Kin.TWB_FL_OB.Y)
+				obj.AddDesignVariable('Var_TWB_FL_OB_Z',  'MODEL.sys_S_SetUp.sys_OB_Data.TML_FL_OB.Z.value',  ModelIndex, Kin.TWB_FL_OB.Z)
+				
+				obj.AddDesignVariable('Var_TWB_RL_OB_X',  'MODEL.sys_S_SetUp.sys_OB_Data.TML_RL_OB.X.value',  ModelIndex, Kin.TWB_RL_OB.X)
+				obj.AddDesignVariable('Var_TWB_RL_OB_Y',  'MODEL.sys_S_SetUp.sys_OB_Data.TML_RL_OB.Y.value',  ModelIndex, Kin.TWB_RL_OB.Y)
+				obj.AddDesignVariable('Var_TWB_RL_OB_Z',  'MODEL.sys_S_SetUp.sys_OB_Data.TML_RL_OB.Z.value',  ModelIndex, Kin.TWB_RL_OB.Z)
+	
+			    obj.AddDesignVariable('Var_TWB_FL_IB_X',  'MODEL.sys_S_SetUp.sys_IB_Data.TML_FL_IB.X.value',  ModelIndex, Kin.TWB_FL_IB.X)
+			    obj.AddDesignVariable('Var_TWB_FL_IB_Y',  'MODEL.sys_S_SetUp.sys_IB_Data.TML_FL_IB.Y.value',  ModelIndex, Kin.TWB_FL_IB.Y)
+			    obj.AddDesignVariable('Var_TWB_FL_IB_Z',  'MODEL.sys_S_SetUp.sys_IB_Data.TML_FL_IB.Z.value',  ModelIndex, Kin.TWB_FL_IB.Z)
+			 
+			    obj.AddDesignVariable('Var_TWB_RL_IB_X',  'MODEL.sys_S_SetUp.sys_IB_Data.TML_RL_IB.X.value',  ModelIndex, Kin.TWB_RL_IB.X)
+			    obj.AddDesignVariable('Var_TWB_RL_IB_Y',  'MODEL.sys_S_SetUp.sys_IB_Data.TML_RL_IB.Y.value',  ModelIndex, Kin.TWB_RL_IB.Y)
+			    obj.AddDesignVariable('Var_TWB_RL_IB_Z',  'MODEL.sys_S_SetUp.sys_IB_Data.TML_RL_IB.Z.value',  ModelIndex, Kin.TWB_RL_IB.Z)
+			    					
+			end
+			%----%
+			if strcmp(Tmpl.LWB,'Solid') == 1
+				obj.AddDesignVariable('Var_LWB_OB_X',  'MODEL.sys_S_SetUp.sys_OB_Data.LWB_OB.X.value',  ModelIndex, Kin.LWB_FL_OB.X)
+				obj.AddDesignVariable('Var_LWB_OB_Y',  'MODEL.sys_S_SetUp.sys_OB_Data.LWB_OB.Y.value',  ModelIndex, Kin.LWB_FL_OB.Y)
+				obj.AddDesignVariable('Var_LWB_OB_Z',  'MODEL.sys_S_SetUp.sys_OB_Data.LWB_OB.Z.value',  ModelIndex, Kin.LWB_FL_OB.Z)
+				
+			    obj.AddDesignVariable('Var_LWB_FL_IB_X',  'MODEL.sys_S_SetUp.sys_IB_Data.LWB_FL_IB.X.value',  ModelIndex, Kin.LWB_FL_IB.X)
+			    obj.AddDesignVariable('Var_LWB_FL_IB_Y',  'MODEL.sys_S_SetUp.sys_IB_Data.LWB_FL_IB.Y.value',  ModelIndex, Kin.LWB_FL_IB.Y)
+			    obj.AddDesignVariable('Var_LWB_FL_IB_Z',  'MODEL.sys_S_SetUp.sys_IB_Data.LWB_FL_IB.Z.value',  ModelIndex, Kin.LWB_FL_IB.Z)
+
+				obj.AddDesignVariable('Var_LWB_RL_IB_X',  'MODEL.sys_S_SetUp.sys_IB_Data.LWB_RL_IB.X.value',  ModelIndex, Kin.LWB_RL_IB.X)
+				obj.AddDesignVariable('Var_LWB_RL_IB_Y',  'MODEL.sys_S_SetUp.sys_IB_Data.LWB_RL_IB.Y.value',  ModelIndex, Kin.LWB_RL_IB.Y)
+				obj.AddDesignVariable('Var_LWB_RL_IB_Z',  'MODEL.sys_S_SetUp.sys_IB_Data.LWB_RL_IB.Z.value',  ModelIndex, Kin.LWB_RL_IB.Z)				
+			else
+				obj.AddDesignVariable('Var_LWB_FL_OB_X',  'MODEL.sys_S_SetUp.sys_OB_Data.LML_FL_OB.X.value',  ModelIndex, Kin.LWB_FL_OB.X)
+				obj.AddDesignVariable('Var_LWB_FL_OB_Y',  'MODEL.sys_S_SetUp.sys_OB_Data.LML_FL_OB.Y.value',  ModelIndex, Kin.LWB_FL_OB.Y)
+				obj.AddDesignVariable('Var_LWB_FL_OB_Z',  'MODEL.sys_S_SetUp.sys_OB_Data.LML_FL_OB.Z.value',  ModelIndex, Kin.LWB_FL_OB.Z)
+
+				obj.AddDesignVariable('Var_LWB_RL_OB_X',  'MODEL.sys_S_SetUp.sys_OB_Data.LML_RL_OB.X.value',  ModelIndex, Kin.LWB_RL_OB.X)
+				obj.AddDesignVariable('Var_LWB_RL_OB_Y',  'MODEL.sys_S_SetUp.sys_OB_Data.LML_RL_OB.Y.value',  ModelIndex, Kin.LWB_RL_OB.Y)
+				obj.AddDesignVariable('Var_LWB_RL_OB_Z',  'MODEL.sys_S_SetUp.sys_OB_Data.LML_RL_OB.Z.value',  ModelIndex, Kin.LWB_RL_OB.Z)
+
+			    obj.AddDesignVariable('Var_LWB_FL_IB_X',  'MODEL.sys_S_SetUp.sys_IB_Data.LML_FL_IB.X.value',  ModelIndex, Kin.LWB_FL_IB.X)
+			    obj.AddDesignVariable('Var_LWB_FL_IB_Y',  'MODEL.sys_S_SetUp.sys_IB_Data.LML_FL_IB.Y.value',  ModelIndex, Kin.LWB_FL_IB.Y)
+			    obj.AddDesignVariable('Var_LWB_FL_IB_Z',  'MODEL.sys_S_SetUp.sys_IB_Data.LML_FL_IB.Z.value',  ModelIndex, Kin.LWB_FL_IB.Z)
+
+				obj.AddDesignVariable('Var_LWB_RL_IB_X', 'MODEL.sys_S_SetUp.sys_IB_Data.LML_RL_IB.X.value',  ModelIndex, Kin.LWB_RL_IB.X)
+				obj.AddDesignVariable('Var_LWB_RL_IB_Y', 'MODEL.sys_S_SetUp.sys_IB_Data.LML_RL_IB.Y.value',  ModelIndex, Kin.LWB_RL_IB.Y)
+				obj.AddDesignVariable('Var_LWB_RL_IB_Z', 'MODEL.sys_S_SetUp.sys_IB_Data.LML_RL_IB.Z.value',  ModelIndex, Kin.LWB_RL_IB.Z)					
+			end
+			%----%
+			obj.AddDesignVariable('Var_TRD_OB_X', 'MODEL.sys_S_SetUp.sys_OB_Data.TRD_OB.X.value',  ModelIndex, Kin.TRD_OB.X)
+			obj.AddDesignVariable('Var_TRD_OB_Y', 'MODEL.sys_S_SetUp.sys_OB_Data.TRD_OB.Y.value',  ModelIndex, Kin.TRD_OB.Y)
+			obj.AddDesignVariable('Var_TRD_OB_Z', 'MODEL.sys_S_SetUp.sys_OB_Data.TRD_OB.Z.value',  ModelIndex, Kin.TRD_OB.Z)
+			%----%
+			obj.AddDesignVariable('Var_TRD_IB_X', 'MODEL.sys_S_SetUp.sys_IB_Data.TRD_IB.X.value',  ModelIndex, Kin.TRD_IB.X)
+			obj.AddDesignVariable('Var_TRD_IB_Y', 'MODEL.sys_S_SetUp.sys_IB_Data.TRD_IB.Y.value',  ModelIndex, Kin.TRD_IB.Y)
+			obj.AddDesignVariable('Var_TRD_IB_Z', 'MODEL.sys_S_SetUp.sys_IB_Data.TRD_IB.Z.value',  ModelIndex, Kin.TRD_IB.Z)			
+			%----%
+			if strcmp(Tmpl.PrdAttachment,'Upright') == 1
+				obj.AddDesignVariable('Var_PRD_OB_X', 'MODEL.sys_S_SetUp.sys_OB_Data.PRD_U_OB.X.value',  ModelIndex, Kin.PRD_OB.X)
+				obj.AddDesignVariable('Var_PRD_OB_Y', 'MODEL.sys_S_SetUp.sys_OB_Data.PRD_U_OB.Y.value',  ModelIndex, Kin.PRD_OB.Y)
+				obj.AddDesignVariable('Var_PRD_OB_Z', 'MODEL.sys_S_SetUp.sys_OB_Data.PRD_U_OB.Z.value',  ModelIndex, Kin.PRD_OB.Z)
+			
+			else
+				obj.AddDesignVariable('Var_PRD_OB_X', 'MODEL.sys_S_SetUp.sys_OB_Data.PRD_OB.X.value',  ModelIndex, Kin.PRD_OB.X)
+				obj.AddDesignVariable('Var_PRD_OB_Y', 'MODEL.sys_S_SetUp.sys_OB_Data.PRD_OB.Y.value',  ModelIndex, Kin.PRD_OB.Y)
+				obj.AddDesignVariable('Var_PRD_OB_Z', 'MODEL.sys_S_SetUp.sys_OB_Data.PRD_OB.Z.value',  ModelIndex, Kin.PRD_OB.Z)				
+			end
+			%----%
+			obj.AddDesignVariable('Var_PRD_IB_X', 'MODEL.sys_S_SetUp.sys_IB_Data.PRD_IB.X.value',  ModelIndex, Kin.PRD_IB.X)
+			obj.AddDesignVariable('Var_PRD_IB_Y', 'MODEL.sys_S_SetUp.sys_IB_Data.PRD_IB.Y.value',  ModelIndex, Kin.PRD_IB.Y)
+			obj.AddDesignVariable('Var_PRD_IB_Z', 'MODEL.sys_S_SetUp.sys_IB_Data.PRD_IB.Z.value',  ModelIndex, Kin.PRD_IB.Z)
+			%----%
+			obj.AddDesignVariable('Var_RH_Min',  'MODEL.ana_FKinematic.ds_RHSetup.real_RH_Min.value',  ModelIndex, obj.RHMin)
+			obj.AddDesignVariable('Var_RH_Max',  'MODEL.ana_FKinematic.ds_RHSetup.real_RH_Max.value',  ModelIndex, obj.RHMax)
+			%----%
+			obj.AddDesignVariable('Var_CurveFitting','None',  ModelIndex, 0,-5,5)
+			obj.AddDesignVariable('Var_RH', 'None',  ModelIndex, 30,25,35)			
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function WriteDesignVariable(obj)
+			 for k = 1:numel(obj.DesignVariable)
+				 if obj.DesignVariable(k).ModelIndex > 0 && strcmp(obj.DesignVariable(k).MbdVarName, 'None') == 0
+					 fprintf(obj.Fid, '            <DesignVariable varname="%s_m%02.0f">\n',obj.DesignVariable(k).VarName, obj.DesignVariable(k).ModelIndex)
+					 fprintf(obj.Fid, '              <Label>%s_m%02.0f</Label>\n', obj.DesignVariable(k).Label, obj.DesignVariable(k).ModelIndex)
+				 else
+					 fprintf(obj.Fid, '            <DesignVariable varname="%s">\n',obj.DesignVariable(k).VarName)
+					 fprintf(obj.Fid, '              <Label>%s</Label>\n', obj.DesignVariable(k).Label)
+				 end
+				 fprintf(obj.Fid, '              <Comment></Comment>\n')
+				 fprintf(obj.Fid, '              <ScalarTool type="Templex">\n')
+				 if obj.DesignVariable(k).ModelIndex > 0 && strcmp(obj.DesignVariable(k).MbdVarName, 'None') == 0
+					 fprintf(obj.Fid, '                <Expression>%s</Expression>\n', obj.DesignVariable(k).VarName)
+				 else
+					fprintf(obj.Fid, '                <Expression></Expression>\n')
+				 end
+				 fprintf(obj.Fid, '              </ScalarTool>\n')		
+				 if strcmp(obj.DesignVariable(k).MbdVarName, 'None') == 0
+					 fprintf(obj.Fid, '              <ModelParameter>\n')
+					 fprintf(obj.Fid, '                <Name>%s</Name>\n',  obj.DesignVariable(k).MbdVarName)
+					 fprintf(obj.Fid, '                <ModelVarname>%s</ModelVarname>\n',  obj.DesignVariable(k).ModelVarName)
+					 fprintf(obj.Fid, '                <MetaDataList></MetaDataList>\n')
+					 fprintf(obj.Fid, '                <Unit>\n')
+					 fprintf(obj.Fid, '                  <Name></Name>\n')
+					 fprintf(obj.Fid, '                  <Type></Type>\n')
+					 fprintf(obj.Fid, '                </Unit>\n')
+					 fprintf(obj.Fid, '              </ModelParameter>\n')
+				 else
+					fprintf(obj.Fid, '              <ModelParameter>\n');
+					fprintf(obj.Fid, '                <Name>native</Name>\n');
+					fprintf(obj.Fid, '                <ModelVarname>%s</ModelVarname>\n', obj.DesignVariable(k).ModelName);
+					fprintf(obj.Fid, '                <MetaDataList></MetaDataList>\n');
+					fprintf(obj.Fid, '                <Unit>\n');
+					fprintf(obj.Fid, '                  <Name></Name>\n');
+					fprintf(obj.Fid, '                  <Type></Type>\n');
+					fprintf(obj.Fid, '                </Unit>\n');
+					fprintf(obj.Fid, '              </ModelParameter>\n');					 
+			     end
+				 fprintf(obj.Fid, '              <State>true</State>\n')
+				 fprintf(obj.Fid, '              <Category>Controlled</Category>\n')
+				 fprintf(obj.Fid, '              <Role>Design</Role>\n')
+				 fprintf(obj.Fid, '              <FixedVariable>\n')
+				 fprintf(obj.Fid, '                <Type>Real</Type>\n')
+				 fprintf(obj.Fid, '                <Mode>Continuous</Mode>\n')
+				 fprintf(obj.Fid, '                <Levels></Levels>\n')
+				 fprintf(obj.Fid, '                <LowerBound type="double">%2.6f</LowerBound>\n', obj.DesignVariable(k).LowBoundValue)
+				 fprintf(obj.Fid, '                <NominalValue type="double">%2.6f</NominalValue>\n', obj.DesignVariable(k).NominalValue)
+				 fprintf(obj.Fid, '                <UpperBound type="double">%2.6f</UpperBound>\n', obj.DesignVariable(k).UpperBoundValue)
+				 fprintf(obj.Fid, '              </FixedVariable>\n')
+				 fprintf(obj.Fid, '              <RandomVariable>\n')
+				 fprintf(obj.Fid, '                <StatisticalDistribution>Normal_Variance</StatisticalDistribution>\n')
+				 fprintf(obj.Fid, '                <Param_Alpha>%2.4f</Param_Alpha>\n', obj.DesignVariable(k).NominalValue)
+				 fprintf(obj.Fid, '                <Param_Beta>%2.4f</Param_Beta>\n', obj.DesignVariable(k).NominalValue)
+				 fprintf(obj.Fid, '                <Param_Gamma></Param_Gamma>\n')
+				 fprintf(obj.Fid, '              </RandomVariable>\n')
+				 fprintf(obj.Fid, '            </DesignVariable>\n')				 
+			 end
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function AddModel(obj, ModelPath, ModelName, VarName, Type)
+			 
+			 if isempty(obj.Model)
+				 n = 1;
+			 else
+				 n = numel(obj.Model) + 1;
+			 end
+			 
+			 obj.Model(n).Path     = ModelPath;
+			 obj.Model(n).Name     = ModelName;
+			 obj.Model(n).VarName  = VarName;
+			 obj.Model(n).Type     = Type;
+			 
+			 
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function ModelWrite(obj, ModelIndex)
+			
+			if strcmp(obj.Model(ModelIndex).Type, 'hst_internal_math') == 1
+				fprintf(obj.Fid, '            <Model varname="%s" type="%s">\n', obj.Model(ModelIndex).VarName, obj.Model(ModelIndex).Type)
+				fprintf(obj.Fid, '              <Label>%s</Label>\n',obj.Model(ModelIndex).VarName)
+				fprintf(obj.Fid, '              <Comment></Comment>\n')	
+				fprintf(obj.Fid, '              <State>true</State>\n')	
+				fprintf(obj.Fid, '              <RunScript></RunScript>\n')	
+				fprintf(obj.Fid, '              <Argument></Argument>\n')
+				fprintf(obj.Fid, '              <Solver></Solver>\n')
+				fprintf(obj.Fid, '              <AnalysisTask></AnalysisTask>\n')
+				fprintf(obj.Fid, '              <SchemaVersionHstp>hstp_v_6</SchemaVersionHstp>\n')
+				fprintf(obj.Fid, '              <Resources></Resources>\n')
+				fprintf(obj.Fid, '              <MetaDataList></MetaDataList>\n')
+				fprintf(obj.Fid, '            </Model>\n')				
+			elseif strcmp(obj.Model(ModelIndex).Type, 'MDL') == 1
+				fprintf(obj.Fid, '            <Model varname="%s" type="%s">\n', obj.Model(ModelIndex).VarName, obj.Model(ModelIndex).Type)
+				fprintf(obj.Fid, '              <Label>%s</Label>\n',obj.Model(ModelIndex).VarName)
+				fprintf(obj.Fid, '              <Comment></Comment>\n')	
+				fprintf(obj.Fid, '              <State>true</State>\n')	
+				fprintf(obj.Fid, '              <RunScript>ms</RunScript>\n')	
+				fprintf(obj.Fid, '              <Argument>${filepath}</Argument>\n')
+				fprintf(obj.Fid, '              <Solver>MotionSolve</Solver>\n')
+				fprintf(obj.Fid, '              <AnalysisTask>ana_FKinematic</AnalysisTask>\n')
+				fprintf(obj.Fid, '              <SchemaVersionHstp>hstp_v_6</SchemaVersionHstp>\n')
+				fprintf(obj.Fid, '              <Resources>\n')
+				fprintf(obj.Fid, '                <Resource varname="FrontSusp.file_1" type="Input">\n')
+				fprintf(obj.Fid, '                  <Label>%s</Label>\n', obj.Model(ModelIndex).VarName)
+				fprintf(obj.Fid, '                  <Comment></Comment>\n')
+				fprintf(obj.Fid, '                  <Role>file</Role>\n')
+				fprintf(obj.Fid, '                  <InVault>false</InVault>\n')
+				fprintf(obj.Fid, '                  <PathOrigin>file:///%s</PathOrigin>\n',obj.Model(ModelIndex).Path )
+				fprintf(obj.Fid, '                  <PathLocal>run-file:///%s</PathLocal>\n',obj.Model(ModelIndex).Name)
+				fprintf(obj.Fid, '                  <Operation>WriteInput</Operation>\n')
+				fprintf(obj.Fid, '                  <Format></Format>\n')
+				fprintf(obj.Fid, '                  <AutoGenerated>false</AutoGenerated>\n')
+				fprintf(obj.Fid, '                </Resource>\n')
+				fprintf(obj.Fid, '              </Resources>\n')
+				fprintf(obj.Fid, '              <MetaDataList></MetaDataList>\n')
+				fprintf(obj.Fid, '            </Model>\n')
+			end
+			
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function AddDataSource(obj, VarName, Label, ModelIndex, Request, Component, Expression)
+			 if isempty(obj.DataSource) == 1
+				 k = 1;
+			 else
+				 k = numel(obj.DataSource) + 1;
+			 end			 
+			 obj.DataSource(k).VarName     = VarName;
+			 obj.DataSource(k).Label        = Label;
+			 if ModelIndex > 0
+				 obj.DataSource(k).Request      = Request;
+				 obj.DataSource(k).Component    = Component;
+				 obj.DataSource(k).ModelName    = obj.Model(ModelIndex).Name;
+				 obj.DataSource(k).ModelVarName = obj.Model(ModelIndex).VarName;
+				 obj.DataSource(k).ModelIndex   =  ModelIndex;
+			 elseif ModelIndex < 0
+				 obj.DataSource(k).Request      = Request;
+				 obj.DataSource(k).Component    = Component;
+				 obj.DataSource(k).ModelName    = 'None';
+				 obj.DataSource(k).ModelVarName = 'None';
+				 obj.DataSource(k).ModelIndex   =  -1;						 
+			 else				 
+				 obj.DataSource(k).Request      = 'None';
+				 obj.DataSource(k).Component    = 'None';
+				 obj.DataSource(k).ModelName    = 'None';
+				 obj.DataSource(k).ModelVarName = 'None';
+				 obj.DataSource(k).ModelIndex   =  0;				 
+			 end
+			 if nargin < 7
+				obj.DataSource(k).Expression   =  'None';
+			 else
+				 if ModelIndex > -1
+					obj.DataSource(k).Expression   =  Expression;
+				 else
+					obj.DataSource(k).ModelName    =  Expression;
+				 end
+			 end
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function WriteDataSource(obj)
+			 for k = 1:numel(obj.DataSource)
+				 fprintf(obj.Fid, '            <DataSource varname="%s">\n', obj.DataSource(k).VarName)
+				 fprintf(obj.Fid, '              <Label>%s</Label>\n', obj.DataSource(k).Label)
+				 fprintf(obj.Fid, '              <Comment></Comment>\n')
+				 fprintf(obj.Fid, '              <State>true</State>\n')
+				 if obj.DataSource(k).ModelIndex > 0
+					fprintf(obj.Fid, '              <Source>run-file:///FrontSusp%02.0f/Model%02.0f.plt</Source>\n', obj.DataSource(k).ModelIndex, obj.DataSource(k).ModelIndex)
+				 elseif obj.DataSource(k).ModelIndex < 0
+					fprintf(obj.Fid, '              <Source>%s</Source>\n', obj.DataSource(k).ModelName  )
+				 else
+					fprintf(obj.Fid, '              <Source></Source>\n')
+				 end
+				 fprintf(obj.Fid, '              <Type>Real</Type>\n')
+				 fprintf(obj.Fid, '              <ModelParameter>\n')
+				 fprintf(obj.Fid, '                <Name></Name>\n')
+				 fprintf(obj.Fid, '                <ModelVarname></ModelVarname>\n')
+				 fprintf(obj.Fid, '                <MetaDataList></MetaDataList>\n')
+				 fprintf(obj.Fid, '                <Unit>\n')
+				 fprintf(obj.Fid, '                  <Name></Name>\n')
+				 fprintf(obj.Fid, '                  <Type></Type>\n')
+				 fprintf(obj.Fid, '                </Unit>\n')
+				 fprintf(obj.Fid, '              </ModelParameter>\n')				 
+				 if obj.DataSource(k).ModelIndex > 0
+					 fprintf(obj.Fid, '              <DataSourceTool type="FileSource">\n')
+					 fprintf(obj.Fid, '                <Subcase></Subcase>\n')
+					 fprintf(obj.Fid, '                <Type>User Defined</Type>\n')
+					 fprintf(obj.Fid, '                <Request>%s</Request>\n', obj.DataSource(k).Request)
+					 fprintf(obj.Fid, '                <Component>%s</Component>\n', obj.DataSource(k).Component)
+					 fprintf(obj.Fid, '                <Reader></Reader>\n')
+					 fprintf(obj.Fid, '                <ReaderVersion></ReaderVersion>\n')
+					 fprintf(obj.Fid, '                <ReaderVersionSupport>false</ReaderVersionSupport>\n')
+				 elseif obj.DataSource(k).ModelIndex < 0
+				     fprintf(obj.Fid, '              <DataSourceTool type="FileSource">\n')
+					 fprintf(obj.Fid, '                <Subcase></Subcase>\n')
+					 fprintf(obj.Fid, '                <Type>Unknown</Type>\n')
+					 fprintf(obj.Fid, '                <Request>%s</Request>\n', obj.DataSource(k).Request)
+					 fprintf(obj.Fid, '                <Component>%s</Component>\n', obj.DataSource(k).Component)
+					 fprintf(obj.Fid, '                <Reader></Reader>\n')
+					 fprintf(obj.Fid, '                <ReaderVersion></ReaderVersion>\n')
+					 fprintf(obj.Fid, '                <ReaderVersionSupport>false</ReaderVersionSupport>\n')					 
+				 else
+					 fprintf(obj.Fid, '              <DataSourceTool type="Templex">\n')
+					 fprintf(obj.Fid, '                <Expression>%s</Expression>\n', obj.DataSource(k).Expression )
+				 end
+				 fprintf(obj.Fid, '              </DataSourceTool>\n')
+				 fprintf(obj.Fid, '            </DataSource>\n')
+			 end
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function AddResponce(obj, VarName, Label, Formula)			 
+			 if isempty(obj.Response) == 1
+				 k = 1;
+			 else
+				 k = numel(obj.Response) + 1;
+			 end	
+			 obj.Response(k).VarName = VarName;
+			 obj.Response(k).Label = Label;
+			 obj.Response(k).Formula = Formula;
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function WriteResponse(obj)
+			 for k = 1:numel(obj.Response)
+				 fprintf(obj.Fid, '            <Response varname="%s">\n', obj.Response(k).VarName)
+				 fprintf(obj.Fid, '              <Label>%s</Label>\n', obj.Response(k).Label)
+				 fprintf(obj.Fid, '              <Comment></Comment>\n')
+				 fprintf(obj.Fid, '              <ScalarTool type="Templex">\n')
+				 fprintf(obj.Fid, '                <Expression>%s</Expression>\n', obj.Response(k).Formula)
+				 fprintf(obj.Fid, '              </ScalarTool>\n')
+				 fprintf(obj.Fid, '              <ModelParameter>\n')
+				 fprintf(obj.Fid, '                <Name></Name>\n')
+				 fprintf(obj.Fid, '                <ModelVarname></ModelVarname>\n')
+				 fprintf(obj.Fid, '                <MetaDataList></MetaDataList>\n')
+				 fprintf(obj.Fid, '                <Unit>\n')
+				 fprintf(obj.Fid, '                  <Name></Name>\n')
+				 fprintf(obj.Fid, '                  <Type></Type>\n')
+				 fprintf(obj.Fid, '                </Unit>\n')
+				 fprintf(obj.Fid, '              </ModelParameter>\n')
+				 fprintf(obj.Fid, '              <State>true</State>\n')
+				 fprintf(obj.Fid, '              <Type>Real</Type>\n')
+				 fprintf(obj.Fid, '              <Evaluate>$SOLVER</Evaluate>\n')
+				 fprintf(obj.Fid, '            </Response>\n')
+			 end
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function AddGoal(obj, VarName, Label, Response)
+			 if isempty(obj.Goal) == 1
+				 k = 1;
+			 else
+				 k = numel(obj.Goal) + 1;
+			 end				 
+			 obj.Goal(k).VarName  = VarName;
+			 obj.Goal(k).Label    = Label;
+			 obj.Goal(k).Response = Response;
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function WriteGoal(obj)
+			 for k = 1:numel(obj.Goal)
+				 fprintf(obj.Fid, '            <Goal varname="%s">\n',obj.Goal(k).VarName)
+				 fprintf(obj.Fid, '              <Label>%s</Label>\n',obj.Goal(k).Label)
+				 fprintf(obj.Fid, '              <Comment></Comment>\n')
+				 fprintf(obj.Fid, '              <State>true</State>\n')
+				 fprintf(obj.Fid, '              <Response>%s</Response>\n',obj.Goal(k).Response)
+				 fprintf(obj.Fid, '              <Type>Constraint</Type>\n')
+				 fprintf(obj.Fid, '              <BoundType>&gt;=</BoundType>\n')
+				 fprintf(obj.Fid, '              <BoundValue> 0</BoundValue>\n')
+				 fprintf(obj.Fid, '              <TypeSpecificValue> 0</TypeSpecificValue>\n')
+				 fprintf(obj.Fid, '            </Goal>\n')				 
+			 end
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function WriteFile(obj, Kin, Tmpl)
+			%--------------------------------------------------------------------------------------------%
+			if strcmp(obj.Axle,'Front') == 1
+				for k = 1:numel(obj.Name)
+					ModelPath = strrep([obj.Path '\' obj.Name{k}],'\', '/');
+					ModelName = sprintf('FrontSusp/Model%02.0f.xml',k);
+					VarName = sprintf('FrontSusp%02.0f',k);
+					obj.AddModel(ModelPath, ModelName, VarName);
+				end
+			else
+				error('Rear axle not supported yet')
+			end
+			obj.AddModelDesignVarible(0, Tmpl, Kin);
+			obj.AddModelDesignVarible(1, Tmpl, Kin);
+			obj.AddModelDesignVarible(2, Tmpl, Kin);
+			%--------------------------------------------------------------------------------------------%
+			obj.SourceSelect2(Tmpl, 1)			
+			%--------------------------------------------------------------------------------------------%
+			obj.AddResponce('Err_Camber', 'Err_Camber', 'max(Camber_Error^2)*Var_CurveFitting + akima(T_RH, Camber_Error, {Var_RH})[0]^2*(1 - Var_CurveFitting)');
+			obj.AddResponce('Err_Toe', 'Err_Toe', 'max(Toe_Error^2)*Var_CurveFitting + akima(T_RH, Toe_Error, {Var_RH})[0]^2*(1 - Var_CurveFitting)' );
+			obj.AddResponce('Err_Caster', 'Err_Caster', 'max(Caster_Error^2)*Var_CurveFitting + akima(T_RH, Caster_Error, {Var_RH})[0]^2*(1 - Var_CurveFitting)');
+			obj.AddResponce('Err_KingPin', 'Err_KingPin', 'max(KingPin_Error^2)*Var_CurveFitting + akima(T_RH, KingPin_Error, {Var_RH})[0]^2*(1 - Var_CurveFitting)');
+			obj.AddResponce('Err_Scrub', 'Err_Scrub', 'max(Scrub_Error^2)*Var_CurveFitting + akima(T_RH, Scrub_Error, {Var_RH})[0]^2*(1 - Var_CurveFitting)');
+			obj.AddResponce('Err_Trail', 'Err_Trail', 'max(Trail_Error^2)*Var_CurveFitting + akima(T_RH, Trail_Error, {Var_RH})[0]^2*(1 - Var_CurveFitting)');
+			obj.AddResponce('Err_Dive', 'Err_Dive', 'max(Dive_Error)^2*Var_CurveFitting  + akima(T_RH, Dive_Error, {Var_RH})[0]^2*(1 - Var_CurveFitting)');
+			obj.AddResponce('Err_RCz', 'Err_RCz', 'max(RCz_Error^2)*Var_CurveFitting + akima(T_RH, RCz_Error, {Var_RH})[0]^2*(1 - Var_CurveFitting)');
+			obj.AddResponce('Err_SteerAvrg', 'Err_SteerAvrg', 'max(SteerAvrg_Error^2)');
+			obj.AddResponce('Err_DeltaToe', 'Err_DeltaToe', 'max(DeltaToe_Error^2)');
+			obj.AddResponce('Err_Tot', 'Err_Tot', 'Err_Camber + Err_Toe + Err_Caster + Err_KingPin + Err_Scrub + Err_Trail + Err_Dive + Err_RCz + Err_SteerAvrg + Err_DeltaToe');
+			%--------------------------------------------------------------------------------------------%
+			% obj.AddGoal('Goal_Camber', 'Goal_Camber', 'Err_Camber');
+			% obj.AddGoal('Goal_Toe', 'Goal_Toe', 'Err_Toe');
+			% obj.AddGoal('Goal_Caster', 'Goal_Caster', 'Err_Caster');
+			% obj.AddGoal('Goal_KingPin', 'Goal_KingPin', 'Err_KingPin');
+			% obj.AddGoal('Goal_Scrub', 'Goal_Scrub', 'Err_Scrub');
+			% obj.AddGoal('Goal_Trail', 'Goal_Trail', 'Err_Trail');
+			% obj.AddGoal('Goal_Dive', 'Goal_Dive', 'Err_Dive');
+			% obj.AddGoal('Goal_RCz', 'Goal_RCz', 'Err_RCz');
+			% obj.AddGoal('Goal_Err_Tot', 'Goal_Err_Tot', 'Err_Tot');
+			%--------------------------------------------------------------------------------------------%
+			obj.Starter();
+			obj.WriteDesignVariable();
+			obj.Ender();
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function SourceSelect(obj, Tmpl, ModelIndex)
+			 if strcmp(obj.Axle,'Front') == 1
+				obj.AddDataSource('CamberError', 'CamberError', ModelIndex, 'REQ/70000260 O_Err_Camber', 'f2');
+				obj.AddDataSource('ToeError', 'ToeError', ModelIndex, 'REQ/70000261 O_Err_Toe', 'f2');
+				obj.AddDataSource('CasterError', 'CasterError', ModelIndex, 'REQ/70000262 O_Err_Caster', 'f2');
+				obj.AddDataSource('KingPinError', 'KingPinError', ModelIndex, 'REQ/70000263 O_Err_KingPin', 'f2');
+				obj.AddDataSource('ScrubError', 'ScrubError', ModelIndex, 'REQ/70000264 O_Err_Scrub', 'f2');
+				obj.AddDataSource('TrailError', 'TrailError', ModelIndex, 'REQ/70000265 O_Err_Trail', 'f2');
+				obj.AddDataSource('DiveError', 'DiveError', ModelIndex, 'REQ/70000266 O_Err_Dive', 'f2');
+				obj.AddDataSource('RCzError', 'RCzError', ModelIndex, 'REQ/70000267 O_Err_RCz', 'f2');	
+               obj.AddDataSource('RH', 'RH', ModelIndex, 'RH(70000257) -- RH', 'RH Left');					 
+			 elseif strcmp(obj.Axle,'Rear') == 1
+				error('rear axle not supported yet')
+			 end
+		end
+		%%---------------------------------------------------------------------------------------%%
+		function SourceSelect2(obj, Tmpl, ModelIndex)
+			if strcmp(Tmpl.TWB,'Solid') == 1 && strcmp(Tmpl.LWB,'Solid') == 1
+				obj.AddDataSource('mt_RH', 'mt_RH', 1, 'REQ/70000197 o_RH', 'f2', 'None');
+				obj.AddDataSource('mt_RackDisp', 'mt_RackDisp', 2, 'Rack(70000256) -- Rack', 'Disp', 'None');
+				obj.AddDataSource('mt_Camber', 'mt_Camber', 1, 'REQ/70000189 Camber', 'f2', 'None');			
+				obj.AddDataSource('mt_Toe', 'mt_Toe', 1, 'REQ/70000190 Toe', 'f2', 'None');			
+				obj.AddDataSource('mt_Caster', 'mt_Caster', 1, 'REQ/70000191 Caster', 'f2', 'None');	
+				obj.AddDataSource('mt_KingPin', 'mt_KingPin', 1, 'REQ/70000192 KingPin', 'f2', 'None');		
+				obj.AddDataSource('mt_Scrub', 'mt_Scrub', 1, 'REQ/70000193 Scrub', 'f2', 'None');	
+				obj.AddDataSource('mt_Trail', 'mt_Trail', 1, 'REQ/70000194 Trail', 'f2', 'None');		
+				obj.AddDataSource('mt_RollCenterZ', 'mt_RollCenterZ', 1, 'REQ/70000195 RC_z', 'f2', 'None');
+                obj.AddDataSource('mt_Dive', 'mt_Dive', 1, 'REQ/70000196 Dive', 'f2', 'None');			
+                obj.AddDataSource('mt_SteerAvrg', 'mt_SteerAvrg', 2, 'REQ/70000198 Steer', 'f4', 'None');		
+                obj.AddDataSource('mt_DeltaToe', 'mt_DeltaToe', 2, 'REQ/70000190 Toe', 'f4', 'None');							
+			elseif strcmp(Tmpl.TWB,'Solid') == 1 && strcmp(Tmpl.LWB,'MultiLink') == 1
+				obj.AddDataSource('mt_RH', 'mt_RH', 1, 'REQ/70000203 o_RH', 'f2', 'None');
+				obj.AddDataSource('mt_RackDisp', 'mt_RackDisp', 2, 'Rack(70000265) -- Rack', 'Disp', 'None');
+				obj.AddDataSource('mt_Camber', 'mt_Camber', 1, 'REQ/70000195 Camber', 'f2', 'None');			
+				obj.AddDataSource('mt_Toe', 'mt_Toe', 1, 'REQ/70000196 Toe', 'f2', 'None');			
+				obj.AddDataSource('mt_Caster', 'mt_Caster', 1, 'REQ/70000197 Caster', 'f2', 'None');	
+				obj.AddDataSource('mt_KingPin', 'mt_KingPin', 1, 'REQ/70000198 KingPin', 'f2', 'None');		
+				obj.AddDataSource('mt_Scrub', 'mt_Scrub', 1, 'REQ/70000199 Scrub', 'f2', 'None');	
+				obj.AddDataSource('mt_Trail', 'mt_Trail', 1, 'REQ/70000200 Trail', 'f2', 'None');		
+				obj.AddDataSource('mt_RollCenterZ', 'mt_RollCenterZ', 1, 'REQ/70000201 RC_z', 'f2', 'None');
+                obj.AddDataSource('mt_Dive', 'mt_Dive', 1, 'REQ/70000202 Dive', 'f2', 'None');			
+                obj.AddDataSource('mt_SteerAvrg', 'mt_SteerAvrg', 2, 'REQ/70000204 Steer', 'f4', 'None');		
+                obj.AddDataSource('mt_DeltaToe', 'mt_DeltaToe', 2, 'REQ/70000196 Toe', 'f4', 'None');											
+			end
+			obj.AddDataSource('T_RH', 'T_RH',-1, 'Block 1', 'RH', 'file:///C:/SusAn_DataBase/Compose/RefFileKin.dat');
+						
+			obj.AddDataSource('T_RackDisp', 'T_RackDisp',-1, 'Block 1', 'RackDisp', 'file:///C:/SusAn_DataBase/Compose/RefFileSte.dat');
+						
+			
+			obj.AddDataSource('T_Camber', 'T_Camber', -1, 'Block 1', 'Camber', 'file:///C:/SusAn_DataBase/Compose/RefFileKin.dat');
+			obj.AddDataSource('Camber_Error', 'Camber_Error', 0, 'None', 'None', '(akima(mt_RH, mt_Camber, T_RH) - T_Camber)');
+			
+			
+			obj.AddDataSource('T_Toe', 'T_Toe', -1, 'Block 1', 'Toe', 'file:///C:/SusAn_DataBase/Compose/RefFileKin.dat');
+			obj.AddDataSource('Toe_Error', 'Toe_Error', 0, 'None', 'None', '(akima(mt_RH, mt_Toe, T_RH) - T_Toe)');				
+			
+					
+			obj.AddDataSource('T_Caster', 'T_Caster', -1, 'Block 1', 'Caster', 'file:///C:/SusAn_DataBase/Compose/RefFileKin.dat');
+			obj.AddDataSource('Caster_Error', 'Caster_Error', 0, 'None', 'None', '(akima(mt_RH, mt_Caster, T_RH) - T_Caster)');			
+			
+				
+			obj.AddDataSource('T_KingPin', 'T_KingPin', -1, 'Block 1', 'KingPin', 'file:///C:/SusAn_DataBase/Compose/RefFileKin.dat');
+			obj.AddDataSource('KingPin_Error', 'KingPin_Error', 0, 'None', 'None', '(akima(mt_RH, mt_KingPin, T_RH) - T_KingPin)');		
+			
+			
+			obj.AddDataSource('T_Scrub', 'T_Scrub', -1, 'Block 1', 'Scrub', 'file:///C:/SusAn_DataBase/Compose/RefFileKin.dat');
+			obj.AddDataSource('Scrub_Error', 'Scrub_Error', 0, 'None', 'None', '(akima(mt_RH, mt_Scrub, T_RH) - T_Scrub)');				
+
+			
+			obj.AddDataSource('T_Trail', 'T_Trail', -1, 'Block 1', 'Trail', 'file:///C:/SusAn_DataBase/Compose/RefFileKin.dat');
+			obj.AddDataSource('Trail_Error', 'Trail_Error', 0, 'None', 'None', '(akima(mt_RH, mt_Trail, T_RH) - T_Trail)');									
+
+			
+			obj.AddDataSource('T_RollCenterZ', 'T_RollCenterZ', -1, 'Block 1', 'RollCenterZ', 'file:///C:/SusAn_DataBase/Compose/RefFileKin.dat');
+			obj.AddDataSource('RCz_Error', 'RCz_Error', 0, 'None', 'None', '(akima(mt_RH, mt_RollCenterZ, T_RH) - T_RollCenterZ)');		
+
+			
+			obj.AddDataSource('T_Dive', 'T_Dive', -1, 'Block 1', 'Dive', 'file:///C:/SusAn_DataBase/Compose/RefFileKin.dat');
+			obj.AddDataSource('Dive_Error', 'Dive_Error', 0, 'None', 'None', '(akima(mt_RH, mt_Dive, T_RH) - T_Dive)');		
+
+			
+			obj.AddDataSource('T_SteerAvrg', 'T_SteerAvrg', -1, 'Block 1', 'Steer', 'file:///C:/SusAn_DataBase/Compose/RefFileSte.dat');
+			obj.AddDataSource('SteerAvrg_Error', 'SteerAvrg_Error', 0, 'None', 'None', '(akima(mt_RackDisp, mt_SteerAvrg, T_RackDisp) - T_SteerAvrg)');	
+									
+			
+			obj.AddDataSource('T_DeltaToe', 'T_DeltaToe', -1, 'Block 1', 'DeltaToe', 'file:///C:/SusAn_DataBase/Compose/RefFileSte.dat');
+			obj.AddDataSource('DeltaToe_Error', 'DeltaToe_Error', 0, 'None', 'None', '(akima(mt_RackDisp, mt_DeltaToe, T_RackDisp) - T_DeltaToe)');				
+			
+		end
+		%%---------------------------------------------------------------------------------------%%		
+	end
+	
+end

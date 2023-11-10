@@ -1,0 +1,60 @@
+clear all
+close all
+clc
+
+addpath('../HypStu')
+
+Path = 'C:\SusAn_Dev\Script\Test.hstudy'
+
+HS = HyperStudyCreation(Path);
+HS.AddModel('None', 'M1', 'M1', 'HST')
+HS.AddDesignVariable('CamberGain', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('RCz', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('Dive', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('Squat', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('Caster', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('KingPin', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('Trail', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('Scrub', 'None', 1, 0, -1, 1);
+
+HS.AddDesignVariable('TWB_FL_IB_X', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('TWB_FL_IB_Y', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('TWB_RL_IB_X', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('TWB_RL_IB_Y', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('TWB_FL_OB_Z', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('TWB_Delta_OB_X', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('TWB_Delta_OB_Y', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('TWB_Delta_OB_Z', 'None', 1, 0, -1, 1);
+
+HS.AddDesignVariable('LWB_FL_IB_X', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('LWB_FL_IB_Y', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('LWB_RL_IB_X', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('LWB_RL_IB_Y', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('LWB_FL_OB_Z', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('LWB_Delta_OB_X', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('LWB_Delta_OB_Y', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('LWB_Delta_OB_Z', 'None', 1, 0, -1, 1);
+
+HS.AddDesignVariable('WC_X', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('WC_Y', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('WC_Z', 'None', 1, 0, -1, 1);
+
+HS.AddDesignVariable('TCP_X', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('TCP_Y', 'None', 1, 0, -1, 1);
+HS.AddDesignVariable('TCP_Z', 'None', 1, 0, -1, 1);
+
+HS.AddDataSource( 'ParamVect', 'ParamVect', 0, 'None', 'None', '{WC_X, WC_Y, WC_Z, TCP_X, TCP_Y, TCP_Z, CamberGain, RCz, Squat, Dive, Caster, KingPin, Trail, Scrub}');
+HS.AddDataSource( 'ActVectTWB', 'ActVectTWB', 0, 'None', 'None', '{1,1,0,0,0,1,1,1,0,0,0,0,1,1,1}');
+HS.AddDataSource( 'ActVectLWB', 'ActVectLWB', 0, 'None', 'None', '{1,1,0,0,0,1,1,1,0,0,0,0,1,1,1}');
+
+HS.AddDataSource( 'CoordTWB', 'CoordTWB', 0, 'None', 'None', '{TWB_FL_IB_X,TWB_FL_IB_Y,0,0,0,TWB_FL_OB_Z,TWB_RL_IB_X,TWB_RL_IB_Y,0,0,0,0,TWB_Delta_OB_X,TWB_Delta_OB_Y,TWB_Delta_OB_Z}');
+HS.AddDataSource( 'CoordLWB', 'CoordLWB', 0, 'None', 'None', '{LWB_FL_IB_X,LWB_FL_IB_Y,0,0,0,LWB_FL_OB_Z,LWB_RL_IB_X,LWB_RL_IB_Y,0,0,0,0,LWB_Delta_OB_X,LWB_Delta_OB_Y,LWB_Delta_OB_Z}');
+
+
+
+HS.AddDataSource( 'Pout', 'Pout', 0, 'None', 'None', 'SuspKinCalc(ParamVect, ActVectTWB, ActVectLWB, CoordTWB, CoordLWB)');
+
+HS.Starter();
+HS.WriteDesignVariable();
+HS.WriteDataSource()
+HS.Ender();

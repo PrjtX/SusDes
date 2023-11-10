@@ -1,0 +1,169 @@
+classdef LoadCalc < handle
+
+	properties
+		Kin
+		Path
+		RH
+		RckrRot
+		RackDisp
+		SteerAvrg
+		L
+	end
+	
+	methods
+		%%%------------------------------------------------------------%%%
+		function obj = LoadCalc(Kinematic, WorkPath)			
+			obj.Kin = Kinematic;
+			obj.Path = WorkPath;
+		end
+		%%%------------------------------------------------------------%%%
+		function CompPath = CreateFolder(obj,FoldName)	
+			CompPath = [obj.Path '/' FoldName ];
+			mkdir(CompPath);			
+		end
+		%%%------------------------------------------------------------%%%
+		function SusTravel(obj, MinRH, MaxRH, DeltaRH)
+			
+			CompPath = obj.CreateFolder('Travel');
+			
+			Sus = SuspXml('Travel', obj.Path);
+			Sus.SetMode('Travel');
+			Sus.XmlInit();
+			%%%-------------------------------------------------%%%	
+			Sus.ChcLoad(obj.Kin);
+			%%%-------------------------------------------------%%%
+			Sus.BodyDef();
+			Sus.MarkerDef();
+			Sus.JointDef();
+			Sus.GraphicDef();
+			Sus.OutPutDef();
+			Sus.VertTravelMot(MinRH, MaxRH, DeltaRH);
+			Sus.CloseXml();
+			Sus.RunAnalysis();
+			Sus.ReadOutPut();
+			
+			obj.RH = Sus.Out.RH;
+			obj.RckrRot = Sus.Out.RkrRot;
+			
+		end
+		%%%------------------------------------------------------------%%%
+		function SusSteer(obj, SteerMax, DeltaSteer)
+			
+			CompPath = obj.CreateFolder('Steer');
+			
+			Sus = SuspXml('Steer', obj.Path);
+			Sus.SetMode('Steer');
+			Sus.XmlInit();
+			%%%-------------------------------------------------%%%	
+			Sus.ChcLoad(obj.Kin);
+			%%%-------------------------------------------------%%%
+			Sus.BodyDef();
+			Sus.MarkerDef();
+			Sus.JointDef();
+			Sus.GraphicDef();
+			Sus.OutPutDef();
+			Sus.SteeringMot(SteerMax, DeltaSteer);
+			Sus.CloseXml();
+			Sus.RunAnalysis();
+			Sus.ReadOutPut();
+			
+			obj.RackDisp  = Sus.Out.Rack;
+			obj.SteerAvrg = Sus.Out.SteerAvrg;			
+			
+		end
+		%%%------------------------------------------------------------%%%
+		function Position = CalcRockerRack(obj, RH, Steer)
+			
+			Position.RkrAngle = interp1(obj.RH, obj.RckrRot, RH);
+			Position.RackDisp = interp1(obj.SteerAvrg, obj.RackDisp, Steer, 'linear', 'extrap');
+			
+		end
+		%%%------------------------------------------------------------%%%
+		function [L,Sus] = CalcLoad(obj, Load)
+					
+			%%%-------------------------------------------------%%%			
+			CompPath = obj.CreateFolder('FixedPosRocker');
+			
+			Position = obj.CalcRockerRack( Load.RH, Load.Steer)
+			
+			Time = (1:1:numel(Load.Fx))';
+			
+			Sus = SuspXml('FixedPosRocker', obj.Path);
+			Sus.SetMode('FixedPosRocker');
+			Sus.XmlInit();
+			%%%-------------------------------------------------%%%	
+			Sus.ChcLoad(obj.Kin);
+			%%%-------------------------------------------------%%%
+			Sus.BodyDef();
+			Sus.MarkerDef();
+			Sus.JointDef();
+			Sus.GraphicDef();
+			Sus.OutPutDef();
+			Sus.ForceAtWC(Time, Load.Fx, Load.Fy, Load.Fz, Load.Mx, Load.My, Load.Mz);
+			Sus.FixedPosRkrMot(Time, Position.RkrAngle, Position.RackDisp);
+			Sus.DefineSim(max(Time), 1);
+			Sus.CloseXml();
+			Sus.RunAnalysis();
+			Sus.ReadOutPut();
+			%%%-------------------------------------------------%%%
+			obj.L = LoadSorting(Load, Sus.Out);
+			L = obj.L;
+			%%%-------------------------------------------------%%%
+			
+		end
+		%%%------------------------------------------------------------%%%
+		function Out = UnitLoad(obj)
+			
+			%%%-------------------------------------------------%%%			
+			CompPath = obj.CreateFolder('FixedPosRocker');
+			
+			
+			Time = [0 1    2    3    4    5    6]';
+			Fx   = [0 1000 0    0    0    0    0]';
+			Fy   = [0 0    1000 0    0    0    0]';
+			Fz   = [0 0    0    1000 0    0    0]';
+			Mx   = [0 0    0    0    1000 0    0]';
+			My   = [0 0    0    0    0    1000 0]';
+			Mz   = [0 0    0    0    0    0    1000]';
+			
+			Sus = SuspXml('FixedPosRocker', obj.Path);
+			Sus.SetMode('FixedPosRocker');
+			Sus.XmlInit();
+			%%%-------------------------------------------------%%%	
+			Sus.ChcLoad(obj.Kin);
+			%%%-------------------------------------------------%%%
+			Sus.BodyDef();
+			Sus.MarkerDef();
+			Sus.JointDef();
+			Sus.GraphicDef();
+			Sus.OutPutDef();
+			Sus.ForceAtWC(Time, Fx, Fy, Fz, Mx, My, Mz);
+			Sus.FixedPosRkrMot(Time, zeros(numel(Time),1), zeros(numel(Time),1));
+			Sus.DefineSim(max(Time), 1);
+			Sus.CloseXml();
+			Sus.RunAnalysis();
+			Sus.ReadOutPut();
+			%%%-------------------------------------------------%%%
+			Out.OutPut.LWB_FL = Sus.Out.LWB_FL.Force;
+			Out.OutPut.LWB_RL = Sus.Out.LWB_RL.Force;
+			Out.OutPut.TWB_FL = Sus.Out.TWB_FL.Force;
+			Out.OutPut.TWB_RL = Sus.Out.TWB_RL.Force;
+			Out.OutPut.TRD = Sus.Out.TRD.Force;
+			Out.OutPut.PRD = Sus.Out.PRD.Force;
+			Out.InPut.Fx   = Fx;
+			Out.InPut.Fy   = Fy;
+			Out.InPut.Fz   = Fz;
+			Out.InPut.Mx   = Mx;
+			Out.InPut.My   = My;
+			Out.InPut.Mz   = Mz;
+			%%%-------------------------------------------------%%%					
+		end
+		%%%------------------------------------------------------------%%%
+		function SaveLoad(obj, LoadPath)			
+			L = obj.L;
+			save(LoadPath, 'L');			
+		end
+		%%%------------------------------------------------------------%%%
+	end
+end
+		

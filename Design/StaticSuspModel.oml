@@ -1,0 +1,230 @@
+classdef StaticSuspModel < handle
+
+	properties
+		TWB_FL_IB = [0, 0, 0]
+		TWB_FL_OB = [0, 0, 0]
+		TWB_RL_IB = [0, 0, 0]
+		TWB_RL_OB = [0, 0, 0]
+		LWB_FL_IB = [0, 0, 0]
+		LWB_FL_OB = [0, 0, 0]
+		LWB_RL_IB = [0, 0, 0]
+		LWB_RL_OB = [0, 0, 0]
+		WC         = [0, 0, 0]
+		TCP        = [0, 0, 0]
+		Tmpl
+		Name
+		TWB_FL
+		TWB_RL
+		LWB_FL
+		LWB_RL
+		LineA
+		LineB
+		LineA1
+		LineB1
+		LineA2
+		LineB2
+		Point	
+		SteerAxis
+		SAerror
+		InstRotAxis
+		IRAerror
+		YSearchIRA = [ 7500 5000 2500 500]
+	end
+	
+	methods 
+		%%-----------------------------------------------------------------------------------%%
+		function obj = StaticSuspModel(SuspName)
+			obj.Name;
+		end
+		%%-----------------------------------------------------------------------------------%%
+		function HardPointInput(obj, PointName, Coord)			
+			switch PointName
+				case'TWB_FL_IB'
+					obj.TWB_FL_IB = Coord;
+				case'TWB_FL_OB'
+					obj.TWB_FL_OB = Coord;
+				case'TWB_RL_IB'
+					obj.TWB_RL_IB = Coord;
+				case'TWB_RL_OB'
+					obj.TWB_RL_OB = Coord;
+				case'LWB_FL_IB'
+					obj.LWB_FL_IB = Coord;
+				case'LWB_FL_OB'
+					obj.LWB_FL_OB = Coord;
+				case'LWB_RL_IB'
+					obj.LWB_RL_IB = Coord;
+				case'LWB_RL_OB'		
+					obj.LWB_RL_OB = Coord;	
+				case'WC'		
+					obj.WC = Coord;
+				case'TCP'		
+					obj.TCP = Coord;						
+			end			
+		end
+		%%-----------------------------------------------------------------------------------%%
+		function OBPointDistance(obj)
+			
+			TWB_Dist = obj.PointDistance('TWB_FL_OB', 'TWB_RL_OB');
+			LWB_Dist = obj.PointDistance('LWB_FL_OB', 'LWB_RL_OB');
+			
+			if TWB_Dist < 1 && LWB_Dist < 1
+				obj.Tmpl = 'Solid';
+			elseif TWB_Dist > 1 && LWB_Dist < 1
+				obj.Tmpl = 'TopMultiLink';
+			elseif TWB_Dist < 1 && LWB_Dist > 1
+				obj.Tmpl = 'LowMultiLink';
+			else
+				obj.Tmpl = 'FullMultiLink';					
+			end
+			
+		end
+		%%-----------------------------------------------------------------------------------%%
+		function d = PointDistance(obj,P1Name, P2Name)
+			
+			P1 = obj.(P1Name);
+			P2 = obj.(P2Name);
+			
+			dx = P1(1) - P2(1);
+			dy = P1(2) - P2(2);
+			dz = P1(3) - P2(3);
+			
+			d = sqrt(dx^2 + dy^2 + dz^2);
+						
+		end			
+		%%-----------------------------------------------------------------------------------%%
+		function LinkGenerate(obj)
+			
+			obj.TWB_FL = Link(obj.TWB_FL_IB, obj.TWB_FL_OB);
+			obj.TWB_RL = Link(obj.TWB_RL_IB, obj.TWB_RL_OB);
+			obj.LWB_FL = Link(obj.LWB_FL_IB, obj.LWB_FL_OB);
+			obj.LWB_RL = Link(obj.LWB_RL_IB, obj.LWB_RL_OB);			
+								
+		end
+		%%-----------------------------------------------------------------------------------%%
+		function obj = LinkAssign(obj,Line1, Line2, P)
+				
+			obj.LineA = Line1;
+			obj.LineB = Line2;
+			obj.Point = P;
+						
+		end
+		%%-----------------------------------------------------------------------------------%%
+		function obj = LinkAssignML(obj,PointLineLow, MeasLineLow,PointLineTop, MeasLineTop)
+				
+			obj.LineA1 = PointLineLow;
+			obj.LineB1 = MeasLineLow;
+			obj.LineA2 = PointLineTop;
+			obj.LineB2 = MeasLineTop;
+						
+		end
+		%%-----------------------------------------------------------------------------------%%
+		function d = LineDist(obj, t)
+			
+			P = [obj.LineA.ParamPoint(t,'X'),obj.LineA.ParamPoint(t,'Y'),obj.LineA.ParamPoint(t,'Z')];
+			SA = Link(obj.Point, P);
+			[d, t1, t2] = distance(obj.LineB, SA);
+			
+		end
+		%%-----------------------------------------------------------------------------------%%
+		function d = LineDistML(obj, t)
+			
+			P1 = [obj.LineA1.ParamPoint(t(1),'X'),obj.LineA1.ParamPoint(t(1),'Y'),obj.LineA1.ParamPoint(t(1),'Z')];
+			P2 = [obj.LineA2.ParamPoint(t(2),'X'),obj.LineA2.ParamPoint(t(2),'Y'),obj.LineA2.ParamPoint(t(2),'Z')];
+			SA = Link(P1, P2);
+			[d1, t1, t2] = distance(obj.LineB1, SA);
+			[d2, t1, t2] = distance(obj.LineB2, SA);
+			d = d1 + d2;
+			
+		end
+		%%-----------------------------------------------------------------------------------%%
+		function x = FindMinDist(obj)
+			x = fminsearch(@(t) obj.LineDist(t), -1);
+		end	
+		%%-----------------------------------------------------------------------------------%%
+		function x = FindMinDistML(obj, AxisType)
+			
+			switch AxisType
+				case 'Steer'
+					t0(1) = obj.LineA1.findParam( obj.TWB_FL_OB(2), 'Y');
+					t0(2) = obj.LineA2.findParam( obj.TWB_FL_OB(2), 'Y');
+				case 'InstCenter'
+					t0(1) = obj.LineA1.findParam( 10000, 'Y');
+					t0(2) = obj.LineA2.findParam( 10000, 'Y');
+			end
+				
+			
+			[x,fval,info, output] = fminsearch(@(t) obj.LineDistML(t), t0);
+
+			
+			if fval > 1
+				if strcmp(AxisType, 'InstCenter')
+					for k = 1:numel(obj.YSearchIRA)
+						t0(1) = obj.LineA1.findParam( obj.YSearchIRA(k), 'Y');
+						t0(2) = obj.LineA2.findParam( obj.YSearchIRA(k), 'Y');
+						[x,fval,info, output] = fminsearch(@(t) obj.LineDistML(t), t0);
+					end
+				end
+			end
+			
+			if fval > 1
+				msgbox('Axis Research not converged');
+			end
+			
+			
+		end	
+		%%-----------------------------------------------------------------------------------%%
+		function [P1,P2,MinDist] =  FindSteerAxis(obj)
+			
+			switch obj.Tmpl
+				case 'Solid'
+					P1 = obj.TWB_FL_OB;
+					P2 = obj.LWB_FL_OB;
+					MinDist = 0;
+				case 'LowMultiLink'
+					obj.LinkAssign(obj.LWB_RL, obj.LWB_FL, obj.TWB_FL_OB);
+					t = obj.FindMinDist();
+					MinDist = obj.LineDist(t);
+					P1 = obj.TWB_FL_OB;
+					P2 = [obj.LWB_RL.ParamPoint(t,'X');obj.LWB_RL.ParamPoint(t,'Y');obj.LWB_RL.ParamPoint(t,'Z')];
+				case 'TopMultiLink'
+					obj.LinkAssign(obj.TWB_RL, obj.TWB_FL, obj.LWB_FL_OB);
+					t = obj.FindMinDist();
+					MinDist = obj.LineDist(t);
+					P1 = obj.LWB_FL_OB;
+					P2 = [obj.TWB_RL.ParamPoint(t,'X');obj.TWB_RL.ParamPoint(t,'Y');obj.TWB_RL.ParamPoint(t,'Z')];
+				case 'FullMultiLink'
+					obj.LinkAssignML(obj.LWB_RL, obj.LWB_FL, obj.TWB_RL, obj.TWB_FL);
+					t = obj.FindMinDistML('Steer');
+					MinDist = obj.LineDistML(t);
+					P1 = [obj.LineA1.ParamPoint(t(1),'X'); obj.LineA1.ParamPoint(t(1),'Y'); obj.LineA1.ParamPoint(t(1),'Z')];
+					P2 = [obj.LineA2.ParamPoint(t(2),'X'); obj.LineA2.ParamPoint(t(2),'Y'); obj.LineA2.ParamPoint(t(2),'Z')];
+			end
+			obj.SteerAxis = Link(P1, P2);
+			obj.SAerror = MinDist;
+		end
+		%%-----------------------------------------------------------------------------------%%
+		function FindIstRotAxis(obj)
+			
+			obj.LinkAssignML(obj.LWB_RL, obj.TWB_RL, obj.LWB_FL, obj.TWB_FL);
+			t = obj.FindMinDistML('InstCenter');
+			MinDist = obj.LineDistML(t);
+			P1 = [obj.LineA1.ParamPoint(t(1),'X'); obj.LineA1.ParamPoint(t(1),'Y'); obj.LineA1.ParamPoint(t(1),'Z')];
+			P2 = [obj.LineA2.ParamPoint(t(2),'X'); obj.LineA2.ParamPoint(t(2),'Y'); obj.LineA2.ParamPoint(t(2),'Z')];
+			
+			obj.InstRotAxis = Link(P1, P2);
+			obj.IRAerror = MinDist;
+			
+		end
+		%%-----------------------------------------------------------------------------------%%
+		function Point = FindVirtualPoints(obj, Line1, Line2)
+			
+			[d, t1, t2] = distance(Line1, Line2);
+			
+			Point = [Line1.Xp(t1); Line1.Yp(t1); Line1.Zp(t1)];			
+			
+		end
+		%%-----------------------------------------------------------------------------------%%
+	end
+	
+end
+	

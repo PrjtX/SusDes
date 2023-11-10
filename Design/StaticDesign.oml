@@ -1,0 +1,1477 @@
+classdef StaticDesign < handle
+
+	properties
+		CamberGain
+		RollCenterZ
+		Squat
+		Dive
+		Caster
+		KingPin
+		Trail
+		Scrub
+		WC
+		TCP
+		TWB_FL_IB_Y
+		TWB_FL_IB_X
+		TWB_RL_IB_Y
+		TWB_RL_IB_X		
+		TWB_FL_OB_Z
+		TWB_OB_DeltaX
+		TWB_OB_DeltaY
+		TWB_OB_DeltaZ
+		LWB_FL_IB_Y
+		LWB_FL_IB_X
+		LWB_RL_IB_Y
+		LWB_RL_IB_X		
+		LWB_FL_OB_Z
+		LWB_OB_DeltaX
+		LWB_OB_DeltaY
+		LWB_OB_DeltaZ		
+		a
+		Section
+		field
+		Data
+		Buttons
+		ChcPath = 'C:\SusAn_DataBase\Compose\Susp.chc';
+		ChcPathField
+		DTPath 
+		DTField
+		LWB
+		TWB
+		ChcIn
+		ChcOut
+		ChcPathFieldOut
+		ChcPathOut
+		SKinp
+		Panel	
+		ChcKin
+		CurKin
+		ColActive     = [0 1 0];
+		ColNotActive =  [1.0 1.0 0];
+		ActiveHSPanel   = 1
+		ActiveTemplates = 1
+		ActiveTrd = 0
+		Templates = {'Delta_OB'; 'Links_Definition'}
+		PopUp
+		ToeFig
+		PRD
+		TabGroup
+		ToleranceDist
+	end 
+	
+	methods
+		%%%------------------------------------------------------------------------%%%
+		function obj = StaticDesign()
+			
+								
+		end
+		%%%------------------------------------------------------------------------%%%
+		function Open(obj)
+			%%%----%%%
+			Wy = 0.2;
+			Wz = 0.08;
+			%%%----%%%
+			Y1 = 0.25-0.1;
+			Y2 = 0.50-0.1;
+			Y3 = 0.75-0.1;
+			Z1 = 0.025;
+			Z2 = 0.03;
+			Z3 = 0.15;
+			Z4 = 0.42;
+			Z5 = 0.50;
+			Z6 = 0.60;			
+			%%%----%%%
+			a = figure('units', 'normalized', 'position', [0.1 0.1 0.8 0.8]);
+			set(a, 'numbertitle', 'off');
+			set(a, 'Name', 'SusAn - Static Design');
+			undock(a);
+			h = uitabgroup(a);
+			tab1 = uitab(h, 'title', 'Hard points Constraints');
+			tab2 = uitab(h, 'title', 'Static Kin parameter');
+			tab3 = uitab(h, 'title', 'exchange');						
+			if obj.ActiveHSPanel == 1
+				tab4 = uitab(h, 'title', 'To Hyper study');
+				obj.HyperStudyPanel(tab4);
+				obj.ActiveTemplates = 0;
+			end
+			tab5 = uitab(h, 'title', 'Track Rod');
+
+			%% --- %%
+			obj.Panel.TWB_FL_IB = obj.CoordinatePanel(tab1, 'TWB_FL_IB', [0.03, 0.05, 0.3, 0.2]);
+			obj.Panel.TWB_RL_IB = obj.CoordinatePanel(tab1, 'TWB_RL_IB', [0.67, 0.05, 0.3, 0.2]);
+			
+			obj.Panel.TWB_FL_OB = obj.CoordinatePanel(tab1, 'TWB_FL_OB', [0.03, 0.27, 0.3, 0.2]);
+			obj.Panel.TWB_RL_OB = obj.CoordinatePanel(tab1, 'TWB_RL_OB', [0.67, 0.27, 0.3, 0.2]);	
+			
+			obj.Panel.TWB_Delta_OB = obj.CoordinatePanel(tab1, 'TWB_Delta_OB = FL - RL', [0.35, 0.27, 0.3, 0.2]);		
+
+			obj.Panel.LWB_FL_IB = obj.CoordinatePanel(tab1, 'LWB_FL_IB', [0.03, 0.55, 0.3, 0.2]);
+			obj.Panel.LWB_RL_IB = obj.CoordinatePanel(tab1, 'LWB_RL_IB', [0.67, 0.55, 0.3, 0.2]);
+			
+			obj.Panel.LWB_FL_OB = obj.CoordinatePanel(tab1, 'LWB_FL_OB', [0.03, 0.77, 0.3, 0.2]);
+			obj.Panel.LWB_RL_OB = obj.CoordinatePanel(tab1, 'LWB_RL_OB', [0.67, 0.77, 0.3, 0.2]);
+			
+			obj.Panel.LWB_Delta_OB = obj.CoordinatePanel(tab1, 'LWB_Delta_OB = FL - RL', [0.35, 0.77, 0.3, 0.2]);		
+			
+			obj.Panel.PointTol = obj.WorkingParamPanel(tab1, 'Point Tol [mm]', [0.40  0.05  0.1 0.05])
+
+			obj.Panel.TRD_IB = obj.CoordinatePanel(tab5, 'TRD_IB', [0.03, 0.05, 0.3, 0.2]);
+			obj.Panel.TRD_OB = obj.CoordinatePanel(tab5, 'TRD_OB', [0.03, 0.25, 0.3, 0.2]);
+			
+			obj.Panel.PRD_IB = obj.CoordinatePanel(tab5, 'PRD_IB', [0.40, 0.05, 0.3, 0.2]);
+			obj.Panel.PRD_OB = obj.CoordinatePanel(tab5, 'PRD_OB', [0.40, 0.25, 0.3, 0.2]);		
+
+			obj.Panel.Rkr_B1 = obj.CoordinatePanel(tab5, 'Rkr_B1', [0.40, 0.45, 0.3, 0.2]);
+			obj.Panel.Rkr_B2 = obj.CoordinatePanel(tab5, 'Rkr_B2', [0.40, 0.65, 0.3, 0.2]);	
+			
+			obj.Panel.TRD_IRA_Offset    = obj.ParamePanel(tab5, 'IRA distance [mm]',  [0.05  0.5  0.2 0.05]);
+			obj.Panel.TRD_SA_Offset     = obj.ParamePanel(tab5, 'Steering Arm [mm]',  [0.05  0.55  0.2 0.05]);
+			obj.Panel.TRD_X_Ref          = obj.ParamePanel(tab5, 'TRD_XRef [mm]',      [0.05  0.60  0.2 0.05]);
+			obj.Panel.TRD_OB_Offset     = obj.ParamePanel(tab5, 'TRD OB offset [mm]', [0.05  0.65  0.2 0.05]);
+			
+			obj.Panel.PRD_SA_Offset     = obj.ParamePanel(tab5, 'Steer Axis dist [mm]',  [0.40  0.87  0.2 0.05]);
+			obj.Panel.PRD_MotionRatio   = obj.ParamePanel(tab5, 'Rocker MR [deg/mm]',  [0.40  0.92  0.2 0.05]);
+			
+			
+			
+			obj.LockParam('TRD_X_Ref');
+			
+
+			uicontrol(tab2,'Style','text', 'units', 'normalized', 'Position',[0.22  0.01  0.2 0.05],'String','Tar');	
+			uicontrol(tab2,'Style','text', 'units', 'normalized', 'Position',[0.29  0.01  0.2 0.05],'String','Chc');				
+			
+			obj.Panel.CamberGain = obj.ParamePanel(tab2, 'CamberGain [deg/100mm]', [0.05  0.05  0.3 0.05]);
+			obj.Panel.RCz = obj.ParamePanel(tab2, 'Roll Center Z [mm]',              [0.05  0.10  0.3 0.05]);
+			obj.Panel.Squat = obj.ParamePanel(tab2, 'Squat []',                       [0.05  0.15  0.3 0.05]);
+			obj.Panel.Dive = obj.ParamePanel(tab2, 'Dive []',                         [0.05  0.20  0.3 0.05]);
+			obj.Panel.Caster = obj.ParamePanel(tab2, 'Caster [deg]',                 [0.05  0.25  0.3 0.05]);
+			obj.Panel.KingPin = obj.ParamePanel(tab2, 'KingPin [deg]',               [0.05  0.30  0.3 0.05]);
+			obj.Panel.Trail = obj.ParamePanel(tab2, 'Trail [mm]',                    [0.05  0.35  0.3 0.05]);
+			obj.Panel.Scrub = obj.ParamePanel(tab2, 'Scrub [mm]',                    [0.05  0.40  0.3 0.05]);
+			
+			obj.Panel.WC  = obj.CoordinatePanel(tab2, 'WC', [0.6, 0.05, 0.3, 0.2]);
+			obj.Panel.TCP = obj.CoordinatePanel(tab2, 'TCP', [0.6, 0.25, 0.3, 0.2]);
+			
+
+
+			uicontrol(tab3,'Style','text', 'units', 'normalized', 'Position',[0.05  0.1  0.2 0.04],'String','Input Chc Path');		
+			obj.ChcPathField = uicontrol(tab3,'Style','textbox','String', 'none', 'units', 'normalized', 'position', [0.15  0.1  0.7 0.04]);
+			set(obj.ChcPathField, 'String', obj.ChcPath);
+			obj.Buttons.FindChc    = uicontrol(tab3,'Style','pushbutton','String', 'Select Chc', 'units', 'normalized', 'position', [0.93 0.1 0.05 0.04], ...
+                                                                                                          'callback',  @(handle, callback) obj.ChcSelect(handle, callback));	
+																										  
+			uicontrol(tab3,'Style','text', 'units', 'normalized', 'Position',[0.05  0.20  0.2 0.04],'String','Design Table Path');	
+			obj.DTField = uicontrol(tab3,'Style','textbox','String', 'none', 'units', 'normalized', 'position', [0.15  0.2  0.7 0.04]);
+			obj.Buttons.FindDT    = uicontrol(tab3,'Style','pushbutton','String', 'Select DT', 'units', 'normalized', 'position', [0.93 0.2 0.05 0.04], ...
+                                                                                                          'callback',  @(handle, callback) obj.DTSelect(handle, callback));	
+																										  
+			uicontrol(tab3,'Style','text', 'units', 'normalized', 'Position',[0.05  0.30  0.2 0.04],'String','Output Chc Path');		
+			obj.ChcPathFieldOut = uicontrol(tab3,'Style','textbox','String', 'none', 'units', 'normalized', 'position', [0.15  0.3  0.7 0.04]);
+			obj.Buttons.SelectChcOut    = uicontrol(tab3,'Style','pushbutton','String', 'Select Path', 'units', 'normalized', 'position', [0.93 0.3 0.05 0.04], ...
+			                                                                                               'callback', @(handle, callback) obj.ChcOutPathSelect(handle, callback));																											  
+
+			obj.Buttons.FrontRadio = uicontrol(a,'Style','radiobutton','String', 'Front', 'units', 'normalized', 'position', [0.95 0.05 0.05 0.03]);
+			obj.Buttons.RearRadio  = uicontrol(a,'Style','radiobutton','String', 'Rear', 'units', 'normalized', 'position', [0.95 0.08 0.05 0.03]);
+																										  																										  
+			obj.Buttons.ReadChc    = uicontrol(a,'Style','pushbutton','String', 'Read Chc', 'units', 'normalized', 'position', [0.94 0.2 0.05 0.05], ...
+                                                                                                          'callback',  @(handle, callback) obj.ChcRead(handle, callback));		
+																										  
+			obj.Buttons.CalcKin    = uicontrol(a,'Style','pushbutton','String', 'Calc Kin', 'units', 'normalized', 'position', [0.94 0.25 0.05 0.05], ...
+                                                                                                          'callback',  @(handle, callback) obj.Calc(handle, callback));		
+
+			obj.Buttons.WriteDT    = uicontrol(a,'Style','pushbutton','String', 'Write DT', 'units', 'normalized', 'position', [0.94 0.30 0.05 0.05], ...
+                                                                                                          'callback',  @(handle, callback) obj.DTWrite(handle, callback));	
+																										  
+			obj.Buttons.WriteChc   = uicontrol(a,'Style','pushbutton','String', 'Write Chc', 'units', 'normalized', 'position', [0.94 0.35 0.05 0.05], ...
+			                                                                                              'callback',  @(handle, callback) obj.ChcOutput(handle, callback));	
+																										  
+			obj.Buttons.CheckDif   = uicontrol(a,'Style','pushbutton','String', 'Diff Check', 'units', 'normalized', 'position', [0.94 0.40 0.05 0.05], ...
+			                                                                                         'callback',  @(handle, callback) obj.ManualCheckAllDif(handle, callback));	
+			obj.Buttons.ChcPntRet  = uicontrol(a,'Style','pushbutton','String', 'Chc Retrive', 'units', 'normalized', 'position', [0.94 0.45 0.05 0.05], ...
+			                                                                                         'callback',  @(handle, callback) obj.ChcRetrieve(handle, callback));																									 
+																										  
+																									  
+			obj.Buttons.CloseWin   = uicontrol(a,'Style','pushbutton','String', 'Close', 'units', 'normalized', 'position', [0.94 0.9 0.05 0.05], ...
+			                                                                                              'callback',  @(handle, callback) obj.CloseWindow(handle, callback));																							  
+			obj.Buttons.find_TRD_OB  = uicontrol(tab5,'Style','pushbutton','String', 'Find TRD OB', 'units', 'normalized', 'position', [0.8 0.1 0.15 0.05], ...
+																										  'callback', @(handle, callback) obj.FindTRD_OB(handle, callback));																										  
+																										  
+			obj.Buttons.find_PRD_OB  = uicontrol(tab5,'Style','pushbutton','String', 'Find PRD OB', 'units', 'normalized', 'position', [0.8 0.2 0.15 0.05], ...
+																										  'callback', @(handle, callback) obj.FindPRD_OB(handle, callback));																										  																										  
+
+			obj.Buttons.MBDCheck  = uicontrol(tab5,'Style','pushbutton','String', 'MBD Check', 'units', 'normalized', 'position', [0.8 0.4 0.15 0.05], ...
+																										  'callback',  @(handle, callback) obj.MultibodyCheck(handle, callback));	
+			obj.LockAllCoordinate();
+			obj.PopUp.TemplatesName = uicontrol(tab1,'Style','text', 'units', 'normalized', 'Position',[0.45 0.075 0.2 0.03],'String','Select Templates');	
+			obj.PopUp.Templates      = uicontrol(tab1,'Style','popupmenu','String', obj.Templates, 'units', 'normalized', 'position', [0.4 0.1 0.2 0.03], ...
+																								 'callback', @(handle, callback) obj.TmplApply(handle, callback));
+																								 
+			set(obj.PopUp.Templates, 'value', 1 );			
+			
+			if obj.ActiveTemplates == 0
+							
+				obj.TmplApply('','');
+				set(obj.PopUp.Templates, 'visible', 'off');
+				set(obj.PopUp.TemplatesName, 'visible', 'off');
+				
+			end
+			
+			if obj.ActiveTrd == 0
+				set(tab5, 'enable', 'off');
+			end			
+				
+			obj.TabGroup = h;
+			set(obj.TabGroup, 'selectedtab', tab3);
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function TmplApply(obj,handle, callback)
+			
+			obj.LockAllCoordinate();
+			i = get(obj.PopUp.Templates, 'value');
+			TmplName = obj.Templates{i};
+			
+			
+			if strcmp(TmplName, 'Delta_OB') == 1
+			
+				obj.UnlockField('TWB_FL_IB', 'X');
+				obj.UnlockField('TWB_FL_IB', 'Y');
+				
+				obj.UnlockField('TWB_RL_IB', 'X');
+				obj.UnlockField('TWB_RL_IB', 'Y');
+				
+				obj.UnlockField('TWB_FL_OB', 'Z');
+				
+				obj.UnlockField('TWB_Delta_OB', 'X');
+				obj.UnlockField('TWB_Delta_OB', 'Y');
+				obj.UnlockField('TWB_Delta_OB', 'Z');
+				
+				obj.UnlockField('LWB_FL_IB', 'X');
+				obj.UnlockField('LWB_FL_IB', 'Y');
+				
+				obj.UnlockField('LWB_RL_IB', 'X');
+				obj.UnlockField('LWB_RL_IB', 'Y');
+				
+				obj.UnlockField('LWB_FL_OB', 'Z');
+				
+				obj.UnlockField('LWB_Delta_OB', 'X');
+				obj.UnlockField('LWB_Delta_OB', 'Y');
+				obj.UnlockField('LWB_Delta_OB', 'Z');
+				
+				obj.UnlockField('TRD_IB', 'X');
+				obj.UnlockField('TRD_IB', 'Y');
+				obj.UnlockField('TRD_IB', 'Z');
+				
+			elseif strcmp(TmplName, 'Links_Definition') == 1
+				
+				obj.UnlockField('TWB_FL_IB', 'X');
+				obj.UnlockField('TWB_FL_IB', 'Y');
+				
+				obj.UnlockField('TWB_RL_IB', 'X');
+				obj.UnlockField('TWB_RL_IB', 'Y');
+				
+				obj.UnlockField('TWB_FL_OB', 'Y');
+				obj.UnlockField('TWB_FL_OB', 'Z');
+				
+				obj.UnlockField('TWB_RL_OB', 'Y');
+				obj.UnlockField('TWB_RL_OB', 'Z');				
+				
+				
+				obj.UnlockField('LWB_FL_IB', 'X');
+				obj.UnlockField('LWB_FL_IB', 'Y');
+				
+				obj.UnlockField('LWB_RL_IB', 'X');
+				obj.UnlockField('LWB_RL_IB', 'Y');
+				
+				obj.UnlockField('LWB_FL_OB', 'Y');
+				obj.UnlockField('LWB_FL_OB', 'Z');
+				
+				obj.UnlockField('LWB_RL_OB', 'Y');
+				obj.UnlockField('LWB_RL_OB', 'Z');		
+				
+				obj.UnlockField('TRD_IB', 'X');
+				obj.UnlockField('TRD_IB', 'Y');
+								
+				
+			end
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function LockField(obj, FieldName, Comp)			
+			switch Comp
+				case 'X'
+					set(obj.Panel.(FieldName).Cur.Xcol, 'backgroundcolor', obj.ColNotActive );
+					set(obj.Panel.(FieldName).Cur.X, 'enable', 'off');	
+				case 'Y'
+					set(obj.Panel.(FieldName).Cur.Ycol, 'backgroundcolor', obj.ColNotActive );
+					set(obj.Panel.(FieldName).Cur.Y, 'enable', 'off');						
+				case 'Z'
+					set(obj.Panel.(FieldName).Cur.Zcol, 'backgroundcolor', obj.ColNotActive );
+					set(obj.Panel.(FieldName).Cur.Z, 'enable', 'off');		
+				case 'All'					
+					set(obj.Panel.(FieldName).Cur.Xcol, 'backgroundcolor', obj.ColNotActive );
+					set(obj.Panel.(FieldName).Cur.X, 'enable', 'off');							
+					set(obj.Panel.(FieldName).Cur.Ycol, 'backgroundcolor', obj.ColNotActive );
+					set(obj.Panel.(FieldName).Cur.Y, 'enable', 'off');							
+					set(obj.Panel.(FieldName).Cur.Zcol, 'backgroundcolor', obj.ColNotActive );
+					set(obj.Panel.(FieldName).Cur.Z, 'enable', 'off');							
+			end
+		end
+		%%%------------------------------------------------------------------------%%%
+		function LockParam(obj, ParamName)
+			set(obj.Panel.(ParamName).Cur, 'backgroundcolor', obj.ColNotActive );
+			set(obj.Panel.(ParamName).Cur, 'enable', 'off');	
+		end
+		%%%------------------------------------------------------------------------%%%
+		function UnlockField(obj, FieldName, Comp)
+			switch Comp
+				case 'X'
+					set(obj.Panel.(FieldName).Cur.Xcol, 'backgroundcolor', obj.ColActive );
+					set(obj.Panel.(FieldName).Cur.X, 'enable', 'on');	
+				case 'Y'
+					set(obj.Panel.(FieldName).Cur.Ycol, 'backgroundcolor', obj.ColActive );
+					set(obj.Panel.(FieldName).Cur.Y, 'enable', 'on');						
+				case 'Z'
+					set(obj.Panel.(FieldName).Cur.Zcol, 'backgroundcolor', obj.ColActive );
+					set(obj.Panel.(FieldName).Cur.Z, 'enable', 'on');		
+				case 'All'					
+					set(obj.Panel.(FieldName).Cur.Xcol, 'backgroundcolor', obj.ColActive );
+					set(obj.Panel.(FieldName).Cur.X, 'enable', 'on');							
+					set(obj.Panel.(FieldName).Cur.Ycol, 'backgroundcolor', obj.ColActive );
+					set(obj.Panel.(FieldName).Cur.Y, 'enable', 'on');							
+					set(obj.Panel.(FieldName).Cur.Zcol, 'backgroundcolor', obj.ColActive );
+					set(obj.Panel.(FieldName).Cur.Z, 'enable', 'on');							
+			end
+		end		
+		%%%------------------------------------------------------------------------%%%
+		function LockAllCoordinate(obj)
+			obj.LockField('LWB_FL_IB', 'All');
+			obj.LockField('LWB_FL_OB', 'All');
+			obj.LockField('LWB_RL_IB', 'All');
+			obj.LockField('LWB_RL_OB', 'All');		
+			obj.LockField('TWB_FL_IB', 'All');
+			obj.LockField('TWB_FL_OB', 'All');
+			obj.LockField('TWB_RL_IB', 'All');
+			obj.LockField('TWB_RL_OB', 'All');			
+			obj.LockField('LWB_Delta_OB', 'All');
+			obj.LockField('TWB_Delta_OB', 'All');			
+			obj.LockField('TRD_IB', 'All');
+			obj.LockField('TRD_OB', 'All');
+			obj.LockField('PRD_IB', 'All');
+			obj.LockField('PRD_OB', 'All');
+			obj.LockField('Rkr_B1', 'All');
+			obj.LockField('Rkr_B2', 'All');
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function Panel = CoordinatePanel(obj, Tab, Name, Position)
+			%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%
+			Wy = 0.2;
+			Wz = 0.16;
+
+			Y1 = 0.25-0.1;
+			Y2 = 0.50-0.1;
+			Y3 = 0.75-0.1;
+			Z1 = 0.08;
+			Z2 = 0.2;
+			Z3 = 0.4;
+			Z4 = 0.5;
+			Z5 = 0.8;
+			Z6 = 0.9;	
+			
+			Panel.h = uipanel(Tab, 'units', 'normalized', 'position', Position);	
+			uicontrol(Panel.h,'Style','text', 'units', 'normalized', 'Position',[Y2    Z1  Wy*1.5 Wz],'String',Name);			
+			uicontrol(Panel.h,'Style','text', 'units', 'normalized', 'Position',[Y1    Z2  Wy Wz],'String','X [mm]');
+			uicontrol(Panel.h,'Style','text', 'units', 'normalized', 'Position',[Y2    Z2  Wy Wz],'String','Y [mm]');
+			uicontrol(Panel.h,'Style','text', 'units', 'normalized', 'Position',[Y3    Z2  Wy Wz],'String','Z [mm]');
+			uicontrol(Panel.h,'Style','text', 'units', 'normalized', 'Position',[Y1-0.1  Z3+0.04  0.05 0.08],'String','Tar');
+			uicontrol(Panel.h,'Style','text', 'units', 'normalized', 'Position',[Y1-0.1  Z3+1.1*Wz+0.04  0.05 0.08],'String','Chc');
+			
+			Panel.Cur.Xcol = uicontrol(Panel.h,'Style','pushbutton', 'units', 'normalized', 'String', ' ', 'position', [Y1-0.03 Z3 Wy Wz], 'backgroundcolor', obj.ColActive);
+			Panel.Cur.Ycol = uicontrol(Panel.h,'Style','pushbutton', 'units', 'normalized', 'String', ' ', 'position', [Y2-0.03 Z3 Wy Wz], 'backgroundcolor', obj.ColActive);
+			Panel.Cur.Zcol = uicontrol(Panel.h,'Style','pushbutton', 'units', 'normalized', 'String', ' ', 'position', [Y3-0.03 Z3 Wy Wz], 'backgroundcolor', obj.ColActive);		
+			
+			Panel.Cur.X = uicontrol(Panel.h,'Style','edit','String', 'none', 'units', 'normalized', 'position', [Y1-0.03 Z3 Wy Wz], 'backgroundcolor', 'transparent');
+			Panel.Cur.Y = uicontrol(Panel.h,'Style','edit','String', 'none', 'units', 'normalized', 'position', [Y2-0.03 Z3 Wy Wz], 'backgroundcolor', 'transparent');
+			Panel.Cur.Z = uicontrol(Panel.h,'Style','edit','String', 'none', 'units', 'normalized', 'position', [Y3-0.03 Z3 Wy Wz], 'backgroundcolor', 'transparent');
+
+			
+			Panel.Chc.X = uicontrol(Panel.h,'Style','edit','String', 'none', 'units', 'normalized', 'position', [Y1-0.03 Z3+1.1*Wz Wy Wz], 'enable', 'off');
+			Panel.Chc.Y = uicontrol(Panel.h,'Style','edit','String', 'none', 'units', 'normalized', 'position', [Y2-0.03 Z3+1.1*Wz Wy Wz], 'enable', 'off');
+			Panel.Chc.Z = uicontrol(Panel.h,'Style','edit','String', 'none', 'units', 'normalized', 'position', [Y3-0.03 Z3+1.1*Wz Wy Wz], 'enable', 'off');						
+			
+			Panel.XDif = uicontrol(Panel.h,'Style','pushbutton', 'units', 'normalized', 'String', ' ', 'position', [Y1-0.03 Z3+Wz Wy 0.03], 'backgroundcolor', [0.9 1 0.9]);
+			Panel.YDif = uicontrol(Panel.h,'Style','pushbutton', 'units', 'normalized', 'String', ' ', 'position', [Y2-0.03 Z3+Wz Wy 0.03], 'backgroundcolor', [0.9 1 0.9]);
+			Panel.ZDif = uicontrol(Panel.h,'Style','pushbutton', 'units', 'normalized', 'String', ' ', 'position', [Y3-0.03 Z3+Wz Wy 0.03], 'backgroundcolor', [0.9 1 0.9]);
+			%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%%%%----%%%
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function Panel = ParamePanel(obj, Tab, Name, Position)
+			
+			Panel.h = uipanel(Tab, 'units', 'normalized', 'position', Position);	
+			uicontrol(Panel.h,'Style','text', 'units', 'normalized', 'Position',[0.1  0.1  0.8 0.8],'String', Name);	
+			uicontrol(Panel.h,'Style','pushbutton', 'units', 'normalized', 'String', ' ', 'position', [0.5 0.15 0.2 0.7], 'backgroundcolor', obj.ColActive);
+			Panel.Cur    = uicontrol(Panel.h,'Style','edit','String', 'none', 'units', 'normalized', 'position', [0.5 0.15 0.2 0.7], 'backgroundcolor', 'transparent');
+			Panel.Chc = uicontrol(Panel.h,'Style','edit','String', 'none', 'units', 'normalized', 'position', [0.75 0.15 0.2 0.7], 'enable', 'off');
+			Panel.Dif = uicontrol(Panel.h,'Style','pushbutton', 'units', 'normalized', 'String', ' ', 'position', [0.71 0.15 0.025 0.7], 'backgroundcolor', [0.9 1 0.9]);
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function Panel = WorkingParamPanel(obj, Tab, Name, Position)
+			Panel.h = uipanel(Tab, 'units', 'normalized', 'position', Position);	
+			uicontrol(Panel.h,'Style','text', 'units', 'normalized', 'Position',[0.1  0.1  0.8 0.8],'String', Name);	
+			Panel.Val = uicontrol(Panel.h,'Style','edit','String', '1.0', 'units', 'normalized', 'position', [0.65 0.15 0.3 0.7]);
+		end
+		%%%------------------------------------------------------------------------%%%
+		function CoordPagePopolate(obj)
+			Comp = {'X','Y','Z'};
+			for k = 1:numel(Comp)
+							
+				obj.FieldPopolate(obj.Panel.TWB_FL_IB.Cur.(Comp{k}), obj.CurKin.TWB_FL_IB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TWB_RL_IB.Cur.(Comp{k}), obj.CurKin.TWB_RL_IB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TWB_FL_OB.Cur.(Comp{k}), obj.CurKin.TWB_FL_OB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TWB_RL_OB.Cur.(Comp{k}), obj.CurKin.TWB_RL_OB.(Comp{k}));
+				
+				obj.FieldPopolate(obj.Panel.LWB_FL_IB.Cur.(Comp{k}), obj.CurKin.LWB_FL_IB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.LWB_RL_IB.Cur.(Comp{k}), obj.CurKin.LWB_RL_IB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.LWB_FL_OB.Cur.(Comp{k}), obj.CurKin.LWB_FL_OB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.LWB_RL_OB.Cur.(Comp{k}), obj.CurKin.LWB_RL_OB.(Comp{k}));
+				
+				obj.FieldPopolate(obj.Panel.TWB_Delta_OB.Cur.(Comp{k}), obj.CurKin.TWB_FL_OB.(Comp{k})-obj.CurKin.TWB_RL_OB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TWB_Delta_OB.Chc.(Comp{k}), obj.ChcKin.TWB_FL_OB.(Comp{k})-obj.ChcKin.TWB_RL_OB.(Comp{k}));
+				
+				obj.FieldPopolate(obj.Panel.TWB_FL_IB.Chc.(Comp{k}), obj.ChcKin.TWB_FL_IB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TWB_RL_IB.Chc.(Comp{k}), obj.ChcKin.TWB_RL_IB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TWB_FL_OB.Chc.(Comp{k}), obj.ChcKin.TWB_FL_OB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TWB_RL_OB.Chc.(Comp{k}), obj.ChcKin.TWB_RL_OB.(Comp{k}));
+				
+				obj.FieldPopolate(obj.Panel.LWB_FL_IB.Chc.(Comp{k}), obj.ChcKin.LWB_FL_IB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.LWB_RL_IB.Chc.(Comp{k}), obj.ChcKin.LWB_RL_IB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.LWB_FL_OB.Chc.(Comp{k}), obj.ChcKin.LWB_FL_OB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.LWB_RL_OB.Chc.(Comp{k}), obj.ChcKin.LWB_RL_OB.(Comp{k}));			
+				
+				obj.FieldPopolate(obj.Panel.LWB_Delta_OB.Cur.(Comp{k}), obj.CurKin.LWB_FL_OB.(Comp{k})-obj.CurKin.LWB_RL_OB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.LWB_Delta_OB.Chc.(Comp{k}), obj.ChcKin.LWB_FL_OB.(Comp{k})-obj.ChcKin.LWB_RL_OB.(Comp{k}));
+				
+				obj.FieldPopolate(obj.Panel.TRD_IB.Cur.(Comp{k}), obj.CurKin.TRD_IB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TRD_IB.Chc.(Comp{k}), obj.ChcKin.TRD_IB.(Comp{k}));
+				
+				obj.FieldPopolate(obj.Panel.TRD_OB.Cur.(Comp{k}), obj.CurKin.TRD_OB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TRD_OB.Chc.(Comp{k}), obj.ChcKin.TRD_OB.(Comp{k}));		
+
+				obj.FieldPopolate(obj.Panel.PRD_IB.Cur.(Comp{k}), obj.CurKin.PRD_IB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.PRD_IB.Chc.(Comp{k}), obj.ChcKin.PRD_IB.(Comp{k}));
+				
+				obj.FieldPopolate(obj.Panel.PRD_OB.Cur.(Comp{k}), obj.CurKin.PRD_OB.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.PRD_OB.Chc.(Comp{k}), obj.ChcKin.PRD_OB.(Comp{k}));			
+
+				obj.FieldPopolate(obj.Panel.Rkr_B1.Cur.(Comp{k}), obj.CurKin.Rkr_B1.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.Rkr_B1.Chc.(Comp{k}), obj.ChcKin.Rkr_B1.(Comp{k}));
+				
+				obj.FieldPopolate(obj.Panel.Rkr_B2.Cur.(Comp{k}), obj.CurKin.Rkr_B2.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.Rkr_B2.Chc.(Comp{k}), obj.ChcKin.Rkr_B2.(Comp{k}));				
+					
+				obj.FieldPopolate(obj.Panel.WC.Cur.(Comp{k}), obj.CurKin.WC.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TCP.Cur.(Comp{k}), obj.CurKin.TCP.(Comp{k}));		
+				
+				obj.FieldPopolate(obj.Panel.WC.Chc.(Comp{k}), obj.ChcKin.WC.(Comp{k}));
+				obj.FieldPopolate(obj.Panel.TCP.Chc.(Comp{k}), obj.ChcKin.TCP.(Comp{k}));			
+											
+			end			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function ChcRead(obj, handle, event )
+			
+			Aux = get(obj.ChcPathField, 'String');
+			ChcPath = Aux{1,1};
+			Chc = ChcReader(ChcPath);
+			Chc.FindSections();
+			Chc.KinRead(1);
+			Chc.KinRead(2);
+			Chc.FrontKinDefine();
+			Chc.RearKinDefine();
+			Chc.TemplateDef(1);
+			Chc.TemplateDef(2);			
+
+			if get(obj.Buttons.FrontRadio, 'Value') == 1
+				Kin = Chc.FKin;
+				obj.ChcKin = Kin;
+			elseif get(obj.Buttons.RearRadio, 'Value') == 1
+				Kin = Chc.RKin;
+				obj.ChcKin = Kin;
+			end
+			obj.CurKin = obj.ChcKin;
+			%%%-------------------------------------------------%%%	
+			SK = SuspKinParamCalc(Kin);
+
+			obj.SKinp = SK;
+			%%%-------------------------------------------------%%%
+			
+			obj.CoordPagePopolate();
+			
+			obj.FieldPopolate(obj.Panel.CamberGain.Cur, SK.CamberGain*180/3.14*100);
+			obj.FieldPopolate(obj.Panel.RCz.Cur, SK.P_RC(3));
+			obj.FieldPopolate(obj.Panel.Squat.Cur, SK.Squat);
+			obj.FieldPopolate(obj.Panel.Dive.Cur, SK.Dive);
+			obj.FieldPopolate(obj.Panel.Caster.Cur, SK.Caster*180/3.14);
+			obj.FieldPopolate(obj.Panel.KingPin.Cur, SK.KingPin*180/3.14);
+			obj.FieldPopolate(obj.Panel.Trail.Cur, SK.Trail);
+			obj.FieldPopolate(obj.Panel.Scrub.Cur, SK.Scrub);	
+
+			obj.FieldPopolate(obj.Panel.CamberGain.Chc, SK.CamberGain*180/3.14*100);
+			obj.FieldPopolate(obj.Panel.RCz.Chc, SK.P_RC(3));
+			obj.FieldPopolate(obj.Panel.Squat.Chc, SK.Squat);
+			obj.FieldPopolate(obj.Panel.Dive.Chc, SK.Dive);
+			obj.FieldPopolate(obj.Panel.Caster.Chc, SK.Caster*180/3.14);
+			obj.FieldPopolate(obj.Panel.KingPin.Chc, SK.KingPin*180/3.14);
+			obj.FieldPopolate(obj.Panel.Trail.Chc, SK.Trail);
+			obj.FieldPopolate(obj.Panel.Scrub.Chc, SK.Scrub);
+			
+			obj.ChcIn = Chc;
+			
+			obj.CheckAllDif();
+			
+			if obj.ActiveHSPanel == 1
+				CB = [SK.CamberGain*180/3.14*100;SK.P_RC(3);SK.Squat;SK.Dive;SK.Caster*180/3.14;SK.KingPin*180/3.14;SK.Trail;SK.Scrub; ...
+				   Kin.WC.X;Kin.WC.Y;Kin.WC.Z;Kin.TCP.X;Kin.TCP.Y;Kin.TCP.Z; ...
+				   Kin.TWB_FL_IB.X;Kin.TWB_FL_IB.Y;Kin.TWB_RL_IB.X;Kin.TWB_RL_IB.Y;Kin.TWB_FL_OB.Z; ...
+				   Kin.TWB_FL_OB.X-Kin.TWB_RL_OB.X;Kin.TWB_FL_OB.Y-Kin.TWB_RL_OB.Y;Kin.TWB_FL_OB.Z-Kin.TWB_RL_OB.Z;  ...
+				   Kin.LWB_FL_IB.X;Kin.LWB_FL_IB.Y;Kin.LWB_RL_IB.X;Kin.LWB_RL_IB.Y;Kin.LWB_FL_OB.Z; ...
+				   Kin.LWB_FL_OB.X-Kin.LWB_RL_OB.X;Kin.LWB_FL_OB.Y-Kin.LWB_RL_OB.Y;Kin.LWB_FL_OB.Z-Kin.LWB_RL_OB.Z];
+				
+
+				StringNom = '';
+				StringL = '';
+				StringU = '';
+				for k = 1:numel(CB)
+					StringNom = [StringNom sprintf('%3.3f\n', CB(k))]
+					if CB(k) > 0
+						StringL = [StringL sprintf('%3.3f\n', CB(k)*0.9)]
+						StringU = [StringU sprintf('%3.3f\n', CB(k)*1.1)]
+					elseif CB(k) < 0
+						StringL = [StringL sprintf('%3.3f\n', CB(k)*1.1)]
+						StringU = [StringU sprintf('%3.3f\n', CB(k)*0.9)]
+					else
+						StringL = [StringL sprintf('%3.3f\n', -0.1)]
+						StringU = [StringU sprintf('%3.3f\n', 0.1)]						
+					end
+				end
+				
+				set(obj.Data.HSNom, 'String', StringNom);			
+				set(obj.Data.HSLB, 'String', StringL);
+				set(obj.Data.HSUB, 'String', StringU);
+
+			end
+			
+			%-------------------------------------------%
+			% TRD
+			%-------------------------------------------%
+			Ref_TRD_IB(1,1) = obj.ReadField(obj.Panel.TRD_IB.Chc.X);
+			Ref_TRD_IB(2,1) = obj.ReadField(obj.Panel.TRD_IB.Chc.Y);
+			Ref_TRD_IB(3,1) = obj.ReadField(obj.Panel.TRD_IB.Chc.Z);
+			
+			Ref_TRD_OB(1,1) = obj.ReadField(obj.Panel.TRD_OB.Chc.X);
+			Ref_TRD_OB(2,1) = obj.ReadField(obj.Panel.TRD_OB.Chc.Y);
+			Ref_TRD_OB(3,1) = obj.ReadField(obj.Panel.TRD_OB.Chc.Z);			
+			
+			Ref_TrackRod = TRD_Position(SK.A_SA, SK.A_IR);
+			Ref_TrackRod.TRDRef(Ref_TRD_IB,Ref_TRD_OB);	
+
+			obj.FieldPopolate(obj.Panel.TRD_IRA_Offset.Chc, Ref_TrackRod.Ref_D_IRA);
+			obj.FieldPopolate(obj.Panel.TRD_SA_Offset.Chc, Ref_TrackRod.Ref_D_SA);
+			obj.FieldPopolate(obj.Panel.TRD_X_Ref.Chc, Ref_TrackRod.Ref_X_IRA);
+			obj.FieldPopolate(obj.Panel.TRD_OB_Offset.Chc, Ref_TrackRod.Ref_DeltaD_TRD);
+
+			obj.FieldPopolate(obj.Panel.TRD_IRA_Offset.Cur, Ref_TrackRod.Ref_D_IRA);
+			obj.FieldPopolate(obj.Panel.TRD_SA_Offset.Cur, Ref_TrackRod.Ref_D_SA);
+			obj.FieldPopolate(obj.Panel.TRD_X_Ref.Cur, Ref_TrackRod.Ref_X_IRA);
+			obj.FieldPopolate(obj.Panel.TRD_OB_Offset.Cur, Ref_TrackRod.Ref_DeltaD_TRD);			
+			%-------------------------------------------%
+			% PRD
+			%-------------------------------------------%		
+			Ref_PRD_IB(1,1) = obj.ReadField(obj.Panel.PRD_IB.Chc.X);
+			Ref_PRD_IB(2,1) = obj.ReadField(obj.Panel.PRD_IB.Chc.Y);
+			Ref_PRD_IB(3,1) = obj.ReadField(obj.Panel.PRD_IB.Chc.Z);
+			
+			Ref_PRD_OB(1,1) = obj.ReadField(obj.Panel.PRD_OB.Chc.X);
+			Ref_PRD_OB(2,1) = obj.ReadField(obj.Panel.PRD_OB.Chc.Y);
+			Ref_PRD_OB(3,1) = obj.ReadField(obj.Panel.PRD_OB.Chc.Z);	
+			
+			Ref_WC(1,1) = obj.ReadField(obj.Panel.WC.Chc.X);	
+			Ref_WC(2,1) = obj.ReadField(obj.Panel.WC.Chc.Y);	
+			Ref_WC(3,1) = obj.ReadField(obj.Panel.WC.Chc.Z);	
+			
+			Ref_Rkr_B1(1,1) = obj.ReadField(obj.Panel.Rkr_B1.Chc.X);
+			Ref_Rkr_B1(2,1) = obj.ReadField(obj.Panel.Rkr_B1.Chc.Y);
+			Ref_Rkr_B1(3,1) = obj.ReadField(obj.Panel.Rkr_B1.Chc.Z);
+			
+			Ref_Rkr_B2(1,1) = obj.ReadField(obj.Panel.Rkr_B2.Chc.X);
+			Ref_Rkr_B2(2,1) = obj.ReadField(obj.Panel.Rkr_B2.Chc.Y);
+			Ref_Rkr_B2(3,1) = obj.ReadField(obj.Panel.Rkr_B2.Chc.Z);
+			
+			Ref_PRod = PRD_Position(SK.A_SA, SK.A_IR);
+			Ref_PRod.SetPoints('WC', Ref_WC);
+			Ref_PRod.SetPoints('PRD_IB', Ref_PRD_IB);
+			Ref_PRod.SetPoints('PRD_OB', Ref_PRD_OB);
+			Ref_PRod.SetPoints('Rkr_B1', Ref_Rkr_B1);
+			Ref_PRod.SetPoints('Rkr_B2', Ref_Rkr_B2);
+			Ref_PRod.RkrMotionRatio();
+			dist = Ref_PRod.SteeringAxisDist();
+			
+			obj.FieldPopolate(obj.Panel.PRD_SA_Offset.Cur, dist);
+			obj.FieldPopolate(obj.Panel.PRD_MotionRatio.Cur, Ref_PRod.MotionRatio);
+			
+			obj.FieldPopolate(obj.Panel.PRD_SA_Offset.Chc, dist);
+			obj.FieldPopolate(obj.Panel.PRD_MotionRatio.Chc, Ref_PRod.MotionRatio);			
+	
+			%-------------------------------------------%			
+			msgbox('Chc Loaded');
+			%-------------------------------------------%
+			
+			
+		end			
+		%%%------------------------------------------------------------------------%%%
+		function TarRecalc(obj)
+			
+			if get(obj.Buttons.FrontRadio, 'Value') == 1
+				KinName = 'FKin';
+			elseif get(obj.Buttons.RearRadio, 'Value') == 1
+				KinName = 'RKin';
+			end				
+			
+			Kin = obj.ChcOut.(KinName);
+						
+			Kin.LWB_FL_IB.X = obj.ReadField(obj.Panel.LWB_FL_IB.Cur.X);
+			Kin.LWB_FL_IB.Y = obj.ReadField(obj.Panel.LWB_FL_IB.Cur.Y);
+			Kin.LWB_FL_IB.Z = obj.ReadField(obj.Panel.LWB_FL_IB.Cur.Z);
+
+			Kin.LWB_FL_OB.X = obj.ReadField(obj.Panel.LWB_FL_OB.Cur.X);
+			Kin.LWB_FL_OB.Y = obj.ReadField(obj.Panel.LWB_FL_OB.Cur.Y);
+			Kin.LWB_FL_OB.Z = obj.ReadField(obj.Panel.LWB_FL_OB.Cur.Z);		
+
+			Kin.LWB_RL_IB.X = obj.ReadField(obj.Panel.LWB_RL_IB.Cur.X);
+			Kin.LWB_RL_IB.Y = obj.ReadField(obj.Panel.LWB_RL_IB.Cur.Y);
+			Kin.LWB_RL_IB.Z = obj.ReadField(obj.Panel.LWB_RL_IB.Cur.Z);	
+
+			Kin.LWB_RL_OB.X = obj.ReadField(obj.Panel.LWB_RL_OB.Cur.X);
+			Kin.LWB_RL_OB.Y = obj.ReadField(obj.Panel.LWB_RL_OB.Cur.Y);
+			Kin.LWB_RL_OB.Z = obj.ReadField(obj.Panel.LWB_RL_OB.Cur.Z);
+
+
+			Kin.TWB_FL_IB.X = obj.ReadField(obj.Panel.TWB_FL_IB.Cur.X);
+			Kin.TWB_FL_IB.Y = obj.ReadField(obj.Panel.TWB_FL_IB.Cur.Y);
+			Kin.TWB_FL_IB.Z = obj.ReadField(obj.Panel.TWB_FL_IB.Cur.Z);
+
+			Kin.TWB_FL_OB.X = obj.ReadField(obj.Panel.TWB_FL_OB.Cur.X);
+			Kin.TWB_FL_OB.Y = obj.ReadField(obj.Panel.TWB_FL_OB.Cur.Y);
+			Kin.TWB_FL_OB.Z = obj.ReadField(obj.Panel.TWB_FL_OB.Cur.Z);		
+
+			Kin.TWB_RL_IB.X = obj.ReadField(obj.Panel.TWB_RL_IB.Cur.X);
+			Kin.TWB_RL_IB.Y = obj.ReadField(obj.Panel.TWB_RL_IB.Cur.Y);
+			Kin.TWB_RL_IB.Z = obj.ReadField(obj.Panel.TWB_RL_IB.Cur.Z);	
+
+			Kin.TWB_RL_OB.X = obj.ReadField(obj.Panel.TWB_RL_OB.Cur.X);
+			Kin.TWB_RL_OB.Y = obj.ReadField(obj.Panel.TWB_RL_OB.Cur.Y);
+			Kin.TWB_RL_OB.Z = obj.ReadField(obj.Panel.TWB_RL_OB.Cur.Z);
+
+			Kin.WC.X = obj.ReadField(obj.Panel.WC.Cur.X);
+			Kin.WC.Y = obj.ReadField(obj.Panel.WC.Cur.Y);
+			Kin.WC.Z = obj.ReadField(obj.Panel.WC.Cur.Z);	
+			
+			Kin.TCP.X = obj.ReadField(obj.Panel.TCP.Cur.X);
+			Kin.TCP.Y = obj.ReadField(obj.Panel.TCP.Cur.Y);
+			Kin.TCP.Z = obj.ReadField(obj.Panel.TCP.Cur.Z);				
+			
+			SK = SuspKinParamCalc(Kin);
+			 
+			obj.FieldPopolate(obj.Panel.CamberGain.Cur, SK.CamberGain*180/3.14*100);
+			obj.FieldPopolate(obj.Panel.RCz.Cur, SK.P_RC(3));
+			obj.FieldPopolate(obj.Panel.Squat.Cur, SK.Squat);
+			obj.FieldPopolate(obj.Panel.Dive.Cur, SK.Dive);
+			obj.FieldPopolate(obj.Panel.Caster.Cur, SK.Caster*180/3.14);
+			obj.FieldPopolate(obj.Panel.KingPin.Cur, SK.KingPin*180/3.14);
+			obj.FieldPopolate(obj.Panel.Trail.Cur, SK.Trail);
+			obj.FieldPopolate(obj.Panel.Scrub.Cur, SK.Scrub);		
+
+					
+			obj.ChcOut.(KinName) = Kin;			
+			obj.CurKin = Kin;
+			obj.CoordPagePopolate()
+			obj.CheckAllDif();				
+			
+		end		
+		%%%------------------------------------------------------------------------%%%
+		function ChcSelect(obj, handle, event )
+			
+			Aux = get(obj.ChcPathField, 'String');
+			ChcPath = Aux{1,1};
+			[name, filepath, index] = uigetfile(ChcPath);
+			Path = [filepath '/' name];
+			set(obj.ChcPathField, 'String', Path);
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function DTSelect(obj, handle, event )
+			
+			
+			[name, filepath, index] = uigetfile('*.xls');
+			Path = [filepath '/' name];
+			set(obj.DTField , 'String', Path);
+			
+		end
+		%%%------------------------------------------------------------------------%%%	
+		function ChcOutPathSelect(obj, handle, event)
+			
+			filepathIni = get(obj.Buttons.SelectChcOut, 'String');
+			[name, filepath, index] = uiputfile('.chc', '', 'Output.chc');
+			set(obj.ChcPathFieldOut, 'String', [filepath '\' name]);
+
+		end
+		%%%------------------------------------------------------------------------%%%	
+		function Calc(obj, handle, event)
+			
+			i = get(obj.PopUp.Templates, 'value');
+			TmplName = obj.Templates{i};
+			
+			
+			CamberGain = (obj.ReadField(obj.Panel.CamberGain.Cur)/100)*3.14/180;
+			RollCenterZ = obj.ReadField(obj.Panel.RCz.Cur);
+			Squat = obj.ReadField(obj.Panel.Squat.Cur);
+			Dive = obj.ReadField(obj.Panel.Dive.Cur);		
+			Caster = obj.ReadField(obj.Panel.Caster.Cur)*3.14/180;				
+	        KingPin = obj.ReadField(obj.Panel.KingPin.Cur)*3.14/180;
+			Trail = obj.ReadField(obj.Panel.Trail.Cur);
+			Scrub = obj.ReadField(obj.Panel.Scrub.Cur);
+			
+			
+			WC(1,1) = obj.ReadField(obj.Panel.WC.Cur.X);
+			WC(2,1) = obj.ReadField(obj.Panel.WC.Cur.Y);
+			WC(3,1) = obj.ReadField(obj.Panel.WC.Cur.Z);
+			
+			TCP(1,1) = obj.ReadField(obj.Panel.TCP.Cur.X);
+			TCP(2,1) = obj.ReadField(obj.Panel.TCP.Cur.Y);
+			TCP(3,1) = obj.ReadField(obj.Panel.TCP.Cur.Z);
+
+			%%%------------------------------------------------------%%%
+			LWB_FL_IB_X = obj.ReadField(obj.Panel.LWB_FL_IB.Cur.X);
+            LWB_FL_IB_Y = obj.ReadField(obj.Panel.LWB_FL_IB.Cur.Y);
+			LWB_FL_IB_Z = obj.ReadField(obj.Panel.LWB_FL_IB.Cur.Z);
+			
+			LWB_FL_OB_X = obj.ReadField(obj.Panel.LWB_FL_OB.Cur.X);
+            LWB_FL_OB_Y = obj.ReadField(obj.Panel.LWB_FL_OB.Cur.Y);
+			LWB_FL_OB_Z = obj.ReadField(obj.Panel.LWB_FL_OB.Cur.Z);		
+
+			LWB_RL_IB_X = obj.ReadField(obj.Panel.LWB_RL_IB.Cur.X);
+            LWB_RL_IB_Y = obj.ReadField(obj.Panel.LWB_RL_IB.Cur.Y);
+			LWB_RL_IB_Z = obj.ReadField(obj.Panel.LWB_RL_IB.Cur.Z);	
+
+			LWB_RL_OB_X = obj.ReadField(obj.Panel.LWB_RL_OB.Cur.X);
+            LWB_RL_OB_Y = obj.ReadField(obj.Panel.LWB_RL_OB.Cur.Y);
+			LWB_RL_OB_Z = obj.ReadField(obj.Panel.LWB_RL_OB.Cur.Z);
+			
+            LWB_OB_DeltaX = obj.ReadField(obj.Panel.LWB_Delta_OB.Cur.X);
+			LWB_OB_DeltaY = obj.ReadField(obj.Panel.LWB_Delta_OB.Cur.Y);
+			LWB_OB_DeltaZ = obj.ReadField(obj.Panel.LWB_Delta_OB.Cur.Z);		
+			
+			TWB_FL_IB_X = obj.ReadField(obj.Panel.TWB_FL_IB.Cur.X);
+            TWB_FL_IB_Y = obj.ReadField(obj.Panel.TWB_FL_IB.Cur.Y);
+			TWB_FL_IB_Z = obj.ReadField(obj.Panel.TWB_FL_IB.Cur.Z);
+			
+			TWB_FL_OB_X = obj.ReadField(obj.Panel.TWB_FL_OB.Cur.X);
+            TWB_FL_OB_Y = obj.ReadField(obj.Panel.TWB_FL_OB.Cur.Y);
+			TWB_FL_OB_Z = obj.ReadField(obj.Panel.TWB_FL_OB.Cur.Z);		
+
+			TWB_RL_IB_X = obj.ReadField(obj.Panel.TWB_RL_IB.Cur.X);
+            TWB_RL_IB_Y = obj.ReadField(obj.Panel.TWB_RL_IB.Cur.Y);
+			TWB_RL_IB_Z = obj.ReadField(obj.Panel.TWB_RL_IB.Cur.Z);	
+
+			TWB_RL_OB_X = obj.ReadField(obj.Panel.TWB_RL_OB.Cur.X);
+            TWB_RL_OB_Y = obj.ReadField(obj.Panel.TWB_RL_OB.Cur.Y);
+			TWB_RL_OB_Z = obj.ReadField(obj.Panel.TWB_RL_OB.Cur.Z);		
+
+            TWB_OB_DeltaX = obj.ReadField(obj.Panel.TWB_Delta_OB.Cur.X);
+			TWB_OB_DeltaY = obj.ReadField(obj.Panel.TWB_Delta_OB.Cur.Y);
+			TWB_OB_DeltaZ = obj.ReadField(obj.Panel.TWB_Delta_OB.Cur.Z);
+			%%%------------------------------------------------------%%%			
+			
+									
+			SK = SuspKin('Susp');
+			SK.AssignWC(WC);
+			SK.AssignTCP(TCP);
+			SK.AssignRCz(RollCenterZ);
+			SK.AssignCamberGain(CamberGain);
+			SK.AssignDive(Dive);
+			SK.AssignSquat(Squat);
+			SK.AssignScrub(Scrub);
+			SK.AssignTrail(Trail);
+			SK.AssignCaster(Caster);
+			SK.AssignKingPin(KingPin);
+			SK.CalsSteerAxis();
+			SK.CalcIRLat();
+			SK.CalcIRLong();
+			SK.CalcInstRotAxis();
+			
+			if get(obj.Buttons.FrontRadio, 'Value') == 1
+				KinName = 'FKin';
+			elseif get(obj.Buttons.RearRadio, 'Value') == 1
+				KinName = 'RKin';
+			end			
+
+			if strcmp(TmplName, 'Delta_OB') == 1
+				
+				obj.TWB = ML_CombOB(SK.A_SA, SK.A_IR);
+				obj.TWB.FL_IB_Pos(TWB_FL_IB_X, TWB_FL_IB_Y);
+				obj.TWB.RL_IB_Pos(TWB_RL_IB_X, TWB_RL_IB_Y);
+				obj.TWB.FL_OB_ZPos(TWB_FL_OB_Z);
+				obj.TWB.OB_DeltaPos(-TWB_OB_DeltaX,-TWB_OB_DeltaY,-TWB_OB_DeltaZ);
+				Error = obj.TWB.FindLinks();
+
+
+				obj.LWB = ML_CombOB(SK.A_SA, SK.A_IR);
+				obj.LWB.FL_IB_Pos(LWB_FL_IB_X, LWB_FL_IB_Y);
+				obj.LWB.RL_IB_Pos(LWB_RL_IB_X, LWB_RL_IB_Y);
+				obj.LWB.FL_OB_ZPos(LWB_FL_OB_Z);
+				obj.LWB.OB_DeltaPos(-LWB_OB_DeltaX,-LWB_OB_DeltaY,-LWB_OB_DeltaZ);
+				Error = obj.LWB.FindLinks();
+						
+				
+			elseif strcmp(TmplName, 'Links_Definition') == 1
+				
+				TWB_FL = ConnectLine(SK.A_SA, SK.A_IR);
+				TWB_RL = ConnectLine(SK.A_SA, SK.A_IR);
+				LWB_FL = ConnectLine(SK.A_SA, SK.A_IR);
+				LWB_RL = ConnectLine(SK.A_SA, SK.A_IR);
+				
+				TWB_FL.SetIniX(TWB_FL_IB_X);
+				TWB_FL.SetIniZ(TWB_FL_OB_Z);				
+				TWB_RL.SetIniX(TWB_RL_IB_X);
+				TWB_RL.SetIniZ(TWB_RL_OB_Z);
+	 			
+				LWB_FL.SetIniX(LWB_FL_IB_X);
+				LWB_FL.SetIniZ(LWB_FL_OB_Z);				
+				LWB_RL.SetIniX(LWB_RL_IB_X);
+				LWB_RL.SetIniZ(LWB_RL_OB_Z);		
+
+				TWB_FL.ConstrainedPosition('Y', TWB_FL_IB_Y, 'X', TWB_FL_IB_X);
+				TWB_FL.ConstrainedPosition('Y', TWB_FL_OB_Y, 'Z', TWB_FL_OB_Z);				
+				TWB_RL.ConstrainedPosition('Y', TWB_RL_IB_Y, 'X', TWB_RL_IB_X);
+				TWB_RL.ConstrainedPosition('Y', TWB_RL_OB_Y, 'Z', TWB_RL_OB_Z);	
+
+				LWB_FL.ConstrainedPosition('Y', LWB_FL_IB_Y, 'X', LWB_FL_IB_X);
+				LWB_FL.ConstrainedPosition('Y', LWB_FL_OB_Y, 'Z', LWB_FL_OB_Z);				
+				LWB_RL.ConstrainedPosition('Y', LWB_RL_IB_Y, 'X', LWB_RL_IB_X);
+				LWB_RL.ConstrainedPosition('Y', LWB_RL_OB_Y, 'Z', LWB_RL_OB_Z);
+				
+				t = TWB_FL.FindLine();
+				t = TWB_RL.FindLine();
+				t = LWB_FL.FindLine();
+				t = LWB_RL.FindLine();
+
+				obj.TWB.P_FL_IB = TWB_FL.FindPoint(1);
+				obj.TWB.P_FL_OB = TWB_FL.FindPoint(2);
+
+				obj.TWB.P_RL_IB = TWB_RL.FindPoint(1);
+				obj.TWB.P_RL_OB = TWB_RL.FindPoint(2);
+
+				obj.LWB.P_FL_IB = LWB_FL.FindPoint(1);
+				obj.LWB.P_FL_OB = LWB_FL.FindPoint(2);
+
+				obj.LWB.P_RL_IB = LWB_RL.FindPoint(1);
+				obj.LWB.P_RL_OB = LWB_RL.FindPoint(2);
+	
+								
+			end
+			
+			if norm([obj.TWB.P_FL_OB(1)-obj.TWB.P_RL_OB(1);obj.TWB.P_FL_OB(2)-obj.TWB.P_RL_OB(2);obj.TWB.P_FL_OB(3)-obj.TWB.P_RL_OB(3)]) < 1
+				obj.TWB.P_RL_OB = obj.TWB.P_FL_OB;
+			end
+			
+			if norm([obj.LWB.P_FL_OB(1)-obj.LWB.P_RL_OB(1);obj.LWB.P_FL_OB(2)-obj.LWB.P_RL_OB(2);obj.LWB.P_FL_OB(3)-obj.LWB.P_RL_OB(3)]) < 1
+				obj.LWB.P_RL_OB = obj.LWB.P_FL_OB;
+			end			
+			
+			obj.CalcResultWrite(KinName);
+			
+			msgbox('Kin generation completed');
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function DTWrite(obj, handle, event)
+			
+			SuspName = 'Test';
+			
+			Aux = get(obj.DTField, 'String');			
+			PathXls = Aux{1,1};
+
+			[num, txt, raw] = xlsread(PathXls, 'main', 'A2:A30');
+
+			Mono       = xlsread(PathXls, 'main', 'AR2:AT2');
+			DamperChs = xlsread(PathXls, 'main', 'BD2:BF2');
+			DamperRkr = xlsread(PathXls, 'main', 'BA2:BC2');
+			RollRkr   = xlsread(PathXls, 'main', 'BM2:BO2');
+			
+			if get(obj.Buttons.FrontRadio, 'Value') == 1
+				KinName = 'FKin';
+			elseif get(obj.Buttons.RearRadio, 'Value') == 1
+				KinName = 'RKin';
+			end			
+
+			Nitem = numel(txt);
+			Data = [obj.LWB.P_FL_IB(1)
+					 obj.LWB.P_FL_IB(2)
+					 obj.LWB.P_FL_IB(3)
+					 obj.LWB.P_RL_IB(1)
+					 obj.LWB.P_RL_IB(2)
+					 obj.LWB.P_RL_IB(3)
+					 obj.LWB.P_FL_OB(1)
+					 obj.LWB.P_FL_OB(2)
+					 obj.LWB.P_FL_OB(3)
+					 obj.LWB.P_RL_OB(1)
+					 obj.LWB.P_RL_OB(2)
+					 obj.LWB.P_RL_OB(3)
+					 obj.ChcIn.(KinName).TRD_OB.X
+					 obj.ChcIn.(KinName).TRD_OB.Y
+					 obj.ChcIn.(KinName).TRD_OB.Z
+					 obj.ChcIn.(KinName).TRD_IB.X
+					 obj.ChcIn.(KinName).TRD_IB.Y
+					 obj.ChcIn.(KinName).TRD_IB.Z
+					 obj.TWB.P_FL_IB(1)
+					 obj.TWB.P_FL_IB(2)
+					 obj.TWB.P_FL_IB(3)
+					 obj.TWB.P_RL_IB(1)
+					 obj.TWB.P_RL_IB(2)
+					 obj.TWB.P_RL_IB(3)
+					 obj.TWB.P_FL_OB(1)
+					 obj.TWB.P_FL_OB(2)
+					 obj.TWB.P_FL_OB(3)
+					 obj.TWB.P_RL_OB(1)
+					 obj.TWB.P_RL_OB(2)
+					 obj.TWB.P_RL_OB(3)
+					 obj.ChcIn.(KinName).TCP.X
+					 obj.ChcIn.(KinName).TCP.Y
+					 obj.ChcIn.(KinName).TCP.Z
+					 obj.ChcIn.(KinName).PRD_OB.X
+					 obj.ChcIn.(KinName).PRD_OB.Y
+					 obj.ChcIn.(KinName).PRD_OB.Z
+					 obj.ChcIn.(KinName).PRD_IB.X
+					 obj.ChcIn.(KinName).PRD_IB.Y
+					 obj.ChcIn.(KinName).PRD_IB.Z
+					 Mono(1)
+					 Mono(2)
+					 Mono(3)
+					 obj.ChcIn.(KinName).Rkr_B1.X
+					 obj.ChcIn.(KinName).Rkr_B1.Y
+					 obj.ChcIn.(KinName).Rkr_B1.Z
+					 obj.ChcIn.(KinName).Rkr_B2.X
+					 obj.ChcIn.(KinName).Rkr_B2.Y
+					 obj.ChcIn.(KinName).Rkr_B2.Z
+					 DamperRkr(1)
+					 DamperRkr(2)
+					 DamperRkr(3)
+					 DamperChs(1)
+					 DamperChs(2)
+					 DamperChs(3)		
+					 obj.ChcIn.(KinName).Rkr_Pot.X
+					 obj.ChcIn.(KinName).Rkr_Pot.Y
+					 obj.ChcIn.(KinName).Rkr_Pot.Z
+					 obj.ChcIn.(KinName).Chs_Pot.X
+					 obj.ChcIn.(KinName).Chs_Pot.Y
+					 obj.ChcIn.(KinName).Chs_Pot.Z
+					 RollRkr(1)
+					 RollRkr(2)
+					 RollRkr(3)];
+
+			range1 = sprintf('A%01.0f', Nitem+2 );
+			range2 = sprintf('E%01.0f:BO%01.0f', Nitem+2, Nitem+2 );
+
+			xlswrite(PathXls, {SuspName}, 'main', range1);
+			xlswrite(PathXls, Data', 'main', range2);	
+
+			msgbox('DT written');			
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function ChcOutput(obj, handle, event)
+			
+			if get(obj.Buttons.FrontRadio, 'Value') == 1
+				Axle = 'Front';
+			elseif get(obj.Buttons.RearRadio, 'Value') == 1
+				Axle = 'Rear';
+			end		
+			
+			
+			Aux = get(obj.ChcPathFieldOut , 'String');
+			Path = Aux{1};
+			obj.ChcOut.Write(Path,Axle);
+			
+			msgbox('Chc written')
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function CloseWindow(obj, handle, event)
+			close all
+		end
+		%%%------------------------------------------------------------------------%%%
+		function FieldPopolate(obj, Field, Value)
+			set(Field, 'String', sprintf('%2.3f',Value));
+		end		
+		%%%------------------------------------------------------------------------%%%
+		function DifCheckCoord(obj, PanelName)
+			
+			CurX = obj.ReadField(obj.Panel.(PanelName).Cur.X);
+			CurY = obj.ReadField(obj.Panel.(PanelName).Cur.Y);
+			CurZ = obj.ReadField(obj.Panel.(PanelName).Cur.Z);
+			
+			
+			ChcX = obj.ReadField(obj.Panel.(PanelName).Chc.X);
+			ChcY = obj.ReadField(obj.Panel.(PanelName).Chc.Y);
+			ChcZ = obj.ReadField(obj.Panel.(PanelName).Chc.Z);
+				
+
+			DeltaX = abs(CurX - ChcX);
+			DeltaY = abs(CurY - ChcY);
+			DeltaZ = abs(CurZ - ChcZ);
+			
+			if abs(DeltaX) > 0.001
+				set(obj.Panel.(PanelName).XDif, 'backgroundcolor', [1 0 0])
+			else
+				set(obj.Panel.(PanelName).XDif, 'backgroundcolor', [0.9 1 0.9])
+			end
+			
+			if abs(DeltaY) > 0.001
+				set(obj.Panel.(PanelName).YDif, 'backgroundcolor', [1 0 0])
+			else
+				set(obj.Panel.(PanelName).YDif, 'backgroundcolor', [0.9 1 0.9])
+			end			
+			
+			if abs(DeltaZ) > 0.001
+				set(obj.Panel.(PanelName).ZDif, 'backgroundcolor', [1 0 0])
+			else
+				set(obj.Panel.(PanelName).ZDif, 'backgroundcolor', [0.9 1 0.9])
+			end			
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function DifCheckParam(obj, PanelName)
+			Cur = obj.ReadField(obj.Panel.(PanelName).Cur);
+			Chc = obj.ReadField(obj.Panel.(PanelName).Chc);
+			
+			Delta = abs(Cur - Chc);
+			
+			if abs(Delta) > 0.001
+				set(obj.Panel.(PanelName).Dif, 'backgroundcolor', [1 0 0])
+			else
+				set(obj.Panel.(PanelName).Dif, 'backgroundcolor', [0.9 1 0.9])
+			end		
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function ToleranceCoordRetrive(obj, PanelName, Tolerance)
+			
+			Cur(1) = obj.ReadField(obj.Panel.(PanelName).Cur.X);
+			Cur(2) = obj.ReadField(obj.Panel.(PanelName).Cur.Y);
+			Cur(3) = obj.ReadField(obj.Panel.(PanelName).Cur.Z);
+			
+			
+			Chc(1) = obj.ReadField(obj.Panel.(PanelName).Chc.X);
+			Chc(2) = obj.ReadField(obj.Panel.(PanelName).Chc.Y);			
+			Chc(3) = obj.ReadField(obj.Panel.(PanelName).Chc.Z);
+			
+			dist = norm(Chc - Cur);
+			
+			if dist<=Tolerance
+				
+				obj.FieldPopolate(obj.Panel.(PanelName).Cur.X, Chc(1));
+				obj.FieldPopolate(obj.Panel.(PanelName).Cur.Y, Chc(2));
+				obj.FieldPopolate(obj.Panel.(PanelName).Cur.Z, Chc(3));
+				 
+			end
+			
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function CheckAllDif(obj)
+			
+			obj.DifCheckCoord('TWB_FL_IB');
+			obj.DifCheckCoord('TWB_FL_OB');
+			obj.DifCheckCoord('TWB_RL_IB');
+			obj.DifCheckCoord('TWB_RL_OB');
+			
+			
+			obj.DifCheckCoord('LWB_FL_IB');
+			obj.DifCheckCoord('LWB_FL_OB');
+			obj.DifCheckCoord('LWB_RL_IB');
+			obj.DifCheckCoord('LWB_RL_OB');
+			
+			obj.DifCheckCoord('TRD_IB');
+			obj.DifCheckCoord('TRD_OB');
+			
+			obj.DifCheckCoord('PRD_IB');
+			obj.DifCheckCoord('PRD_OB');			
+			
+			obj.DifCheckCoord('Rkr_B1');
+			obj.DifCheckCoord('Rkr_B2');
+			
+			obj.DifCheckCoord('LWB_Delta_OB');
+			obj.DifCheckCoord('TWB_Delta_OB');
+
+			obj.DifCheckCoord('WC');
+			obj.DifCheckCoord('TCP');
+			
+			obj.DifCheckParam('CamberGain');
+			obj.DifCheckParam('RCz');
+			obj.DifCheckParam('Squat');
+			obj.DifCheckParam('Dive');
+			obj.DifCheckParam('Caster');
+			obj.DifCheckParam('KingPin');
+			obj.DifCheckParam('Trail');
+			obj.DifCheckParam('Scrub');
+			
+			obj.DifCheckParam('TRD_IRA_Offset');
+			obj.DifCheckParam('TRD_SA_Offset');
+			obj.DifCheckParam('TRD_X_Ref');
+			obj.DifCheckParam('TRD_OB_Offset');
+
+		end
+		%%%------------------------------------------------------------------------%%%
+		function ToleranceCoordRetriveAll(obj, Tolerance)
+			
+			obj.ToleranceCoordRetrive('TWB_FL_IB', Tolerance);
+			obj.ToleranceCoordRetrive('TWB_RL_IB', Tolerance);
+			obj.ToleranceCoordRetrive('TWB_FL_OB', Tolerance);
+			obj.ToleranceCoordRetrive('TWB_RL_OB', Tolerance);
+			
+			obj.ToleranceCoordRetrive('LWB_FL_IB', Tolerance);
+			obj.ToleranceCoordRetrive('LWB_RL_IB', Tolerance);
+			obj.ToleranceCoordRetrive('LWB_FL_OB', Tolerance);
+			obj.ToleranceCoordRetrive('LWB_RL_OB', Tolerance);	
+
+			
+
+		end		
+		%%%------------------------------------------------------------------------%%%
+		function ManualCheckAllDif(obj, handle, event)
+			obj.CheckAllDif();
+		end
+		%%%------------------------------------------------------------------------%%%
+		function Value = ReadField(obj, FieldHandle)
+			
+			String = get(FieldHandle, 'String');
+			Value = sscanf(String, '%f'); 
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function HyperStudyPanel(obj, Tab)
+			uicontrol(Tab, 'Style','text', 'units', 'normalized', 'Position',[0.05 0.05 0.10 0.05],'String','Lower Bound');
+			uicontrol(Tab, 'Style','text', 'units', 'normalized', 'Position',[0.20 0.05 0.10 0.05],'String','Nom Data');
+			uicontrol(Tab, 'Style','text', 'units', 'normalized', 'Position',[0.35 0.05 0.10 0.05],'String','Upper Bound');
+			obj.Data.HSNom = uicontrol(Tab,'Style','textbox','String', 'none', 'units', 'normalized', 'position', [0.20 0.1 0.1 0.8]);
+			obj.Data.HSLB = uicontrol(Tab,'Style','textbox','String', 'none', 'units', 'normalized', 'position', [0.05 0.1 0.1 0.8]);
+			obj.Data.HSUB = uicontrol(Tab,'Style','textbox','String', 'none', 'units', 'normalized', 'position', [0.35 0.1 0.1 0.8]);
+		end
+		%%%------------------------------------------------------------------------%%%
+		function MultibodyCheck(obj, handle, callback)
+			
+			if isempty(obj.ToeFig) == 1
+				obj.ToeFigureOpen();
+			else
+				close(obj.ToeFig.Fig);
+				obj.ToeFigureOpen();
+			end
+			
+			
+			SuspName = 'Test';
+			Path = 'C:\Scratch\Test';
+		
+			Err = SuspRun(SuspName, Path,  obj.ChcKin, obj.ToeFig.SP, 'b');
+			Err = SuspRun(SuspName, Path,  obj.CurKin, obj.ToeFig.SP, 'r');
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function ToeFigureOpen(obj)
+			
+			obj.ToeFig.Fig = figure();
+			undock();
+			%%-------------------------------------------------------%%%-------------------------------------------------------%%%					
+			obj.ToeFig.SP(1) = subplot(3,2,1);
+			hold on
+			grid on
+			
+			xlabel('RH [mm]');
+			ylabel('Toe [deg]');			
+			%%%-------------------------------------------------------%%%
+			obj.ToeFig.SP(2) = subplot(3,2,2);
+			hold on
+			grid on
+
+			xlabel('Rack disp [mm]');
+			ylabel('Avrg Steer [deg]');
+			%%%-------------------------------------------------------%%%
+			obj.ToeFig.SP(3) = subplot(3,2,3);
+			hold on
+			grid on
+
+			xlabel('Rack disp [mm]');
+			ylabel('Delta Toe [deg]');
+			%%%-------------------------------------------------------%%%-------------------------------------------------------%%%		
+			obj.ToeFig.SP(4) = subplot(3,2,4);
+			hold on
+			grid on
+
+			xlabel('Rack disp [mm]');
+			ylabel('Delta RH [mm]');
+			%%%-------------------------------------------------------%%%-------------------------------------------------------%%%	
+			obj.ToeFig.SP(5) = subplot(3,2,5);
+			hold on
+			grid on
+
+			xlabel('RH [mm]');
+			ylabel('Rocker angle [deg]');
+			%%%-------------------------------------------------------%%%-------------------------------------------------------%%%				
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function FindTRD_OB(obj, handle, callback)
+			
+			%%%-------------------------------------------------%%%
+			Cur_WC(1,1) = obj.ReadField(obj.Panel.WC.Cur.X);
+			Cur_WC(2,1) = obj.ReadField(obj.Panel.WC.Cur.Y);
+			Cur_WC(3,1) = obj.ReadField(obj.Panel.WC.Cur.Z);
+			
+			Cur_TCP(1,1) = obj.ReadField(obj.Panel.TCP.Cur.X);
+			Cur_TCP(2,1) = obj.ReadField(obj.Panel.TCP.Cur.Y);
+			Cur_TCP(3,1) = obj.ReadField(obj.Panel.TCP.Cur.Z);
+			
+			Cur_CamberGain = (obj.ReadField(obj.Panel.CamberGain.Cur)/100)*3.14/180;
+			Cur_RollCenterZ = obj.ReadField(obj.Panel.RCz.Cur);
+			Cur_Squat = obj.ReadField(obj.Panel.Squat.Cur);
+			Cur_Dive = obj.ReadField(obj.Panel.Dive.Cur);		
+			Cur_Caster = obj.ReadField(obj.Panel.Caster.Cur)*3.14/180;				
+	        Cur_KingPin = obj.ReadField(obj.Panel.KingPin.Cur)*3.14/180;
+			Cur_Trail = obj.ReadField(obj.Panel.Trail.Cur);
+			Cur_Scrub = obj.ReadField(obj.Panel.Scrub.Cur);	
+												
+			Cur_SK = SuspKin('Susp');
+			Cur_SK.AssignWC(Cur_WC);
+			Cur_SK.AssignTCP(Cur_TCP);
+			Cur_SK.AssignRCz(Cur_RollCenterZ);
+			Cur_SK.AssignCamberGain(Cur_CamberGain);
+			Cur_SK.AssignDive(Cur_Dive);
+			Cur_SK.AssignSquat(Cur_Squat);
+			Cur_SK.AssignScrub(Cur_Scrub);
+			Cur_SK.AssignTrail(Cur_Trail);
+			Cur_SK.AssignCaster(Cur_Caster);
+			Cur_SK.AssignKingPin(Cur_KingPin);
+			Cur_SK.CalsSteerAxis();
+			Cur_SK.CalcIRLat();
+			Cur_SK.CalcIRLong();
+			Cur_SK.CalcInstRotAxis();
+			
+			Cur_TRD_IB(1,1) = obj.ReadField(obj.Panel.TRD_IB.Cur.X);
+			Cur_TRD_IB(2,1) = obj.ReadField(obj.Panel.TRD_IB.Cur.Y);
+			Cur_TRD_IB(3,1) = obj.ReadField(obj.Panel.TRD_IB.Cur.Z);
+			
+			Ref_D_IRA = obj.ReadField(obj.Panel.TRD_IRA_Offset.Cur);
+			Ref_D_SA = obj.ReadField(obj.Panel.TRD_SA_Offset.Cur);
+			Ref_X_IRA = obj.ReadField(obj.Panel.TRD_X_Ref.Cur);
+			Ref_DeltaD_TRD = obj.ReadField(obj.Panel.TRD_OB_Offset.Cur);
+			%%%-------------------------------------------------%%%
+			TrackRod = TRD_Position(Cur_SK.A_SA, Cur_SK.A_IR);
+			TrackRod.GetRefValues(Ref_D_IRA, Ref_D_SA, Ref_X_IRA, Ref_DeltaD_TRD);
+			TrackRod.InboardPosition(Cur_TRD_IB(1), Cur_TRD_IB(2), Cur_TRD_IB(3));
+			Err = TrackRod.FindTRDAxis();
+			Pos = TrackRod.Find_TRD_OB();
+			
+			obj.CurKin.TRD_IB.X = Cur_TRD_IB(1);
+			obj.CurKin.TRD_IB.Y = Cur_TRD_IB(2);
+			obj.CurKin.TRD_IB.Z = Cur_TRD_IB(3);
+			
+			obj.CurKin.TRD_OB.X = Pos(1);
+			obj.CurKin.TRD_OB.Y = Pos(2);
+			obj.CurKin.TRD_OB.Z = Pos(3);
+			
+			obj.CoordPagePopolate();
+			%%%-------------------------------------------------%%%
+			obj.CheckAllDif();
+			
+			if get(obj.Buttons.FrontRadio, 'Value') == 1
+				obj.ChcOut.FKin = obj.CurKin;
+			elseif get(obj.Buttons.RearRadio, 'Value') == 1
+				obj.ChcOut.RKin = obj.CurKin;
+			end					
+									
+		end
+		%%%------------------------------------------------------------------------%%%
+		function FindPRD_OB(obj, handle, callback)
+			
+			%%%-------------------------------------------------%%%
+			Cur_WC(1,1) = obj.ReadField(obj.Panel.WC.Cur.X);
+			Cur_WC(2,1) = obj.ReadField(obj.Panel.WC.Cur.Y);
+			Cur_WC(3,1) = obj.ReadField(obj.Panel.WC.Cur.Z);
+			
+			Cur_TCP(1,1) = obj.ReadField(obj.Panel.TCP.Cur.X);
+			Cur_TCP(2,1) = obj.ReadField(obj.Panel.TCP.Cur.Y);
+			Cur_TCP(3,1) = obj.ReadField(obj.Panel.TCP.Cur.Z);
+			
+			Cur_CamberGain = (obj.ReadField(obj.Panel.CamberGain.Cur)/100)*3.14/180;
+			Cur_RollCenterZ = obj.ReadField(obj.Panel.RCz.Cur);
+			Cur_Squat = obj.ReadField(obj.Panel.Squat.Cur);
+			Cur_Dive = obj.ReadField(obj.Panel.Dive.Cur);		
+			Cur_Caster = obj.ReadField(obj.Panel.Caster.Cur)*3.14/180;				
+	        Cur_KingPin = obj.ReadField(obj.Panel.KingPin.Cur)*3.14/180;
+			Cur_Trail = obj.ReadField(obj.Panel.Trail.Cur);
+			Cur_Scrub = obj.ReadField(obj.Panel.Scrub.Cur);	
+												
+			Cur_SK = SuspKin('Susp');
+			Cur_SK.AssignWC(Cur_WC);
+			Cur_SK.AssignTCP(Cur_TCP);
+			Cur_SK.AssignRCz(Cur_RollCenterZ);
+			Cur_SK.AssignCamberGain(Cur_CamberGain);
+			Cur_SK.AssignDive(Cur_Dive);
+			Cur_SK.AssignSquat(Cur_Squat);
+			Cur_SK.AssignScrub(Cur_Scrub);
+			Cur_SK.AssignTrail(Cur_Trail);
+			Cur_SK.AssignCaster(Cur_Caster);
+			Cur_SK.AssignKingPin(Cur_KingPin);
+			Cur_SK.CalsSteerAxis();
+			Cur_SK.CalcIRLat();
+			Cur_SK.CalcIRLong();
+			Cur_SK.CalcInstRotAxis();
+			
+			Cur_Rkr_B1(1,1)  = obj.ReadField(obj.Panel.Rkr_B1.Cur.X);
+			Cur_Rkr_B1(2,1)  = obj.ReadField(obj.Panel.Rkr_B1.Cur.Y);
+			Cur_Rkr_B1(3,1)  = obj.ReadField(obj.Panel.Rkr_B1.Cur.Z);
+			
+			Cur_Rkr_B2(1,1)  = obj.ReadField(obj.Panel.Rkr_B2.Cur.X);
+			Cur_Rkr_B2(2,1)  = obj.ReadField(obj.Panel.Rkr_B2.Cur.Y);
+			Cur_Rkr_B2(3,1)  = obj.ReadField(obj.Panel.Rkr_B2.Cur.Z);			
+						
+			Cur_PRD_IB(1,1) = obj.ReadField(obj.Panel.PRD_IB.Cur.X);
+			Cur_PRD_IB(2,1) = obj.ReadField(obj.Panel.PRD_IB.Cur.Y);
+			Cur_PRD_IB(3,1) = obj.ReadField(obj.Panel.PRD_IB.Cur.Z);
+			
+			Cur_PRD_OB(1,1) = obj.ReadField(obj.Panel.PRD_OB.Cur.X);
+			Cur_PRD_OB(2,1) = obj.ReadField(obj.Panel.PRD_OB.Cur.Y);
+			Cur_PRD_OB(3,1) = obj.ReadField(obj.Panel.PRD_OB.Cur.Z);			
+			
+			Ref_SA_Offset = obj.ReadField(obj.Panel.PRD_SA_Offset.Cur);
+			Ref_MotionRatio = obj.ReadField(obj.Panel.PRD_MotionRatio.Cur);
+			%%%-------------------------------------------------%%%
+			PRod = PRD_Position(Cur_SK.A_SA, Cur_SK.A_IR);
+			PRod.SetPoints('WC', Cur_WC);
+			PRod.SetPoints('PRD_IB', Cur_PRD_IB);
+			PRod.SetPoints('PRD_OB', Cur_PRD_OB);
+			PRod.SetPoints('Rkr_B1', Cur_Rkr_B1);
+			PRod.SetPoints('Rkr_B2', Cur_Rkr_B2);
+			PRod.SetRefSAdist(Ref_SA_Offset);
+			PRod.SetRefMotionRatio(Ref_MotionRatio);
+			
+			Pos = PRod.Find_PRD_OB;
+
+
+
+			
+			obj.CurKin.PRD_OB.X = Pos(1);
+			obj.CurKin.PRD_OB.Y = Pos(2);
+			obj.CurKin.PRD_OB.Z = Pos(3);
+			
+			obj.CoordPagePopolate();
+			%%%-------------------------------------------------%%%
+			obj.CheckAllDif();
+			%%%-------------------------------------------------%%%		
+
+			if get(obj.Buttons.FrontRadio, 'Value') == 1
+				obj.ChcOut.FKin = obj.CurKin;
+			elseif get(obj.Buttons.RearRadio, 'Value') == 1
+				obj.ChcOut.RKin = obj.CurKin;
+			end			
+			
+		end
+		%%%------------------------------------------------------------------------%%%	
+		function CalcResultWrite(obj, KinName)
+			
+			obj.ChcOut = obj.ChcIn;
+			
+			obj.CurKin.TWB_FL_IB.X = obj.TWB.P_FL_IB(1);
+			obj.CurKin.TWB_FL_IB.Y = obj.TWB.P_FL_IB(2);
+			obj.CurKin.TWB_FL_IB.Z = obj.TWB.P_FL_IB(3);
+			
+			obj.CurKin.TWB_RL_IB.X = obj.TWB.P_RL_IB(1);
+			obj.CurKin.TWB_RL_IB.Y = obj.TWB.P_RL_IB(2);
+			obj.CurKin.TWB_RL_IB.Z = obj.TWB.P_RL_IB(3);
+			
+			obj.CurKin.TWB_FL_OB.X = obj.TWB.P_FL_OB(1);
+			obj.CurKin.TWB_FL_OB.Y = obj.TWB.P_FL_OB(2);
+			obj.CurKin.TWB_FL_OB.Z = obj.TWB.P_FL_OB(3);		
+
+			obj.CurKin.TWB_RL_OB.X = obj.TWB.P_RL_OB(1);
+			obj.CurKin.TWB_RL_OB.Y = obj.TWB.P_RL_OB(2);
+			obj.CurKin.TWB_RL_OB.Z = obj.TWB.P_RL_OB(3);		
+			
+			
+			obj.CurKin.LWB_FL_IB.X = obj.LWB.P_FL_IB(1);
+			obj.CurKin.LWB_FL_IB.Y = obj.LWB.P_FL_IB(2);
+			obj.CurKin.LWB_FL_IB.Z = obj.LWB.P_FL_IB(3);
+			
+			obj.CurKin.LWB_RL_IB.X = obj.LWB.P_RL_IB(1);
+			obj.CurKin.LWB_RL_IB.Y = obj.LWB.P_RL_IB(2);
+			obj.CurKin.LWB_RL_IB.Z = obj.LWB.P_RL_IB(3);
+			
+			obj.CurKin.LWB_FL_OB.X = obj.LWB.P_FL_OB(1);
+			obj.CurKin.LWB_FL_OB.Y = obj.LWB.P_FL_OB(2);
+			obj.CurKin.LWB_FL_OB.Z = obj.LWB.P_FL_OB(3);		
+
+			obj.CurKin.LWB_RL_OB.X = obj.LWB.P_RL_OB(1);
+			obj.CurKin.LWB_RL_OB.Y = obj.LWB.P_RL_OB(2);
+			obj.CurKin.LWB_RL_OB.Z = obj.LWB.P_RL_OB(3);
+						
+			obj.CoordPagePopolate();
+			
+			obj.ChcOut.(KinName).TWB_FL_IB.X = obj.TWB.P_FL_IB(1);
+			obj.ChcOut.(KinName).TWB_FL_IB.Y = obj.TWB.P_FL_IB(2);
+			obj.ChcOut.(KinName).TWB_FL_IB.Z = obj.TWB.P_FL_IB(3);
+			
+			obj.ChcOut.(KinName).TWB_RL_IB.X = obj.TWB.P_RL_IB(1);
+			obj.ChcOut.(KinName).TWB_RL_IB.Y = obj.TWB.P_RL_IB(2);
+			obj.ChcOut.(KinName).TWB_RL_IB.Z = obj.TWB.P_RL_IB(3);
+			
+			obj.ChcOut.(KinName).TWB_FL_OB.X = obj.TWB.P_FL_OB(1);
+			obj.ChcOut.(KinName).TWB_FL_OB.Y = obj.TWB.P_FL_OB(2);
+			obj.ChcOut.(KinName).TWB_FL_OB.Z = obj.TWB.P_FL_OB(3);		
+			
+			obj.ChcOut.(KinName).TWB_RL_OB.X = obj.TWB.P_RL_OB(1);
+			obj.ChcOut.(KinName).TWB_RL_OB.Y = obj.TWB.P_RL_OB(2);
+			obj.ChcOut.(KinName).TWB_RL_OB.Z = obj.TWB.P_RL_OB(3);		
+
+			obj.ChcOut.(KinName).LWB_FL_IB.X = obj.LWB.P_FL_IB(1);
+			obj.ChcOut.(KinName).LWB_FL_IB.Y = obj.LWB.P_FL_IB(2);
+			obj.ChcOut.(KinName).LWB_FL_IB.Z = obj.LWB.P_FL_IB(3);
+			
+			obj.ChcOut.(KinName).LWB_RL_IB.X = obj.LWB.P_RL_IB(1);
+			obj.ChcOut.(KinName).LWB_RL_IB.Y = obj.LWB.P_RL_IB(2);
+			obj.ChcOut.(KinName).LWB_RL_IB.Z = obj.LWB.P_RL_IB(3);
+
+			obj.ChcOut.(KinName).LWB_FL_OB.X = obj.LWB.P_FL_OB(1);
+			obj.ChcOut.(KinName).LWB_FL_OB.Y = obj.LWB.P_FL_OB(2);
+			obj.ChcOut.(KinName).LWB_FL_OB.Z = obj.LWB.P_FL_OB(3);		
+
+			obj.ChcOut.(KinName).LWB_RL_OB.X = obj.LWB.P_RL_OB(1);
+			obj.ChcOut.(KinName).LWB_RL_OB.Y = obj.LWB.P_RL_OB(2);
+			obj.ChcOut.(KinName).LWB_RL_OB.Z = obj.LWB.P_RL_OB(3);					
+			
+			obj.CheckAllDif();		
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function ChcRetrieve(obj, handle, callback)
+			tol = obj.ReadField(obj.Panel.PointTol.Val);
+			obj.ToleranceCoordRetriveAll(1);
+			obj.TarRecalc();
+			obj.CheckAllDif();
+		end
+		%%%------------------------------------------------------------------------%%%
+	end
+end
+
+

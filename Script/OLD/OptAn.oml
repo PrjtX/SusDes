@@ -1,0 +1,78 @@
+clear all
+close all
+clc
+
+R = addpath('../GUI/', '../Tools/', '../Design/', '../HypStu/');
+
+
+ChcIn = ChcReader('W:\676\SUSP\FRONT\F2.11\_chc\230510_676_F2_11.chc');
+ChcIn.FindSections();
+ChcIn.KinRead(1);
+ChcIn.KinRead(2);
+ChcIn.FrontKinDefine();
+ChcIn.RearKinDefine();
+ChcIn.TemplateDef(1);
+ChcIn.TemplateDef(2);	
+				
+				
+SK = SuspKinParamCalc(ChcIn.FKin);
+CamberGain  = SK.CamberGain;
+RCz         = SK.P_RC(3);
+Squat       = SK.Squat;
+Dive        = SK.Dive;		
+Caster      = SK.Caster;				
+KingPin     = SK.KingPin;
+Trail       = SK.Trail;
+Scrub       = SK.Scrub;
+WC          = [ChcIn.FKin.WC.X; ChcIn.FKin.WC.Y; ChcIn.FKin.WC.Z];
+TCP         = [ChcIn.FKin.TCP.X; ChcIn.FKin.TCP.Y; ChcIn.FKin.TCP.Z];
+
+
+RefKin = SuspKin('Susp');
+RefKin.AssignWC(WC);
+RefKin.AssignTCP(TCP);
+RefKin.AssignCamberGain(CamberGain);
+RefKin.AssignRCz(RCz);			
+RefKin.AssignDive(Dive);
+RefKin.AssignSquat(Squat);
+RefKin.AssignScrub(Scrub);
+RefKin.AssignTrail(Trail);
+RefKin.AssignCaster(Caster);
+RefKin.AssignKingPin(KingPin);
+RefKin.CalsSteerAxis();
+RefKin.CalcIRLat();
+RefKin.CalcIRLong();
+RefKin.CalcInstRotAxis();
+
+%A = Link([ChcIn.FKin.TWB_FL_IB.X,ChcIn.FKin.TWB_FL_IB.Y,ChcIn.FKin.TWB_FL_IB.Z]', [ChcIn.FKin.TWB_FL_OB.X,ChcIn.FKin.TWB_FL_OB.Y,ChcIn.FKin.TWB_FL_OB.Z]')
+
+Leg = ConnectLine(RefKin.A_SA, RefKin.A_IR);
+% Leg = ConnectLine(SK.A_SA, SK.A_IR);
+
+Leg.SetIniX(ChcIn.FKin.TWB_FL_IB.X);
+Leg.SetIniZ(ChcIn.FKin.TWB_FL_OB.Z);
+
+Leg.ConstrainedPosition('X', ChcIn.FKin.TWB_FL_IB.X, 'Y', ChcIn.FKin.TWB_FL_IB.Y);
+Leg.ConstrainedPosition('Y', ChcIn.FKin.TWB_FL_OB.Y, 'Z', ChcIn.FKin.TWB_FL_OB.Z);
+%err = Leg.SlidingLine([532;3100])
+t = Leg.FindLine();
+
+% ML = ML_CombOB(RefKin.A_SA, RefKin.A_IR);
+% ML.FL_IB_Pos(ChcIn.FKin.TWB_FL_IB.X, ChcIn.FKin.TWB_FL_IB.Y);
+% ML.RL_IB_Pos(ChcIn.FKin.TWB_RL_IB.X, ChcIn.FKin.TWB_RL_IB.Y);
+% ML.FL_OB_ZPos(ChcIn.FKin.TWB_FL_OB.Z);
+% ML.OB_DeltaPos(0,0,0);
+% Err = ML.FindLinks();
+% % fprintf('Error: %2.2f\n', Err);
+
+% FL.VirtualLink = Link(ML.P_FL_IB, ML.P_FL_OB);
+% RL.VirtualLink = Link(ML.P_RL_IB, ML.P_RL_OB);
+
+% FL.LineError = distance(RefKin.A_SA, FL.VirtualLink) + distance(RefKin.A_IR, FL.VirtualLink);
+% RL.LineError = distance(RefKin.A_SA, RL.VirtualLink) + distance(RefKin.A_IR, RL.VirtualLink);
+
+
+% TWB = WbnComp([1;1;0;0;0;1;1;1;0;0;0;0;1;1;1], [ChcIn.FKin.TWB_FL_IB.X;ChcIn.FKin.TWB_FL_IB.Y;0;0;0;ChcIn.FKin.TWB_FL_OB.Z;ChcIn.FKin.TWB_RL_IB.X;ChcIn.FKin.TWB_RL_IB.Y;0;0;0;0;0;0;0]);
+% TWB.SetSteeringAxis(RefKin.A_SA);
+% TWB.SetInstRotAxis(RefKin.A_IR);
+% TWBPoints = TWB.WishboneCalc();

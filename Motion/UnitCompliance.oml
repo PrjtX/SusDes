@@ -1,0 +1,61 @@
+function C = UnitCompliance(CoordTWB, CoordLWB, K)
+	
+	SuspName = 'Test'
+	Path = 'C:\Scratch\TestLoad';
+	Mode = 'FixedPosRocker';
+	Time      = [0, 1, 2]';
+	Fx        = [0, 1000, 0]';
+	Fy        = [0, 0, 0]';
+	Fz        = [0, 0, 0]';
+	Mx        = [0, 0, 0]';
+	My        = -Fx*0.354;
+	Mz        = [0, 0, 0]';
+	RkrAngle = [0, 0, 0]';
+	RackDisp = [0, 0, 0]';
+	%%---------------------------------------------------------------------------%%
+	Susb = SuspXml(SuspName, Path);
+	Susb.SetMode('FixedPosRocker');
+	Susb.XmlInit();
+	%%%-------------------------------------------------%%%	
+	Susb.DefPoint( 'TWB_FL_IB', [CoordTWB(1);CoordTWB(2);CoordTWB(3)]);
+	Susb.DefPoint( 'TWB_FL_OB', [CoordTWB(4);CoordTWB(5);CoordTWB(6)]);
+	Susb.DefPoint( 'TWB_RL_IB', [CoordTWB(7);CoordTWB(8);CoordTWB(9)]);
+	Susb.DefPoint( 'TWB_RL_OB', [CoordTWB(10);CoordTWB(11);CoordTWB(12)]);
+	Susb.DefPoint( 'LWB_FL_IB', [CoordLWB(1);CoordLWB(2);CoordLWB(3)]);
+	Susb.DefPoint( 'LWB_FL_OB', [CoordLWB(4);CoordLWB(5);CoordLWB(6)]);
+	Susb.DefPoint( 'LWB_RL_IB', [CoordLWB(7);CoordLWB(8);CoordLWB(9)]);
+	Susb.DefPoint( 'LWB_RL_OB', [CoordLWB(10);CoordLWB(11);CoordLWB(12)]);
+	Susb.DefPoint( 'TRD_IB',    [ -24.6801839711,  -141.0000000000,   338.3735192282]');	
+	Susb.DefPoint( 'TRD_OB',    [ -4.5906750249,  -687.1817541881,   326.8861184788]');	
+	Susb.DefPoint( 'PRD_IB',    [198.548,-112.000,556.380]');	
+	Susb.DefPoint( 'PRD_OB',    [100.2450307549,  -631.2416256976,   354.0000000000]');		
+	Susb.DefPoint( 'Rkr_B1',    [200.000,-127.000,509.333]');
+	Susb.DefPoint( 'Rkr_B2',    [0.000,-127.000,566.247]');
+	Susb.DefPoint( 'WC',       [98.484;-811.642;311.515]);
+	Susb.DefPoint( 'WCatCL',   [98.484;0.000;268.978]);
+	Susb.DefPoint( 'TCP',      [98.484;-830.169;-42.000]);
+	Susb.DefPoint( 'Floor',    [98.484;-811.642;-10]);
+	Susb.DefPoint( 'Rack',    [ -24.6801839711,  0.0,   338.3735192282]');	
+	%%%-------------------------------------------------%%%
+	Susb.BodyDef();
+	Susb.SetKLink('TWB_FL',1/(1/(K(1))+2/250000));
+	Susb.SetKLink('TWB_RL',1/(1/(K(2))+2/250000));
+	Susb.SetKLink('LWB_FL',1/(1/(K(3))+2/250000));
+	Susb.SetKLink('LWB_RL',1/(1/(K(4))+2/250000));
+	Susb.SetKLink('TRD',1/(1/(K(5))+1/250000+1/60000));
+	Susb.SetKLink('PRD',1/(1/(K(6))+2/120000));
+	Susb.MarkerDef();
+	Susb.JointDef();
+	Susb.GraphicDef();
+	Susb.OutPutDef();
+	Susb.ForceAtWC(Time, Fx, Fy, Fz, Mx, My, Mz);
+	Susb.FixedPosRkrMot(Time, RkrAngle, RackDisp);
+	Susb.DefineSim(max(Time), 1);
+	Susb.CloseXml();
+	Susb.RunAnalysis();
+	Susb.ReadOutPut();
+
+	C = 1e6*max(Susb.Out.Toe)/max(Fx);	
+	
+	
+end

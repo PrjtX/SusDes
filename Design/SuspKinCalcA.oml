@@ -1,0 +1,102 @@
+function POut = SuspKinCalcA(Point, Data)
+	
+	WC(1,1)        = Point(1);
+	WC(2,1)        = Point(2);
+	WC(3,1)        = Point(3);
+	TCP(1,1)       = Point(4);
+	TCP(2,1)       = Point(5);
+	TCP(3,1)       = Point(6);
+	
+	RCz         = Data(1);
+	CamberGain = Data(2)*3.14/(100*180);
+	Dive        = Data(3);
+	Squat       = Data(4);
+	Scrub       = Data(5);
+	Trail       = Data(6);
+	Caster      = Data(7)*3.14/180;
+	KingPin     = Data(8)*3.14/180;
+	
+	TWB_FL_IB_X     = Data(9);
+	TWB_FL_IB_Y     = Data(10);
+	TWB_RL_IB_X     = Data(11);
+	TWB_RL_IB_Y     = Data(12);
+	TWB_FL_OB_Z     = Data(13);
+	TWB_OB_Delta_X = Data(14);
+	TWB_OB_Delta_Y = Data(15);
+	TWB_OB_Delta_Z = Data(16);
+
+	LWB_FL_IB_X     = Data(17);
+	LWB_FL_IB_Y     = Data(18);
+	LWB_RL_IB_X     = Data(19);
+	LWB_RL_IB_Y     = Data(20);
+	LWB_FL_OB_Z     = Data(21);
+	LWB_OB_Delta_X = Data(22);
+	LWB_OB_Delta_Y = Data(23);	
+	LWB_OB_Delta_Z = Data(24);	
+	
+	SK = SuspKin('Susp');
+	SK.AssignWC(WC);
+	SK.AssignTCP(TCP);
+	SK.AssignRCz(RCz);
+	SK.AssignCamberGain(CamberGain);
+	SK.AssignDive(Dive);
+	SK.AssignSquat(Squat);
+	SK.AssignScrub(Scrub);
+	SK.AssignTrail(Trail);
+	SK.AssignCaster(Caster);
+	SK.AssignKingPin(KingPin);
+	SK.CalsSteerAxis();
+	SK.CalcIRLat();
+	SK.CalcIRLong();
+	SK.CalcInstRotAxis();
+
+	TWB = ML_CombOB(SK.A_SA, SK.A_IR);
+	TWB.FL_IB_Pos(TWB_FL_IB_X, TWB_FL_IB_Y);
+	TWB.RL_IB_Pos(TWB_RL_IB_X, TWB_RL_IB_Y);
+	TWB.FL_OB_ZPos(TWB_FL_OB_Z);
+	TWB.OB_DeltaPos(-TWB_OB_Delta_X,-TWB_OB_Delta_Y,-TWB_OB_Delta_Z);
+	Error1 = TWB.FindLinks();
+
+
+	LWB = ML_CombOB(SK.A_SA, SK.A_IR);
+	LWB.FL_IB_Pos(LWB_FL_IB_X, LWB_FL_IB_Y);
+	LWB.RL_IB_Pos(LWB_RL_IB_X,LWB_RL_IB_Y);
+	LWB.FL_OB_ZPos(LWB_FL_OB_Z);
+	LWB.OB_DeltaPos(-LWB_OB_Delta_X,-LWB_OB_Delta_Y,-LWB_OB_Delta_Z);
+	Error2 = LWB.FindLinks();	
+
+	if Error1>0.1 || Error2>0.1
+		warning('Suspension definition not converging')
+	end
+		
+	%err(1,1) = (-Target.TWB_FL_IB_Z_max + TWB.P_FL_IB(3));
+	%err(2,1) =  (Target.LWB_RL_IB_Z_min - LWB.P_RL_IB(3))
+	
+	POut(1) = TWB.P_FL_IB(1);
+	POut(4) = TWB.P_RL_IB(1);
+	POut(7) = TWB.P_FL_OB(1);
+	POut(10) = TWB.P_RL_OB(1);
+	POut(13) = LWB.P_FL_IB(1);
+	POut(16) = LWB.P_RL_IB(1);
+	POut(19) = LWB.P_FL_OB(1);
+	POut(22) = LWB.P_RL_OB(1);
+	
+	POut(2) = TWB.P_FL_IB(2);
+	POut(5) = TWB.P_RL_IB(2);
+	POut(8) = TWB.P_FL_OB(2);
+	POut(11) = TWB.P_RL_OB(2);
+	POut(14) = LWB.P_FL_IB(2);
+	POut(17) = LWB.P_RL_IB(2);
+	POut(20) = LWB.P_FL_OB(2);
+	POut(23) = LWB.P_RL_OB(2);
+	
+	POut(3) = TWB.P_FL_IB(3);
+	POut(6) = TWB.P_RL_IB(3);
+	POut(9) = TWB.P_FL_OB(3);
+	POut(12) = TWB.P_RL_OB(3);
+	POut(15) = LWB.P_FL_IB(3);
+	POut(18) = LWB.P_RL_IB(3);
+	POut(21) = LWB.P_FL_OB(3);
+	POut(24) = LWB.P_RL_OB(3);	
+			
+end

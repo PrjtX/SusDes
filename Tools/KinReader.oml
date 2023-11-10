@@ -1,0 +1,168 @@
+classdef KinReader < handle
+    
+    properties
+		FilePath
+		File
+		FParam
+		RParam
+		FKin
+		RKin
+		Tmpl
+		KinList
+		ParamList
+    end
+    
+    methods
+		%%%-------------------------------------------------------------------------------%%%
+		function obj = KinReader(KinFilePath)
+			obj.FilePath = KinFilePath;			
+			fid = fopen(obj.FilePath);
+			obj.File(1).lines = '';
+			obj.File(1).lines = fgetl(fid);
+			%%===============================================================%%
+			i = 1;
+			while ischar(obj.File(i).lines)
+				i = i + 1;
+				obj.File(i).lines = fgetl(fid);				
+			end
+			%%===============================================================%%
+			fclose(fid);
+			%%===============================================================%%
+			obj.KinList = {'LWB_FL_IB';
+						   'LWB_RL_IB';
+						   'LWB_FL_OB';
+						   'LWB_RL_OB';
+						   'TRD_OB';
+						   'TRD_IB';
+						   'TWB_FL_IB';
+						   'TWB_RL_IB';
+						   'TWB_FL_OB';
+						   'TWB_RL_OB';
+						   'WC'
+				           'TCP';
+					   	   'PRD_OB';
+						   'PRD_IB';
+						   'Rkr_1';
+						   'Rkr_2';
+				           'Rkr_Mono';
+				           'Rkr_Arb';
+				           'Rkr_Damper';
+				           'Chs_Damper';
+				           'ArbArm_Link';
+				           'ArbArm_BearIB';
+						   'ArbArm_BearOB';
+						   'CV_CentIB';
+						   'CV_CentOB'};	
+						   
+			obj.ParamList = {'Geom.Camber';
+				             'Geom.Toe';
+				             'Wheel.Radius';
+				             'Floor.Z'};
+			%%===============================================================%%			
+		end
+		%%%-------------------------------------------------------------------------------%%%
+		function DataRead(obj)
+			
+			for k = 1:numel(obj.File)-1
+				
+				obj.LineRead(obj.File(k).lines);
+				
+			end		
+
+			
+			obj.FKin.Floor.X = obj.FKin.WC.X;
+			obj.FKin.Floor.Y = 0;
+			obj.FKin.Floor.Z = obj.FParam.Floor_Z;
+			
+			obj.RKin.Floor.X = obj.RKin.WC.X;
+			obj.RKin.Floor.Y = 0;
+			obj.RKin.Floor.Z = obj.RParam.Floor_Z;				
+			
+		end
+		%%%-------------------------------------------------------------------------------%%%
+		function LineRead(obj, Line)
+			
+			L = strtrim(Line);
+			%%% Find Coord		
+			if strcmp(L(1:8),'*SetReal') == 1									
+				ini = strfind(L, '(');
+				fin = strfind(L, ')');
+				com = strfind(L, ',');
+				
+				CompVarName = strtrim(L(ini+1:com-1));
+				VarVal       = strtrim(L(com+1:fin-1));
+				
+				Val = str2double(VarVal);
+				
+				point = strfind(CompVarName, '.');
+				
+				VarName = strtrim(CompVarName(1:point-1));
+				Comp    = strtrim(CompVarName(point+1:end));
+				
+				for k = 1:numel(obj.KinList)					
+					if strcmp(VarName, obj.KinList{k}) == 1						
+						obj.FKin.(VarName).(Comp) = Val;
+					    obj.RKin.(VarName).(Comp) = Val;					
+					end					
+				end				
+			end
+			%% find Param
+			if strcmp(L(1:8),'*SetReal') == 1									
+				ini = strfind(L, '(');
+				fin = strfind(L, ')');
+				com = strfind(L, ',');
+				CompVarName = strtrim(L(ini+1:com-1));
+				NewCompVarName = strrep(CompVarName, '.', '_');
+				
+				VarVal       = strtrim(L(com+1:fin-1));				
+				Val = str2double(VarVal);				
+				
+				for k = 1:numel(obj.ParamList)					
+					if strcmp(CompVarName, obj.ParamList{k}) == 1	
+						obj.FParam.(NewCompVarName) = Val;
+					    obj.RParam.(NewCompVarName) = Val;
+					end
+				end								
+			end		
+			
+		end
+		%%%-------------------------------------------------------------------------------%%%
+		function Write(obj, PathOut)
+			
+			Fid = fopen(PathOut, 'w');	
+			obj.WriteSpacingLine(Fid);
+			ParamName = fieldnames(obj.FParam);
+			for k = 1:numel(ParamName)
+				obj.WriteLine(Fid, ParamName{k}, '', obj.FParam.(ParamName{k}));
+				obj.WriteSpacingLine(Fid);
+			end
+			CoordName = fieldnames(obj.FKin);		
+			for k = 1:numel(CoordName)
+				obj.WriteLine(Fid, CoordName{k}, 'X', obj.FKin.(CoordName{k}).X);
+				obj.WriteLine(Fid, CoordName{k}, 'Y', obj.FKin.(CoordName{k}).Y);
+				obj.WriteLine(Fid, CoordName{k}, 'Z', obj.FKin.(CoordName{k}).Z);
+				obj.WriteSpacingLine(Fid);
+			end
+			fclose all
+			
+		end
+		%%%-------------------------------------------------------------------------------%%%
+		function WriteLine(obj, fid, Name, SubName, Value)
+			
+			if strcmp(SubName, '') == 0
+				fprintf(fid,'  *SetReal( %s.%s, %2.3f)\r\n', Name, SubName, Value);	
+			else
+				VarName = strrep(Name, '_', '.');
+				fprintf(fid,'  *SetReal( %s, %2.3f)\r\n', VarName, Value);	
+			end
+			
+		end
+		%%%-------------------------------------------------------------------------------%%%
+		function WriteSpacingLine(obj, fid)
+			
+			fprintf(fid,'  // --- //\r\n');	
+			
+		end
+		%%%-------------------------------------------------------------------------------%%%
+	end
+end

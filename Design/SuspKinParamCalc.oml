@@ -1,0 +1,38 @@
+function SK = SuspKinParamCalc(Kin)
+	
+	SSM = StaticSuspModel('Susp');
+	SSM.HardPointInput('WC',[ Kin.WC.X; Kin.WC.Y; Kin.WC.Z ]);
+	SSM.HardPointInput('TCP', [ Kin.TCP.X; Kin.TCP.Y; Kin.TCP.Z]);
+	SSM.HardPointInput('TWB_FL_IB',[Kin.TWB_FL_IB.X; Kin.TWB_FL_IB.Y; Kin.TWB_FL_IB.Z]);
+	SSM.HardPointInput('TWB_RL_IB',[Kin.TWB_RL_IB.X; Kin.TWB_RL_IB.Y; Kin.TWB_RL_IB.Z]);
+	SSM.HardPointInput('LWB_FL_IB',[Kin.LWB_FL_IB.X; Kin.LWB_FL_IB.Y; Kin.LWB_FL_IB.Z]);
+	SSM.HardPointInput('LWB_RL_IB',[Kin.LWB_RL_IB.X; Kin.LWB_RL_IB.Y; Kin.LWB_RL_IB.Z]);
+	SSM.HardPointInput('TWB_FL_OB',[Kin.TWB_FL_OB.X; Kin.TWB_FL_OB.Y; Kin.TWB_FL_OB.Z]);
+	SSM.HardPointInput('TWB_RL_OB',[Kin.TWB_RL_OB.X; Kin.TWB_RL_OB.Y; Kin.TWB_RL_OB.Z]);
+	SSM.HardPointInput('LWB_FL_OB',[Kin.LWB_FL_OB.X; Kin.LWB_FL_OB.Y; Kin.LWB_FL_OB.Z]);
+	SSM.HardPointInput('LWB_RL_OB',[Kin.LWB_RL_OB.X; Kin.LWB_RL_OB.Y; Kin.LWB_RL_OB.Z]);
+	%%%-------------------------------------------------%%%
+	SSM.OBPointDistance();
+	SSM.LinkGenerate();
+	SSM.FindSteerAxis();
+	SSM.FindIstRotAxis();			
+	%%%-------------------------------------------------%%%
+	SK = SuspKin('Test');
+	SK.AssignWC(SSM.WC);
+	SK.AssignTCP(SSM.TCP);
+	SK.AssignSteeringAxis(SSM.SteerAxis);
+	SK.AssignInstRotAxis(SSM.InstRotAxis);
+	SK.CalcInstRotLat();
+	SK.CalcInstRotLong();
+	SK.CalcInstRollCenter();
+	SK.CalcCamberGain();
+	SK.CalcSquat();
+	SK.CalcDive();
+	SK.CalcIRLong();
+	SK.CalcIRLat();
+	SK.CalcScrub();
+	SK.CalcTrail();
+	SK.CalcCaster();
+	SK.CalcKingPin();		
+		
+end

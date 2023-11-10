@@ -1,0 +1,5 @@
+clear all
+close all
+clc
+
+createdistributable('SusAn_StaticDesign.oml', 'SusAn_StaticDesign.omd')

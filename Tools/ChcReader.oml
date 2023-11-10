@@ -1,0 +1,588 @@
+classdef ChcReader < handle
+    
+    properties
+		FilePath
+		FrontStart = 0
+		RearStart  = 0
+		FrontEnd   = 0
+		RearEnd    = 0
+		File
+		FParam
+		RParam
+		FKin
+		RKin
+		FTmpl
+		RTmpl
+		FkinList
+		RkinList
+    end
+    
+    methods
+		%%-------------------------------------------------------------------------------------%%
+		function obj = ChcReader(ChcFilePath)			
+			obj.FilePath = ChcFilePath;			
+			fid = fopen(obj.FilePath);
+			obj.File(1).lines = '';
+			obj.File(1).lines = fgetl(fid);
+			%%===============================================================%%
+			i = 1;
+			while ischar(obj.File(i).lines)
+				i = i + 1;
+				obj.File(i).lines = fgetl(fid);				
+			end
+			%%===============================================================%%
+			fclose(fid);
+			%%===============================================================%%
+			obj.FkinList.ChcVar = {'LowerFrontWishbone'; 
+				                      'LowerRearWishbone'; 
+				                      'LowerOuterWishbone'; 
+				                      'LowerRearOuterWishbone';
+                                      'OuterSteering'; 
+				                      'InnerSteering'; 
+				                      'UpperFrontWishbone';
+				                      'UpperRearWishbone';
+				                      'UpperOuterWishbone';
+				                      'UpperRearOuterWishbone';
+				                      'TirePatch';
+				                      'WheelCenter';
+				                      'WheelAxisAtCL';
+				                      'OuterPushrod';
+				                      'InnerPushrod';
+				                      'RockerAxis1';
+				                      'RockerAxis2';
+				                      'PotRocker';
+				                      'PotChassis'};
+			obj.FkinList.IntVar = {  'LWB_FL_IB';
+										'LWB_RL_IB';
+				                        'LWB_FL_OB';
+				                        'LWB_RL_OB';
+				                        'TRD_OB';
+				                        'TRD_IB';
+				                        'TWB_FL_IB';
+										'TWB_RL_IB';
+				                        'TWB_FL_OB';
+				                        'TWB_RL_OB';
+				                        'TCP';
+				                        'WC';
+				                        'WCatCL';
+				                        'PRD_OB';
+				                        'PRD_IB';
+				                        'Rkr_B1';
+				                        'Rkr_B2';
+				                        'Rkr_Pot';
+				                        'Chs_Pot'};
+			obj.RkinList.ChcVar = {'LowerFrontWishbone'; 
+				                      'LowerRearWishbone'; 
+				                      'LowerOuterWishbone'; 
+				                      'LowerRearOuterWishbone';
+                                      'OuterSteering'; 
+				                      'InnerSteering'; 
+				                      'UpperFrontWishbone';
+				                      'UpperRearWishbone';
+				                      'UpperOuterWishbone';
+				                      'UpperRearOuterWishbone';
+				                      'TirePatch';
+				                      'WheelCenter';
+				                      'WheelAxisAtCL';
+				                      'OuterPushrod';
+				                      'InnerPushrod';
+				                      'RockerAxis1';
+				                      'RockerAxis2';
+				                      'PotRocker';
+				                      'PotChassis'};
+			obj.RkinList.IntVar = {  'LWB_FL_IB';
+										'LWB_RL_IB';
+				                        'LWB_FL_OB';
+				                        'LWB_RL_OB';
+				                        'TRD_OB';
+				                        'TRD_IB';
+				                        'TWB_FL_IB';
+										'TWB_RL_IB';
+				                        'TWB_FL_OB';
+				                        'TWB_RL_OB';
+				                        'TCP';
+				                        'WC';
+				                        'WCatCL';
+				                        'PRD_OB';
+				                        'PRD_IB';
+				                        'Rkr_B1';
+				                        'Rkr_B2';
+				                        'Rkr_Pot';
+				                        'Chs_Pot'};										
+			%%===============================================================%%
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function FindSections(obj)
+			
+			for k = 1:numel(obj.File)-1
+				
+				FrontCheck = strfind(obj.File(k).lines, 'Standard Front geometry');
+				RearCheck  = strfind(obj.File(k).lines, 'Standard Rear geometry');
+
+				if not(isempty(FrontCheck))
+					%fprintf('Front Found\n')
+					obj.FrontStart = k;
+				end		
+				if not(isempty(RearCheck))
+					%fprintf('Rear Found\n')
+					obj.RearStart = k;
+				end						
+				
+			end
+			
+			if obj.FrontStart==0
+				error('Front suspension section not found')				
+			end
+			
+			if obj.RearStart==0
+				error('Rear suspension section not found')	
+			else
+				obj.RearEnd=k;
+				obj.FrontEnd=obj.RearStart-1;
+			end			
+			
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function KinRead(obj, Axle)
+			
+			if Axle == 1;
+				AxleName = 'Front';
+				Start = obj.FrontStart;
+				End = obj.FrontEnd;
+				ExpInfo = 'InfoFront';
+				NotExpInfo = 'InfoRear';
+			else
+				AxleName = 'Rear';
+				Start = obj.RearStart;
+				End = obj.RearEnd;				
+				ExpInfo = 'InfoRear';
+				NotExpInfo = 'InfoFront';
+			end
+			
+			SectionStart = 1;
+			SectionEnd = End;
+			
+			for k = Start:End
+				
+				Type = obj.LineDetection(obj.File(k).lines);
+				if strcmp(Type,ExpInfo) == 1
+					SectionStart = max([SectionStart k+1]);
+				end
+				if strcmp(Type,NotExpInfo) == 1
+					error('Wrong axle found');
+				end				
+				if strcmp(Type,'OptionFront') == 1 || strcmp(Type,'OptionRear') == 1
+					SectionEnd = min([SectionEnd k-1]);
+				end
+								
+			end
+			
+			%fprintf('Axle %s section start at line %2.0f and end at %2.0f\n', AxleName, SectionStart,  SectionEnd);
+			
+			j = 0;
+			for k = SectionStart:SectionEnd
+				clear CleanLine Comment Type
+				[CleanLine, Comment] = obj.LineClean(obj.File(k).lines);
+				Type = obj.LineDetection(CleanLine);
+				if strcmp(Type, 'Variable') == 1
+					j = j + 1;
+					[Param(j).VariableName, Param(j).Value] = obj.VariableRead(CleanLine);	
+				end					
+			end
+			if Axle == 1;
+				obj.FParam = Param;
+			else
+				obj.RParam = Param;
+			end
+			
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function [CleanLine, Comment] = LineClean(obj, line)
+			ComentPosition = strfind(line, ';');
+			if isempty(ComentPosition) == 0
+				Comment = line(ComentPosition(1)+1:end);
+				if ComentPosition(1)>1
+					CleanLine = line(1:ComentPosition(1)-1);
+				else
+					CleanLine = '';
+				end
+			else
+				CleanLine = line;
+				Comment = '';
+			end
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function Type = LineDetection(obj, line)
+			
+			SqrBrktPos = strfind(line, '[');
+			EqualPos = strfind(line, '=');
+			Type = 'NotRecognize';
+			
+			if isempty(SqrBrktPos) == 0
+				if isempty(strfind(line, 'FGeo-')) == 0
+					Type = 'InfoFront';
+					if isempty(strfind(line, '+')) == 0
+						Type = 'OptionFront';
+					end
+				elseif isempty(strfind(line, 'RGeo-')) == 0
+					Type = 'InfoRear';
+					if isempty(strfind(line, '+')) == 0
+						Type = 'OptionRear';
+					end			
+				elseif isempty(strfind(line, 'CarInfo')) == 0
+					Type = 'CarInfo';
+				end
+			end
+			
+			if isempty(EqualPos) == 0
+				Type = 'Variable';
+			end
+			
+			
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function [VaribleName, Value] = VariableRead(obj, line)
+			
+			
+			Value = [];
+			EqualPos = strfind(line, '=');
+			if isempty(EqualPos) == 1
+				error('Line type is not a variable');
+			end
+			
+			
+			VaribleName1 = strrep(line(1:EqualPos-1), ' ', '');
+			VaribleName =  strrep(VaribleName1, '	', '');
+
+			ValueLine = line(EqualPos+1:end);
+			
+			
+			ValueString1 = strrep(ValueLine, ',', ' ');
+			ValueString = strrep(ValueString1, '	', ' ');
+			
+			Array = textscan(ValueString, '%f');
+			Value = zeros(numel(Array{1}),1); 
+			for k = 1:numel(Array{1})
+				Value(k) = Array{1}(k);
+			end
+								
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function Value = FindVariable(obj, Axle, VarName)
+			
+			if Axle == 1
+				Param = obj.FParam;
+			else
+				Param = obj.RParam;
+			end
+			
+			Value = nan;
+			
+			for k = 1:numel(Param)
+				if strcmp(Param(k).VariableName, VarName) == 1
+					Value = Param(k).Value;
+				end
+			end
+			
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function CompValue = FindVariableComp(obj, Axle, VarName, Comp)
+			Value = obj.FindVariable(Axle, VarName);
+			if isnan(Value) == 0
+				CompValue = Value(Comp);
+			else
+				CompValue = nan;
+			end
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function FrontKinDefine(obj)
+						
+			obj.FKin.LWB_FL_IB.X = obj.FindVariableComp(1, 'LowerFrontWishbone', 1);
+			obj.FKin.LWB_FL_IB.Y = obj.FindVariableComp(1, 'LowerFrontWishbone', 2);
+			obj.FKin.LWB_FL_IB.Z = obj.FindVariableComp(1, 'LowerFrontWishbone', 3);
+			
+			obj.FKin.LWB_RL_IB.X = obj.FindVariableComp(1, 'LowerRearWishbone', 1);
+			obj.FKin.LWB_RL_IB.Y = obj.FindVariableComp(1, 'LowerRearWishbone', 2);
+			obj.FKin.LWB_RL_IB.Z = obj.FindVariableComp(1, 'LowerRearWishbone', 3);
+
+			obj.FKin.LWB_FL_OB.X = obj.FindVariableComp(1, 'LowerOuterWishbone', 1);
+			obj.FKin.LWB_FL_OB.Y = obj.FindVariableComp(1, 'LowerOuterWishbone', 2);
+			obj.FKin.LWB_FL_OB.Z = obj.FindVariableComp(1, 'LowerOuterWishbone', 3);
+
+			obj.FKin.LWB_RL_OB.X = obj.FindVariableComp(1, 'LowerRearOuterWishbone', 1);
+			obj.FKin.LWB_RL_OB.Y = obj.FindVariableComp(1, 'LowerRearOuterWishbone', 2);
+			obj.FKin.LWB_RL_OB.Z = obj.FindVariableComp(1, 'LowerRearOuterWishbone', 3);		
+
+			obj.FKin.TWB_FL_IB.X = obj.FindVariableComp(1, 'UpperFrontWishbone', 1);
+			obj.FKin.TWB_FL_IB.Y = obj.FindVariableComp(1, 'UpperFrontWishbone', 2);
+			obj.FKin.TWB_FL_IB.Z = obj.FindVariableComp(1, 'UpperFrontWishbone', 3);
+			
+			obj.FKin.TWB_RL_IB.X = obj.FindVariableComp(1, 'UpperRearWishbone', 1);
+			obj.FKin.TWB_RL_IB.Y = obj.FindVariableComp(1, 'UpperRearWishbone', 2);
+			obj.FKin.TWB_RL_IB.Z = obj.FindVariableComp(1, 'UpperRearWishbone', 3);
+
+			obj.FKin.TWB_FL_OB.X = obj.FindVariableComp(1, 'UpperOuterWishbone', 1);
+			obj.FKin.TWB_FL_OB.Y = obj.FindVariableComp(1, 'UpperOuterWishbone', 2);
+			obj.FKin.TWB_FL_OB.Z = obj.FindVariableComp(1, 'UpperOuterWishbone', 3);
+
+			obj.FKin.TWB_RL_OB.X = obj.FindVariableComp(1, 'UpperRearOuterWishbone', 1);
+			obj.FKin.TWB_RL_OB.Y = obj.FindVariableComp(1, 'UpperRearOuterWishbone', 2);
+			obj.FKin.TWB_RL_OB.Z = obj.FindVariableComp(1, 'UpperRearOuterWishbone', 3);
+			
+			obj.FKin.TRD_IB.X = obj.FindVariableComp(1, 'InnerSteering', 1);
+			obj.FKin.TRD_IB.Y = obj.FindVariableComp(1, 'InnerSteering', 2);
+			obj.FKin.TRD_IB.Z = obj.FindVariableComp(1, 'InnerSteering', 3);
+			
+			obj.FKin.TRD_OB.X = obj.FindVariableComp(1, 'OuterSteering', 1);
+			obj.FKin.TRD_OB.Y = obj.FindVariableComp(1, 'OuterSteering', 2);
+			obj.FKin.TRD_OB.Z = obj.FindVariableComp(1, 'OuterSteering', 3);
+
+			obj.FKin.PRD_IB.X = obj.FindVariableComp(1, 'InnerPushrod', 1);
+			obj.FKin.PRD_IB.Y = obj.FindVariableComp(1, 'InnerPushrod', 2);
+			obj.FKin.PRD_IB.Z = obj.FindVariableComp(1, 'InnerPushrod', 3);
+			
+			obj.FKin.PRD_OB.X = obj.FindVariableComp(1, 'OuterPushrod', 1);
+			obj.FKin.PRD_OB.Y = obj.FindVariableComp(1, 'OuterPushrod', 2);
+			obj.FKin.PRD_OB.Z = obj.FindVariableComp(1, 'OuterPushrod', 3);
+			
+			obj.FKin.WC.X = obj.FindVariableComp(1, 'WheelCenter', 1);
+			obj.FKin.WC.Y = obj.FindVariableComp(1, 'WheelCenter', 2);
+			obj.FKin.WC.Z = obj.FindVariableComp(1, 'WheelCenter', 3);		
+
+			obj.FKin.WCatCL.X = obj.FindVariableComp(1, 'WheelAxisAtCL', 1);
+			obj.FKin.WCatCL.Y = obj.FindVariableComp(1, 'WheelAxisAtCL', 2);
+			obj.FKin.WCatCL.Z = obj.FindVariableComp(1, 'WheelAxisAtCL', 3);	
+
+			obj.FKin.TCP.X = obj.FindVariableComp(1, 'TirePatch', 1);
+			obj.FKin.TCP.Y = obj.FindVariableComp(1, 'TirePatch', 2);
+			obj.FKin.TCP.Z = obj.FindVariableComp(1, 'TirePatch', 3);
+			
+			obj.FKin.Rkr_B1.X = obj.FindVariableComp(1, 'RockerAxis1', 1);
+			obj.FKin.Rkr_B1.Y = obj.FindVariableComp(1, 'RockerAxis1', 2);
+			obj.FKin.Rkr_B1.Z = obj.FindVariableComp(1, 'RockerAxis1', 3);
+
+			obj.FKin.Rkr_B2.X = obj.FindVariableComp(1, 'RockerAxis2', 1);
+			obj.FKin.Rkr_B2.Y = obj.FindVariableComp(1, 'RockerAxis2', 2);
+			obj.FKin.Rkr_B2.Z = obj.FindVariableComp(1, 'RockerAxis2', 3);
+			
+			obj.FKin.Rkr_Pot.X = obj.FindVariableComp(1, 'PotRocker', 1);
+			obj.FKin.Rkr_Pot.Y = obj.FindVariableComp(1, 'PotRocker', 2);
+			obj.FKin.Rkr_Pot.Z = obj.FindVariableComp(1, 'PotRocker', 3);	
+
+			obj.FKin.Chs_Pot.X = obj.FindVariableComp(1, 'PotChassis', 1);
+			obj.FKin.Chs_Pot.Y = obj.FindVariableComp(1, 'PotChassis', 2);
+			obj.FKin.Chs_Pot.Z = obj.FindVariableComp(1, 'PotChassis', 3);	
+						
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function RearKinDefine(obj)
+						
+			obj.RKin.LWB_FL_IB.X = obj.FindVariableComp(2, 'LowerFrontWishbone', 1);
+			obj.RKin.LWB_FL_IB.Y = obj.FindVariableComp(2, 'LowerFrontWishbone', 2);
+			obj.RKin.LWB_FL_IB.Z = obj.FindVariableComp(2, 'LowerFrontWishbone', 3);
+			
+			obj.RKin.LWB_RL_IB.X = obj.FindVariableComp(2, 'LowerRearWishbone', 1);
+			obj.RKin.LWB_RL_IB.Y = obj.FindVariableComp(2, 'LowerRearWishbone', 2);
+			obj.RKin.LWB_RL_IB.Z = obj.FindVariableComp(2, 'LowerRearWishbone', 3);
+
+			obj.RKin.LWB_FL_OB.X = obj.FindVariableComp(2, 'LowerOuterWishbone', 1);
+			obj.RKin.LWB_FL_OB.Y = obj.FindVariableComp(2, 'LowerOuterWishbone', 2);
+			obj.RKin.LWB_FL_OB.Z = obj.FindVariableComp(2, 'LowerOuterWishbone', 3);
+
+			obj.RKin.LWB_RL_OB.X = obj.FindVariableComp(2, 'LowerRearOuterWishbone', 1);
+			obj.RKin.LWB_RL_OB.Y = obj.FindVariableComp(2, 'LowerRearOuterWishbone', 2);
+			obj.RKin.LWB_RL_OB.Z = obj.FindVariableComp(2, 'LowerRearOuterWishbone', 3);		
+
+			obj.RKin.TWB_FL_IB.X = obj.FindVariableComp(2, 'UpperFrontWishbone', 1);
+			obj.RKin.TWB_FL_IB.Y = obj.FindVariableComp(2, 'UpperFrontWishbone', 2);
+			obj.RKin.TWB_FL_IB.Z = obj.FindVariableComp(2, 'UpperFrontWishbone', 3);
+			
+			obj.RKin.TWB_RL_IB.X = obj.FindVariableComp(2, 'UpperRearWishbone', 1);
+			obj.RKin.TWB_RL_IB.Y = obj.FindVariableComp(2, 'UpperRearWishbone', 2);
+			obj.RKin.TWB_RL_IB.Z = obj.FindVariableComp(2, 'UpperRearWishbone', 3);
+
+			obj.RKin.TWB_FL_OB.X = obj.FindVariableComp(2, 'UpperOuterWishbone', 1);
+			obj.RKin.TWB_FL_OB.Y = obj.FindVariableComp(2, 'UpperOuterWishbone', 2);
+			obj.RKin.TWB_FL_OB.Z = obj.FindVariableComp(2, 'UpperOuterWishbone', 3);
+
+			obj.RKin.TWB_RL_OB.X = obj.FindVariableComp(2, 'UpperRearOuterWishbone', 1);
+			obj.RKin.TWB_RL_OB.Y = obj.FindVariableComp(2, 'UpperRearOuterWishbone', 2);
+			obj.RKin.TWB_RL_OB.Z = obj.FindVariableComp(2, 'UpperRearOuterWishbone', 3);
+			
+			obj.RKin.TRD_IB.X = obj.FindVariableComp(2, 'InnerTrackrod', 1);
+			obj.RKin.TRD_IB.Y = obj.FindVariableComp(2, 'InnerTrackrod', 2);
+			obj.RKin.TRD_IB.Z = obj.FindVariableComp(2, 'InnerTrackrod', 3);
+			
+			obj.RKin.TRD_OB.X = obj.FindVariableComp(2, 'OuterTrackrod', 1);
+			obj.RKin.TRD_OB.Y = obj.FindVariableComp(2, 'OuterTrackrod', 2);
+			obj.RKin.TRD_OB.Z = obj.FindVariableComp(2, 'OuterTrackrod', 3);
+
+			obj.RKin.PRD_IB.X = obj.FindVariableComp(2, 'InnerPushrod', 1);
+			obj.RKin.PRD_IB.Y = obj.FindVariableComp(2, 'InnerPushrod', 2);
+			obj.RKin.PRD_IB.Z = obj.FindVariableComp(2, 'InnerPushrod', 3);
+			
+			obj.RKin.PRD_OB.X = obj.FindVariableComp(2, 'OuterPushrod', 1);
+			obj.RKin.PRD_OB.Y = obj.FindVariableComp(2, 'OuterPushrod', 2);
+			obj.RKin.PRD_OB.Z = obj.FindVariableComp(2, 'OuterPushrod', 3);
+			
+			obj.RKin.WC.X = obj.FindVariableComp(2, 'WheelCenter', 1);
+			obj.RKin.WC.Y = obj.FindVariableComp(2, 'WheelCenter', 2);
+			obj.RKin.WC.Z = obj.FindVariableComp(2, 'WheelCenter', 3);		
+
+			obj.RKin.WCatCL.X = obj.FindVariableComp(2, 'WheelAxisAtCL', 1);
+			obj.RKin.WCatCL.Y = obj.FindVariableComp(2, 'WheelAxisAtCL', 2);
+			obj.RKin.WCatCL.Z = obj.FindVariableComp(2, 'WheelAxisAtCL', 3);	
+
+			obj.RKin.TCP.X = obj.FindVariableComp(2, 'TirePatch', 1);
+			obj.RKin.TCP.Y = obj.FindVariableComp(2, 'TirePatch', 2);
+			obj.RKin.TCP.Z = obj.FindVariableComp(2, 'TirePatch', 3);
+			
+			obj.RKin.Rkr_B1.X = obj.FindVariableComp(2, 'RockerAxis1', 1);
+			obj.RKin.Rkr_B1.Y = obj.FindVariableComp(2, 'RockerAxis1', 2);
+			obj.RKin.Rkr_B1.Z = obj.FindVariableComp(2, 'RockerAxis1', 3);
+
+			obj.RKin.Rkr_B2.X = obj.FindVariableComp(2, 'RockerAxis2', 1);
+			obj.RKin.Rkr_B2.Y = obj.FindVariableComp(2, 'RockerAxis2', 2);
+			obj.RKin.Rkr_B2.Z = obj.FindVariableComp(2, 'RockerAxis2', 3);
+			
+			obj.RKin.Rkr_Pot.X = obj.FindVariableComp(2, 'PotRocker', 1);
+			obj.RKin.Rkr_Pot.Y = obj.FindVariableComp(2, 'PotRocker', 2);
+			obj.RKin.Rkr_Pot.Z = obj.FindVariableComp(2, 'PotRocker', 3);	
+
+			obj.RKin.Chs_Pot.X = obj.FindVariableComp(2, 'PotChassis', 1);
+			obj.RKin.Chs_Pot.Y = obj.FindVariableComp(2, 'PotChassis', 2);
+			obj.RKin.Chs_Pot.Z = obj.FindVariableComp(2, 'PotChassis', 3);	
+						
+		end
+		%%-------------------------------------------------------------------------------------%%
+		function TemplateDef(obj, Axle)
+			
+			if Axle == 1
+				Param = obj.FParam;
+				Kin = obj.FKin;
+			else
+				Param = obj.RParam;
+				Kin = obj.RKin;				
+			end
+			
+			PrdAtch = obj.FindVariable(Axle,'PushrodToUpright');
+			if PrdAtch == 0
+				Tmpl.PrdAttachment = 'LWB';
+			elseif PrdAtch == 1
+				Tmpl.PrdAttachment = 'Upright';
+			elseif PrdAtch == 2
+				Tmpl.PrdAttachment = 'TWB';
+			end
+			
+			Tmpl.TrdAttachment = 'Chassis';
+			Trd2TWB = obj.FindVariable(Axle,'TrackRodToUpperWishbone');
+			if Trd2TWB == 1
+				Tmpl.TrdAttachment = 'TWB';
+			end			
+			
+			Trd2LWB = obj.FindVariable(Axle,'TrackRodToLowerWishbone');
+			if Trd2TWB == 1
+				Tmpl.TrdAttachment = 'LWB';
+			end						
+			
+			if isnan(Kin.TWB_RL_OB.X)
+				Tmpl.TWB = 'Solid';
+			else
+				TWB_OB_dist = sqrt((Kin.TWB_RL_OB.X-Kin.TWB_FL_OB.X)^2+(Kin.TWB_RL_OB.Y-Kin.TWB_FL_OB.Y)^2+(Kin.TWB_RL_OB.Z-Kin.TWB_FL_OB.Z)^2);
+				if TWB_OB_dist < 10
+					Tmpl.TWB = 'Solid';
+				else
+					Tmpl.TWB = 'MultiLink';
+				end
+			end
+			
+			if isnan(Kin.LWB_RL_OB.X)
+				Tmpl.LWB = 'Solid';
+			else				
+				LWB_OB_dist = sqrt((Kin.LWB_RL_OB.X-Kin.LWB_FL_OB.X)^2+(Kin.LWB_RL_OB.Y-Kin.LWB_FL_OB.Y)^2+(Kin.LWB_RL_OB.Z-Kin.LWB_FL_OB.Z)^2);
+				if LWB_OB_dist < 10
+					Tmpl.LWB = 'Solid';
+				else
+					Tmpl.LWB = 'MultiLink';
+				end				
+			end			
+								
+			if Axle == 1
+				obj.FTmpl = Tmpl;
+			else
+				obj.RTmpl = Tmpl;				
+			end			
+			
+		end
+		%%-------------------------------------------------------------------------------------%%		
+		function Write(obj, Path, Axle)
+			
+			if strcmp(Axle, 'Front')
+				Start = obj.FrontStart;
+				End   = obj.FrontEnd;
+				KinList = obj.FkinList;
+			else
+				Start = obj.RearStart;
+				End   = obj.RearEnd;
+				KinList = obj.RkinList;				
+			end
+			
+			
+			Fid = fopen(Path, 'w');			
+			for i = 1:(Start-1)
+				fprintf(Fid,'%s\n', obj.File(i).lines);
+			end			
+			
+			for i = Start:End
+				line = obj.File(i).lines;
+				Type = obj.LineDetection(line);
+				if strcmp(Type,'Variable') == 1
+					[VaribleName, Value] = obj.VariableRead(line);
+					FoundVar = 0;
+					for k = 1:numel(KinList.ChcVar)
+						if strcmp(VaribleName, KinList.ChcVar{k}) == 1
+							FoundVar = 1;
+							obj.WriteLine(Fid, Axle, KinList.IntVar{k}, KinList.ChcVar{k});
+						end
+					end
+					if strcmp(VaribleName, 'FiveLink') == 1
+						FoundVar = 1;
+						fprintf(Fid,'%s\n', 'FiveLink= 1');						
+					end					
+					if FoundVar == 0
+						fprintf(Fid,'%s\n', line);
+					end
+				else
+					fprintf(Fid,'%s\n', line);
+				end
+			end
+			
+			for i = (End+1):(numel(obj.File)-1)
+				fprintf(Fid,'%s\n', obj.File(i).lines);
+			end
+			fclose all
+			
+		end
+		%%-------------------------------------------------------------------------------------%%		
+		function WriteLine(obj, FileID, Axle, IntVariable, ChcVariable)
+			
+			switch Axle
+				case 'Front'
+					Name = 'FKin';
+				case 'Rear'
+					Name = 'RKin';
+			end
+			
+			X = obj.(Name).(IntVariable).X;
+			Y = obj.(Name).(IntVariable).Y;
+			Z = obj.(Name).(IntVariable).Z;
+			
+			fprintf(FileID,'%s = %2.3f,%2.3f,%2.3f;\n\n', ChcVariable, X, Y,Z);			
+			
+			
+		end
+		%%-------------------------------------------------------------------------------------%%		
+    end
+    
+end
+

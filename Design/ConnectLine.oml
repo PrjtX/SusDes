@@ -1,0 +1,173 @@
+classdef ConnectLine < handle
+
+	properties
+		SA
+		IR
+		Constr
+		LineError
+		VirtualLink
+		OptInfo
+		IniX = 0;
+		IniZ = 0;
+		DebugMode = 1
+		DebugFilePath = 'C:\SusAnScratch\'
+		DebugFileName = 'ConnectLineDebug.dat'
+		Dfile
+		MaxIter = 4
+	end
+	
+	methods 
+	    %%%------------------------------------------------------------------------%%%
+		function obj = ConnectLine(SteerAxis, InstRotAxis)
+			obj.SA = SteerAxis;
+			obj.IR = InstRotAxis;			
+			if obj.DebugMode == 1
+				obj.OpenDebugFile();
+			end
+		end
+		%%%------------------------------------------------------------------------%%%
+		function SetDebugMode(obj, OnOff)
+			switch OnOff							
+				case 'On'	
+					obj.DebugMode = 1;
+				case 'Off'
+					obj.DebugMode = 0;
+			end
+		end
+		%%%------------------------------------------------------------------------%%%
+		function OpenDebugFile(obj)
+			if exist(obj.DebugFilePath) ~= 7
+				mkdir(obj.DebugFilePath)
+			end
+			
+			if exist([obj.DebugFilePath obj.DebugFileName]) == 2
+				obj.Dfile = fopen([obj.DebugFilePath obj.DebugFileName],'a');
+				t = clock;
+				fprintf(obj.Dfile, 'File modified at time %2.0f/%01.0f/%1.0f - %01.0f:%01.0f:%01.0f\n', t(1), t(2), t(3), t(4), t(5), t(6));				
+			else
+				obj.Dfile = fopen([obj.DebugFilePath obj.DebugFileName],'w');
+				t = clock;
+				fprintf(obj.Dfile, 'File created at time %2.0f/%01.0f/%1.0f - %01.0f:%01.0f:%01.0f\n', t(1), t(2), t(3), t(4), t(5), t(6));				
+			end
+		end
+		%%%------------------------------------------------------------------------%%%
+		function SetIniX(obj, Value)
+			obj.IniX = Value;
+		end
+		%%%------------------------------------------------------------------------%%%
+		function SetIniZ(obj, Value)
+			obj.IniZ = Value;
+		end		
+		%%%------------------------------------------------------------------------%%%
+		function ConstrainedPosition(obj, Comp1, Val1, Comp2, Val2)
+			if isempty (obj.Constr)  == 1
+				k = 1;
+			else
+				k = numel(obj.Constr) + 1;
+			end
+			
+			obj.Constr(k).Comp1 = Comp1;
+			obj.Constr(k).Comp2 = Comp2;
+			
+			obj.Constr(k).Val1  = Val1;
+			obj.Constr(k).Val2  = Val2;
+			
+			if obj.DebugMode == 1;
+				fprintf(obj.Dfile, 'Added constraints Component 1: %s %2.3f || Component 2: %s %2.3f\n',Comp1, Val1, Comp2, Val2 );
+			end
+			
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+		function err = SlidingLine(obj, t)
+			P1 = [obj.SA.ParamPoint(t(1),'X'),obj.SA.ParamPoint(t(1),'Y'),obj.SA.ParamPoint(t(1),'Z')];
+			P2 = [obj.IR.ParamPoint(t(2),'X'),obj.IR.ParamPoint(t(2),'Y'),obj.IR.ParamPoint(t(2),'Z')];
+			Line = Link(P1, P2);
+			for k = 1:numel(obj.Constr)
+				t = Line.findParam(obj.Constr(k).Val1 , obj.Constr(k).Comp1);
+				Pos= Line.ParamPoint(t, obj.Constr(k).Comp2);
+				DataError(k) = abs(obj.Constr(k).Val2 - Pos);
+				%DataError(k) = (obj.Constr(k).Val2 - Pos)^2;
+			end
+			err = sum(DataError);
+		end
+		%%%------------------------------------------------------------------------%%%
+		function t = FindLine(obj)
+			
+			IterCorr = [-10000 0 +10000];
+			count = 0;
+			for k = 1:numel(IterCorr)
+				for j = 1:numel(IterCorr)
+					count = count + 1;
+					DeltaX(count) = IterCorr(k);
+					DeltaZ(count) = IterCorr(j);
+				end				
+			end			
+			%
+			Iter = 0;
+			Valid = 0;
+			
+			while Valid == 0 && Iter < count
+				Iter = Iter + 1;
+				%
+				t0(1) = obj.SA.findParam(obj.IniZ+DeltaZ(Iter),'Z');
+				t0(2) = obj.IR.findParam(obj.IniX+DeltaX(Iter),'X');
+				%
+				[t,fval,info,output] = fminsearch(@(t) obj.SlidingLine(t), t0);				
+				%
+				obj.OptInfo = info;
+				obj.LineError = fval;
+				Err = fval;
+				
+				P1 = [obj.SA.ParamPoint(t(1),'X'),obj.SA.ParamPoint(t(1),'Y'),obj.SA.ParamPoint(t(1),'Z')];
+				P2 = [obj.IR.ParamPoint(t(2),'X'),obj.IR.ParamPoint(t(2),'Y'),obj.IR.ParamPoint(t(2),'Z')];
+				obj.VirtualLink = [];
+				obj.VirtualLink = Link(P1, P2);	
+
+				C1 = obj.FindPoint(1);
+				C2 = obj.FindPoint(2);	
+
+				Delta(1) = abs(C2(1) - C1(1));
+				Delta(2) = abs(C2(2) - C1(2));
+				Delta(3) = abs(C2(3) - C1(3));
+				
+				MaxDelta = max(Delta);
+				
+				if Err < 0.1 && MaxDelta < 1000
+					Valid = 1;
+				else
+					Valid = 0;
+				end
+					
+				
+				if obj.DebugMode == 1					
+					fprintf(obj.Dfile, 'Iteration %2.0f\n', Iter );
+					fprintf(obj.Dfile, '  X Initial %2.3f\n', obj.IniX+DeltaX(Iter) );
+					fprintf(obj.Dfile, '  Error %2.3f\n', Err );
+					fprintf(obj.Dfile, '  Coord P1 X %2.3f  Y %2.3f Z %2.3f \n', C1(1), C1(2) , C1(3) );
+					fprintf(obj.Dfile, '  Coord P2 X %2.3f  Y %2.3f Z %2.3f \n', C2(1), C2(2) , C2(3) );
+				end				
+			end					
+			%
+					
+			%			
+			if obj.DebugMode == 1									
+				fclose(obj.Dfile);				
+			end
+		end	
+		%%%------------------------------------------------------------------------%%%
+		function  P = FindPoint(obj, ConstrIndex)
+			
+			Component = obj.Constr(ConstrIndex).Comp2;
+			Value     = obj.Constr(ConstrIndex).Val2;
+						
+			t = obj.VirtualLink.findParam(Value, Component);
+			
+			P(1) = obj.VirtualLink.Xp(t);
+			P(2) = obj.VirtualLink.Yp(t);
+			P(3) = obj.VirtualLink.Zp(t);
+			
+		end
+		%%%------------------------------------------------------------------------%%%
+	end
+end

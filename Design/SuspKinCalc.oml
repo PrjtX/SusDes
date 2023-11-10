@@ -1,0 +1,89 @@
+function Out = SuspKinCalc(ParamVect, ActVectTWB, ActVectLWB, CoordTWB, CoordLWB, Plot)
+	
+	if nargin <  6
+		Plot = 0;
+	end
+		
+	
+	WC(1,1)    = ParamVect(1);
+	WC(2,1)    = ParamVect(2);
+	WC(3,1)    = ParamVect(3);
+	TCP(1,1)   = ParamVect(4);
+	TCP(2,1)   = ParamVect(5);
+	TCP(3,1)   = ParamVect(6);
+	CamberGain = ParamVect(7);
+	RCz        = ParamVect(8);
+	Squat      = ParamVect(9);
+	Dive       = ParamVect(10);
+	Caster     = ParamVect(11);
+	KingPin    = ParamVect(12);
+	Trail      = ParamVect(13);
+	Scrub      = ParamVect(14);
+
+
+	RefKin = SuspKin('Susp');
+	RefKin.AssignWC(WC);
+	RefKin.AssignTCP(TCP);
+	RefKin.AssignCamberGain(CamberGain);
+	RefKin.AssignRCz(RCz);			
+	RefKin.AssignDive(Dive);
+	RefKin.AssignSquat(Squat);
+	RefKin.AssignScrub(Scrub);
+	RefKin.AssignTrail(Trail);
+	RefKin.AssignCaster(Caster);
+	RefKin.AssignKingPin(KingPin);
+	RefKin.CalsSteerAxis();
+	RefKin.CalcIRLat();
+	RefKin.CalcIRLong();
+	RefKin.CalcInstRotAxis();			
+
+	TWB = WbnCompB(ActVectTWB, CoordTWB);
+	TWB.SetSteeringAxis(RefKin.A_SA);
+	TWB.SetInstRotAxis(RefKin.A_IR);
+	TWBPoints = TWB.WishboneCalc();
+
+	LWB = WbnCompB(ActVectLWB, CoordLWB);
+	LWB.SetSteeringAxis(RefKin.A_SA);
+	LWB.SetInstRotAxis(RefKin.A_IR);
+	LWBPoints = LWB.WishboneCalc();	
+
+	Out(1,1)  = TWBPoints.FL.IB(1);
+	Out(2,1)  = TWBPoints.FL.IB(2);
+	Out(3,1)  = TWBPoints.FL.IB(3);
+	Out(4,1)  = TWBPoints.FL.OB(1);
+	Out(5,1)  = TWBPoints.FL.OB(2);
+	Out(6,1)  = TWBPoints.FL.OB(3);
+	Out(7,1)  = TWBPoints.RL.IB(1);
+	Out(8,1)  = TWBPoints.RL.IB(2);
+	Out(9,1)  = TWBPoints.RL.IB(3);
+	Out(10,1) = TWBPoints.RL.OB(1);
+	Out(11,1) = TWBPoints.RL.OB(2);
+	Out(12,1) = TWBPoints.RL.OB(3);
+	Out(13,1) = LWBPoints.FL.IB(1);
+	Out(14,1) = LWBPoints.FL.IB(2);
+	Out(15,1) = LWBPoints.FL.IB(3);
+	Out(16,1) = LWBPoints.FL.OB(1);
+	Out(17,1) = LWBPoints.FL.OB(2);
+	Out(18,1) = LWBPoints.FL.OB(3);
+	Out(19,1) = LWBPoints.RL.IB(1);
+	Out(20,1) = LWBPoints.RL.IB(2);
+	Out(21,1) = LWBPoints.RL.IB(3);
+	Out(22,1) = LWBPoints.RL.OB(1);
+	Out(23,1) = LWBPoints.RL.OB(2);
+	Out(24,1) = LWBPoints.RL.OB(3);	
+	
+	if Plot == 1
+	
+		SP = Susp3DPlot();
+		SP.PlotAxis(RefKin.A_SA, 'Z', [0;500], 'SA');
+		SP.PlotAxis(RefKin.A_IR, 'X', [-1000;1000], 'IR');
+		SP.PlotAxis(TWB.FL.VirtualLink, 'Y', [-1500;10000], 'TWB_FL');
+		SP.PlotAxis(TWB.RL.VirtualLink, 'Y', [-1500;10000], 'TWB_RL');
+		SP.PlotAxis(LWB.FL.VirtualLink, 'Y', [-1500;10000], 'LWB_FL');
+		SP.PlotAxis(LWB.RL.VirtualLink, 'Y', [-1500;10000], 'LWB_RL');		
+		
+		
+	end
+		
+
+end

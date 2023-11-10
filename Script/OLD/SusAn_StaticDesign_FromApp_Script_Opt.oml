@@ -1,0 +1,58 @@
+%%%------------------------------------------------------%%%
+% clear all
+% close all
+% clc
+%%%------------------------------------------------------%%%
+tic
+%%%------------------------------------------------------%%%
+R = addpath('..\Design', '..\Tools');
+%%%-------------------------------------------------%%%
+Data.WC          = [str2double(get(SD.Data.WC(1), 'String')); str2double(get(SD.Data.WC(2), 'String')); str2double(get(SD.Data.WC(3), 'String'))];
+Data.TCP         = [str2double(get(SD.Data.TCP(1), 'String')); str2double(get(SD.Data.TCP(2), 'String')); str2double(get(SD.Data.TCP(3), 'String'))];
+Data.RCz         = str2double(get(SD.Data.RollCenterZ, 'String'));
+Data.CamberGain  = str2double(get(SD.Data.CamberGain, 'String'))*3.14/(100*180);
+Data.Dive        = str2double(get(SD.Data.Dive, 'String'));
+Data.Squat       = str2double(get(SD.Data.Squat, 'String'));
+Data.Scrub       = str2double(get(SD.Data.Scrub, 'String'));
+Data.Trail       = str2double(get(SD.Data.Trail, 'String'));
+Data.Caster      = str2double(get(SD.Data.Caster, 'String'))*3.14/180;
+Data.KingPin     = str2double(get(SD.Data.KingPin, 'String'))*3.14/180;
+%%%-------------------------------------------------%%%
+Point.TWB_FL_IB_X    = str2double(get(SD.field.TWB.FL.IB.X, 'String'));
+Point.TWB_FL_IB_Y    = str2double(get(SD.field.TWB.FL.IB.Y, 'String'));
+Point.TWB_RL_IB_X    = str2double(get(SD.field.TWB.RL.IB.X, 'String'));
+Point.TWB_RL_IB_Y    = str2double(get(SD.field.TWB.RL.IB.Y, 'String'));
+Point.TWB_FL_OB_Z    = str2double(get(SD.field.TWB.FL.OB.Z, 'String'));
+Point.LWB_FL_IB_X    = str2double(get(SD.field.LWB.FL.IB.X, 'String'));
+Point.LWB_FL_IB_Y    = str2double(get(SD.field.LWB.FL.IB.Y, 'String'));
+Point.LWB_RL_IB_X    = str2double(get(SD.field.LWB.RL.IB.X, 'String'));
+Point.LWB_RL_IB_Y    = str2double(get(SD.field.LWB.RL.IB.Y, 'String'));
+Point.LWB_FL_OB_Z    = str2double(get(SD.field.LWB.FL.OB.Z, 'String'));
+Point.TWB_OB_Delta_X = str2double(get(SD.field.TWB.Delta.OB.X, 'String'));
+Point.TWB_OB_Delta_Y = str2double(get(SD.field.TWB.Delta.OB.Y, 'String'));
+Point.TWB_OB_Delta_Z = str2double(get(SD.field.TWB.Delta.OB.Z, 'String'));
+Point.LWB_OB_Delta_X = str2double(get(SD.field.LWB.Delta.OB.X, 'String'));
+Point.LWB_OB_Delta_Y = str2double(get(SD.field.LWB.Delta.OB.Y, 'String'));
+Point.LWB_OB_Delta_Z = str2double(get(SD.field.LWB.Delta.OB.Z, 'String'));
+%%%-------------------------------------------------%%%
+xName = {'RCz', 'CamberGain'};
+
+Constr(1).Name = 'TWB_FL_IB_Z';
+Constr(2).Name = 'LWB_RL_IB_Z';
+
+Constr(1).Value = 485;
+Constr(2).Value = 271;
+
+Constr(1).Type = 'Max';
+Constr(2).Type = 'Min';
+
+x0 = [Data.RCz ; Data.CamberGain ];
+lb = x0*0.8;
+ub = x0*1.2;
+
+fun = @(x)SuspKinOpt2(x, xName, Constr, Point, Data);
+
+options = optimset('MaxIter', 400)
+[x,fval,info,output] = fminsearch(fun,x0);
+
+toc

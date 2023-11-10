@@ -1,0 +1,29 @@
+%%%%----------------------------------------------------------------------------%%%%
+clear all
+close all
+clc
+%%%%----------------------------------------------------------------------------%%%%
+R = addpath('..\Design', '..\Tools', '..\Motion', '..\Loads', '..\GUI');
+%%%%----------------------------------------------------------------------------%%%%
+LaodFile = 'W:\675\_LOADS\Front_675v1.mat';
+%%%%----------------------------------------------------------------------------%%%%
+Load = load(LaodFile);
+%%%%----------------------------------------------------------------------------%%%%
+for k = 1:numel(Load.Category)
+	Case(:,k) = [Load.Fx(k); Load.Fy(k); Load.Fz(k); Load.Mx(k); Load.My(k); Load.Mz(k)];
+end
+
+
+h = figure();
+undock(h);
+a = axes(h);
+set(a, 'xgrid', 'on');
+set(a, 'ygrid', 'on');
+set(a, 'xlim', [0 7]);
+set(a, 'xtick', [1 2 3 4 5 6]);
+set(a, 'xticklabel', {'Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'});
+hold on
+for k = 1:numel(Load.Category)
+	p(k) = plot(a,Case(:,k));
+	set(p(k), 'displayname', Load.Category{k})
+end

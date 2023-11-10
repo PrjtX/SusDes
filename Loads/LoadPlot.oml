@@ -1,0 +1,167 @@
+classdef LoadPlot < handle
+
+	properties
+		fig
+		Tension
+		Compression
+		TG
+		Susp
+		Taxes
+		Caxes
+		Tbar
+		Cbar
+		LinkNames = {'LWB_FL'; 'LWB_RL'; 'TWB_FL'; 'TWB_RL'; 'PRD'; 'TRD'}
+		Data
+				
+	end
+	
+	methods
+		%%%-------------%%%
+		function obj = LoadPlot()
+			obj.fig = figure('units', 'normalized', 'position', [0.1 0.1 0.8 0.8]);
+			set(obj.fig, 'numbertitle', 'off');
+			set(obj.fig, 'Name', 'SusAn - Load Plot');
+			obj.TG = uitabgroup(obj.fig,'units', 'normalized', 'position', [0.01 0.01 0.95 0.95]);
+			undock(obj.fig);	
+			obj.Tension     = uitab(obj.TG, 'title', 'Link tension');
+			obj.Compression = uitab(obj.TG, 'title', 'Link compression');
+			obj.Taxes = axes(obj.Tension,'units', 'normalized', 'position', [0.05 0.05 0.9 0.5]);
+			obj.Caxes = axes(obj.Compression,'units', 'normalized', 'position', [0.05 0.05 0.9 0.5]);
+			
+			obj.Data.Tension.LWB_FL = DataPanel(obj.Tension);
+			obj.Data.Tension.LWB_RL = DataPanel(obj.Tension);
+			obj.Data.Tension.TWB_FL = DataPanel(obj.Tension);
+			obj.Data.Tension.TWB_RL = DataPanel(obj.Tension);
+			obj.Data.Tension.TRD    = DataPanel(obj.Tension);
+			obj.Data.Tension.PRD    = DataPanel(obj.Tension);
+			
+			obj.Data.Compression.LWB_FL = DataPanel(obj.Compression);
+			obj.Data.Compression.LWB_RL = DataPanel(obj.Compression);
+			obj.Data.Compression.TWB_FL = DataPanel(obj.Compression);
+			obj.Data.Compression.TWB_RL = DataPanel(obj.Compression);
+			obj.Data.Compression.TRD    = DataPanel(obj.Compression);
+			obj.Data.Compression.PRD    = DataPanel(obj.Compression);			
+			
+			obj.Data.Tension.LWB_FL.Create('LWB_FL', [0.075 0.6 0.12 0.25]);
+			obj.Data.Tension.LWB_RL.Create('LWB_RL', [0.225 0.6 0.12 0.25]);
+			obj.Data.Tension.TWB_FL.Create('TWB_FL', [0.375 0.6 0.12 0.25]);
+			obj.Data.Tension.TWB_RL.Create('TWB_RL', [0.525 0.6 0.12 0.25]);
+			obj.Data.Tension.PRD.Create('PRD',       [0.675 0.6 0.12 0.25]);
+			obj.Data.Tension.TRD.Create('TRD',       [0.825 0.6 0.12 0.25]);
+			
+			obj.Data.Compression.LWB_FL.Create('LWB_FL', [0.075 0.6 0.12 0.25]);
+			obj.Data.Compression.LWB_RL.Create('LWB_RL', [0.225 0.6 0.12 0.25]);
+			obj.Data.Compression.TWB_FL.Create('TWB_FL', [0.375 0.6 0.12 0.25]);
+			obj.Data.Compression.TWB_RL.Create('TWB_RL', [0.525 0.6 0.12 0.25]);
+			obj.Data.Compression.PRD.Create('PRD',       [0.675 0.6 0.12 0.25]);
+			obj.Data.Compression.TRD.Create('TRD',       [0.825 0.6 0.12 0.25]);			
+			
+		end
+		%%%-------------%%%
+		function AddSuspLoad(obj, L, Name, Color)
+			
+			if isempty(obj.Susp) == 1
+				k = 1;				
+			else				
+				k = numel(obj.Susp) + 1;
+			end
+			
+			obj.Susp(k).Load = L;
+			obj.Susp(k).Name = Name;
+			obj.Susp(k).Color = Color;			
+			
+		end
+		%%%-------------%%%
+		function SusLoad = LoadEnvelope(obj, SuspIndex)
+			
+			L = obj.Susp(SuspIndex).Load.Category;		
+			Field = fieldnames(L);
+			
+			SusLoad(1,1) = 0;
+			SusLoad(2,1) = 0;
+			SusLoad(3,1) = 0;
+			SusLoad(4,1) = 0;
+			SusLoad(5,1) = 0;
+			SusLoad(6,1) = 0;
+			
+			SusLoad(1,2) = 0;
+			SusLoad(2,2) = 0;
+			SusLoad(3,2) = 0;
+			SusLoad(4,2) = 0;
+			SusLoad(5,2) = 0;
+			SusLoad(6,2) = 0;		
+			
+			for k = 1:numel(Field)				
+				Cat = L.(Field{k});
+				if strcmp(Field{k}, 'TrackLoadScaled') == 1
+					for j = 1:numel(Cat)
+						
+						SusLoad(1,1)    = max([Cat(j).LWB_FL; SusLoad(1,1) ]);
+						SusLoad(2,1)    = max([Cat(j).LWB_RL; SusLoad(2,1) ]);
+						SusLoad(3,1)    = max([Cat(j).TWB_FL; SusLoad(3,1) ]);
+						SusLoad(4,1)    = max([Cat(j).TWB_RL;  SusLoad(4,1) ]);
+						SusLoad(5,1)    = max([Cat(j).PRD; SusLoad(5,1) ]);
+						SusLoad(6,1)    = max([Cat(j).TRD; SusLoad(6,1) ]);
+						
+						
+						SusLoad(1,2)    = min([Cat(j).LWB_FL; SusLoad(1,2) ]);
+						SusLoad(2,2)    = min([Cat(j).LWB_RL; SusLoad(2,2) ]);
+						SusLoad(3,2)    = min([Cat(j).TWB_FL; SusLoad(3,2) ]);
+						SusLoad(4,2)    = min([Cat(j).TWB_RL; SusLoad(4,2) ]);
+						SusLoad(5,2)    = min([Cat(j).PRD;    SusLoad(5,2) ]);					
+						SusLoad(6,2)    = min([Cat(j).TRD;    SusLoad(6,2) ]);
+												
+					end
+				end				
+			end
+				
+		end
+		%%%-------------%%%
+		function DataPlot(obj)
+			
+			for k = 1:numel(obj.Susp)				
+				SusLoad = obj.LoadEnvelope(k);				
+				Tension(k,:) = SusLoad(:,1);				
+				Compression(k,:) = SusLoad(:,2);								
+			end
+			
+			obj.Tbar = bar(obj.Taxes, obj.LinkNames, Tension./1000);
+			grid on
+			ylabel('Link load [kN]')
+			legend('on');
+			
+			obj.Cbar = bar(obj.Caxes, obj.LinkNames, Compression./1000);
+			grid on
+			ylabel('Link load [kN]')
+			legend('on');
+			
+			for k = 1:numel(obj.Susp)	
+				
+				set(obj.Tbar(k), 'facecolor', obj.Susp(k).Color);
+				set(obj.Tbar(k), 'displayname', obj.Susp(k).Name);
+				set(obj.Tbar(k), 'barstyle', 2);
+				set(obj.Cbar(k), 'facecolor', obj.Susp(k).Color);
+				set(obj.Cbar(k), 'displayname', obj.Susp(k).Name);
+				set(obj.Cbar(k), 'barstyle', 2);
+				
+				obj.Data.Tension.LWB_FL.SusValueInput( k, Tension(k,1)./1000, obj.Susp(k).Color);
+				obj.Data.Tension.LWB_RL.SusValueInput( k, Tension(k,2)./1000, obj.Susp(k).Color);
+				obj.Data.Tension.TWB_FL.SusValueInput( k, Tension(k,3)./1000, obj.Susp(k).Color);
+				obj.Data.Tension.TWB_RL.SusValueInput( k, Tension(k,4)./1000, obj.Susp(k).Color);
+				obj.Data.Tension.PRD.SusValueInput( k, Tension(k,5)./1000, obj.Susp(k).Color);
+				obj.Data.Tension.TRD.SusValueInput( k, Tension(k,6)./1000, obj.Susp(k).Color);
+				
+				
+				obj.Data.Compression.LWB_FL.SusValueInput( k, Compression(k,1)./1000, obj.Susp(k).Color);
+				obj.Data.Compression.LWB_RL.SusValueInput( k, Compression(k,2)./1000, obj.Susp(k).Color);
+				obj.Data.Compression.TWB_FL.SusValueInput( k, Compression(k,3)./1000, obj.Susp(k).Color);
+				obj.Data.Compression.TWB_RL.SusValueInput( k, Compression(k,4)./1000, obj.Susp(k).Color);
+				obj.Data.Compression.PRD.SusValueInput( k,    Compression(k,5)./1000, obj.Susp(k).Color);
+				obj.Data.Compression.TRD.SusValueInput( k,    Compression(k,6)./1000, obj.Susp(k).Color);
+								
+			end
+								
+		end
+		%%%-------------%%%
+	end
+end
