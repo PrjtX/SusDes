@@ -10,21 +10,21 @@ R = addpath('..\..\Design', '..\..\Tools', '..\..\Motion', '..\..\Loads', '..\..
 SuspName     = 'Test'
 Path         = 'C:\Scratch\TestLoad';
 
-Axle         = 'Front';
-Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\PerformanceModel\Study006\Models\Kinematic\Kin_F013.mdl';
-Kin(2).Path  = 'C:\Users\nikif\OneDrive\ProjectX\PerformanceModel\Study006\Models\Kinematic\Kin_F017.mdl';
-Kin(1).Col   = 'r';
-Kin(2).Col   = 'g';
-Kin(1).Name  = 'F013';
-Kin(2).Name  = 'F016';
-
-% Axle         = 'Rear';
-% Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\PerformanceModel\Study006\Models\Kinematic\Kin_R017.mdl';
-% Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\PerformanceModel\Study006\Models\Kinematic\Kin_R018.mdl';
+% Axle         = 'Front';
+% Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006\Param\Kinematic\Kin_F013.mdl';
+% Kin(2).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006\Param\Kinematic\Kin_F013.mdl';
 % Kin(1).Col   = 'r';
-% Kin(2).Col   = 'b';
-% Kin(1).Name  = 'R018';
-% Kin(2).Name  = 'R018';
+% Kin(2).Col   = 'g';
+% Kin(1).Name  = 'F013';
+% Kin(2).Name  = 'F019';
+
+Axle         = 'Rear';
+Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006\Param\Kinematic\Kin_R018.mdl';
+Kin(2).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006\Param\Kinematic\Kin_R020.mdl';
+Kin(1).Col   = 'r';
+Kin(2).Col   = 'b';
+Kin(1).Name  = 'R018';
+Kin(2).Name  = 'R020';
 
 
 RHMin = -10;

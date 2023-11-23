@@ -8,14 +8,14 @@ R = addpath('..\..\Design', '..\..\Tools', '..\..\Motion', '..\..\Loads', '..\..
 Path         = 'C:\Scratch\TestLoad';
 %%---------------------------------------------------------------------------%%
 Kin(1).Axle  = 'Front';
-Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\PerformanceModel\Study006\Models\Kinematic\Kin_F013.mdl';
+Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006\Param\Kinematic\Kin_F013.mdl';
 Kin(1).Col   = 'r';
 Kin(1).Name  = 'F013';
 
 Kin(2).Axle  = 'Rear';
-Kin(2).Path  = 'C:\Users\nikif\OneDrive\ProjectX\PerformanceModel\Study006\Models\Kinematic\Kin_R019.mdl';
+Kin(2).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006\Param\Kinematic\Kin_R020.mdl';
 Kin(2).Col   = 'b';
-Kin(2).Name  = 'R019';
+Kin(2).Name  = 'R020';
 %%---------------------------------------------------------------------------%%
 RHMin = -20;
 RHMax = 110;
@@ -25,14 +25,14 @@ Car.Cx       = 0.67;
 Car.Cz       = -3.62;
 Car.Ab       = 0.41;
 Car.Wb       = 2800;
-Car.Mass     = 1016;
+Car.Mass     = 1100;
 Car.WeighBal = 0.49;
 Car.KinstF   = 1/(1/5000+1/400);
 Car.KinstR   = 1/(1/5000+1/400);
 Car.Hg       = 316;
-Car.mu       = 1.5;
+Car.mu       = 1.0;
 Car.KarbF    = 23*1000*180/pi;
-Car.KarbR    = 25.2*1000*180/pi;
+Car.KarbR    = 95*1000*180/pi;
 
 Speed = (0:1:350)/3.6;
 Faero = 0.5*1.2*Car.Sx.*Car.Cz.*Speed.^2;
