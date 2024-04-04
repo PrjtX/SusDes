@@ -1,0 +1,14 @@
+function Error = CurveError(RHsample, RHref, KinRef, RH, Kin)
+	
+	M = mean(KinRef);
+	
+	kr = interp1(RHref,KinRef,RHsample, 'linear', 'extrap');
+	k  = interp1(RH,Kin,RHsample, 'linear', 'extrap');
+	
+	if M ~= 0
+		Error = sum(((k - kr)./M).^2)/numel(RHsample);
+	else
+		Error = sum(((k - kr)./1).^2)/numel(RHsample);
+	end
+	
+end

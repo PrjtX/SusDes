@@ -8,23 +8,29 @@ tic
 R = addpath('..\..\Design', '..\..\Tools', '..\..\Motion', '..\..\Loads', '..\..\GUI');
 %%---------------------------------------------------------------------------%%
 SuspName     = 'Test'
-Path         = 'C:\Scratch\TestLoad';
+Path         = 'C:\Scratch\TestLoad2';
 
 % Axle         = 'Front';
-% Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006\Param\Kinematic\Kin_F013.mdl';
-% Kin(2).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006\Param\Kinematic\Kin_F013.mdl';
-% Kin(1).Col   = 'r';
-% Kin(2).Col   = 'g';
-% Kin(1).Name  = 'F013';
-% Kin(2).Name  = 'F019';
+% Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_F018.mdl';
+% Kin(1).Col   = 'b';
+% Kin(1).Name  = 'F018';
 
 Axle         = 'Rear';
-Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006\Param\Kinematic\Kin_R018.mdl';
-Kin(2).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006\Param\Kinematic\Kin_R020.mdl';
-Kin(1).Col   = 'r';
-Kin(2).Col   = 'b';
-Kin(1).Name  = 'R018';
-Kin(2).Name  = 'R020';
+Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R021.mdl';
+Kin(2).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R028.mdl';
+Kin(3).Path  = 'C:\Scratch\TestLoad5_000336\Iteration.mdl';
+Kin(4).Path  = 'C:\Scratch\TestLoad5_000426\Iteration.mdl';
+% Kin(5).Path  = 'C:\Scratch\TestLoad5_00739346.313\Iteration.mdl';
+Kin(1).Col   = 'b';
+Kin(2).Col   = 'r';
+Kin(3).Col   = 'g';
+Kin(4).Col   = 'k';
+% Kin(5).Col   = 'c';
+Kin(1).Name  = 'R021';
+Kin(2).Name  = 'R028';
+Kin(3).Name  = 'Iter336';
+Kin(4).Name  = 'Iter426';
+% Kin(5).Name  = 'Iter3';
 
 
 RHMin = -10;
@@ -151,3 +157,37 @@ for k = 1:numel(Data)
 	plot(Data(k).Travel.Out.RH,Data(k).Travel.Out.Toe, Kin(k).Col)
 end
 legend({Kin.Name })
+
+
+fig5 = figure();
+undock(fig5)
+
+for k = 1:numel(Data)
+	
+	damp_MR = diff(Data(k).Travel.Out.Len_Damper)./diff(Data(k).Travel.Out.RH);
+	Data(k).Travel.Out.Damper_MR = [damp_MR(1); damp_MR'];
+	
+	Arb_MR = diff(Data(k).Travel.Out.ArbRot)./diff(Data(k).Travel.Out.RH);
+	Data(k).Travel.Out.Arb_MR = [Arb_MR(1); Arb_MR'];
+	
+end
+
+subplot(2,1,1)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('damper Motion Ratio [mm/mm]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.Out.RH,Data(k).Travel.Out.Damper_MR, Kin(k).Col)
+end
+
+legend({Kin.Name })
+
+subplot(2,1,2)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('arb angle motion ration [deg/mm]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.Out.RH,Data(k).Travel.Out.Arb_MR, Kin(k).Col)
+end

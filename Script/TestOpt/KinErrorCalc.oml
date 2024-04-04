@@ -1,0 +1,87 @@
+function Error = KinErrorCalc(X,Ref)
+	%%---------------------------------------------------------------------------%%
+	FolIdx = load('C:\Scratch\NFolder.mat');
+	FolIdx.ID = FolIdx.ID + 1;
+	%%---------------------------------------------------------------------------%%
+	NowTime      = now;
+	SuspName     = 'Test'	
+	Path         = sprintf('C:/Scratch/TestLoad5_%06.0f',FolIdx.ID);
+    %%---------------------------------------------------------------------------%%
+	Axle         = 'Rear';
+	PathKin      = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R028.mdl';
+    %%---------------------------------------------------------------------------%%
+	RHMin = 0;
+	RHMax = 70;
+	%%---------------------------------------------------------------------------%%
+	CamberGain = Ref.CamberGain;
+	Dive       = Ref.Dive;
+	Squat      = Ref.Squat;
+	RCz        = Ref.RCz;
+	RHref      = Ref.RH;
+	%%---------------------------------------------------------------------------%%
+	KinIn = KinReader(PathKin);
+	KinIn.DataRead();
+	%%---------------------------------------------------------------------------%%
+	wToe        = 100;
+	wCamberGain = 10;
+	wDive       = 100;
+	wSquat      = 0.1;
+	wRCz        = 10;
+	wGlobal     = 1000;
+	%%---------------------------------------------------------------------------%%
+    KinIn.FKin.TWB_FL_IB.X = X(1);
+    KinIn.FKin.TWB_FL_IB.Z = X(2);
+	KinIn.FKin.TWB_FL_OB.Z = X(3);
+    KinIn.FKin.TWB_RL_IB.X = X(4);
+    KinIn.FKin.TWB_RL_IB.Z = X(5);
+	KinIn.FKin.TWB_RL_OB.Z = X(6);
+    KinIn.FKin.LWB_FL_IB.X = X(7);
+    KinIn.FKin.LWB_FL_IB.Z = X(8);
+	KinIn.FKin.LWB_FL_OB.Z = X(9);
+    KinIn.FKin.LWB_RL_IB.X = X(10);
+    KinIn.FKin.LWB_RL_IB.Z = X(11);
+	KinIn.FKin.LWB_RL_OB.Z = X(12);
+    KinIn.FKin.TRD_IB.X    = X(13);
+    KinIn.FKin.TRD_IB.Z    = X(14);
+    KinIn.FKin.TRD_OB.X    = X(15);
+    KinIn.FKin.TRD_OB.Y    = X(16);
+    % KinIn.FKin.TRD_IB.X    = X(1);
+	% KinIn.FKin.TRD_IB.Y    = X(2);
+    % KinIn.FKin.TRD_IB.Z    = X(3);
+    % KinIn.FKin.TRD_OB.X    = X(4);
+    % KinIn.FKin.TRD_OB.Y    = X(5);	
+	% KinIn.FKin.TRD_OB.Z    = X(6);	
+	%%---------------------------------------------------------------------------%%
+	%%---------------------------------------------------------------------------%%
+	LT = KinCalc(KinIn.FKin, Path);
+	LT.SusTravel(RHMin,RHMax, 1.0);
+	%%---------------------------------------------------------------------------%%
+	Data.Travel.Out    = LT.Out;
+	Data.Travel.KinOut = LT.KinOut;
+	%%---------------------------------------------------------------------------%%
+	ErrRH          = (RHMin:1:RHMax);
+	E_Toe          = CurveMeanError(ErrRH, RHref, zeros(1,numel(RHref)),Data.Travel.Out.RH, Data.Travel.Out.Toe);
+	E_CamberGain   = CurveMeanError(ErrRH, RHref, CamberGain, Data.Travel.KinOut.RH, Data.Travel.KinOut.CamberGain);
+	E_Dive         = CurveMeanError(ErrRH, RHref, Dive, Data.Travel.KinOut.RH, Data.Travel.KinOut.Dive);
+	E_Squat        = CurveMeanError(ErrRH, RHref, Squat, Data.Travel.KinOut.RH, Data.Travel.KinOut.Squat);
+	E_RCz          = CurveMeanError(ErrRH, RHref, RCz, Data.Travel.KinOut.RH, Data.Travel.KinOut.RCz);
+	%%---------------------------------------------------------------------------%%
+	Error = wGlobal*(E_Toe*wToe+E_CamberGain*wCamberGain+E_Dive*wDive+E_Squat*wSquat+E_RCz*wRCz);
+	%%---------------------------------------------------------------------------%%
+	fid = fopen('C:\Scratch\OptRun.dat','a');
+	fprintf(fid, 'Data :');
+	for k = 1:numel(X)
+		fprintf(fid, ' %6.3f', X(k));
+	end
+	fprintf(fid, ' || ');
+    fprintf(fid, 'Error: %6.4f\n', Error);
+	fprintf(fid, 'Error: Toe %7.6f || CamberGain %7.6f || Dive %7.6f || Squat %7.6f || RCz %7.6f\n', E_Toe, E_CamberGain, E_Dive, E_Squat, E_RCz);
+	fprintf(fid, 'Path: %s \n', Path);
+	fclose all;
+	%%---------------------------------------------------------------------------%%	
+	KinIn.Write(sprintf('%s/Iteration.mdl',Path))
+	%%---------------------------------------------------------------------------%%
+	ID = FolIdx.ID;
+	save('C:\Scratch\NFolder.mat', 'ID');
+	%%---------------------------------------------------------------------------%%	
+end

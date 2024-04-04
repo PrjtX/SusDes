@@ -1,0 +1,71 @@
+%%%------------------------------------------------------------------------------------%%%
+clear all
+close all
+clc
+%%---------------------------------------------------------------------------%%
+R = addpath('..\..\Design', '..\..\Tools', '..\..\Motion', '..\..\Loads', '..\..\GUI');
+%%---------------------------------------------------------------------------%%
+SuspName     = 'Test'
+Path         = 'C:\Scratch\TestLoad2';
+
+RHMin = 0;
+RHMax = 70;
+KinPath1  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R021.mdl';
+KinPath2  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R028.mdl';
+
+KinIn1 = KinReader(KinPath1);
+KinIn1.DataRead();
+LT1 = KinCalc(KinIn1.FKin, Path);
+LT1.SusTravel(RHMin,RHMax, 1.0);
+Data1.Out    = LT1.Out;
+Data1.KinOut = LT1.KinOut;
+
+KinIn2 = KinReader(KinPath2);
+KinIn2.DataRead();
+LT2 = KinCalc(KinIn2.FKin, Path);
+LT2.SusTravel(RHMin,RHMax, 1.0);
+Data2.Out    = LT2.Out;
+Data2.KinOut = LT2.KinOut;
+
+Ref.RH         = (RHMin:1:RHMax);
+Ref.CamberGain = interp1(Data1.KinOut.RH,Data1.KinOut.CamberGain, Ref.RH, 'linear', 'extrap');
+Ref.RCz        = interp1(Data1.KinOut.RH,Data1.KinOut.RCz, Ref.RH, 'linear', 'extrap');
+Ref.Dive       = interp1(Data2.KinOut.RH,Data2.KinOut.Dive, Ref.RH, 'linear', 'extrap');
+Ref.Squat      = interp1(Data2.KinOut.RH,Data2.KinOut.Squat, Ref.RH, 'linear', 'extrap');
+
+
+% X(1)  = KinIn2.FKin.TWB_FL_IB.X;
+% X(2)  = KinIn2.FKin.TWB_FL_IB.Z;
+% X(3)  = KinIn2.FKin.TWB_FL_OB.Z;
+% X(4)  = KinIn2.FKin.TWB_RL_IB.X;
+% X(5)  = KinIn2.FKin.TWB_RL_IB.Z;
+% X(6)  = KinIn2.FKin.TWB_RL_OB.Z;
+% X(7)  = KinIn2.FKin.LWB_FL_IB.X;
+% X(8)  = KinIn2.FKin.LWB_FL_IB.Z;
+% X(9)  = KinIn2.FKin.LWB_FL_OB.Z;
+% X(10) = KinIn2.FKin.LWB_RL_IB.X;
+% X(11) = KinIn2.FKin.LWB_RL_IB.Z;
+% X(12) = KinIn2.FKin.LWB_RL_OB.Z;
+% X(13) = KinIn2.FKin.TRD_IB.X; 
+% X(14) = KinIn2.FKin.TRD_IB.Z;
+% X(15) = KinIn2.FKin.TRD_OB.X;
+% X(16) = KinIn2.FKin.TRD_OB.Y;    
+
+%Error = ToeErrorCalc(TRD_IB_Coord);
+fun = @(x) KinErrorCalc(x,Ref);
+
+Num = xlsread('Kin.xlsx', 'AAA', 'E3:G18');
+
+x0 = Num(:,2);
+	  
+lb = Num(:,1);
+ub = Num(:,3);
+
+% options = grsmoptimset('MaxIter', 200, 'Display', 'iter')
+%[x,fval,info,output] = fmincon(@fun,x0,[],[],[],[],lb,ub);
+
+% x = grsm(@fun,x0,[],[],[],[],lb,ub)
+
+
+% options = gaoptimset('Generations', 200, 'Display', 'iter')
+[x,fval,info,output] = ga(@fun,numel(x0),[],[],[],[],lb,ub,[]);

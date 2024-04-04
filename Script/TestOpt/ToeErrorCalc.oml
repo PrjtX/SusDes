@@ -1,0 +1,34 @@
+function Error = ToeErrorCalc(X)
+	%%---------------------------------------------------------------------------%%
+	R = addpath('C:/MBD_Vehicle_Tools/SusDes/Design', 'C:/MBD_Vehicle_Tools/SusDes/Tools', 'C:/MBD_Vehicle_Tools/SusDes/Motion', 'C:/MBD_Vehicle_Tools/SusDes/Loads', 'C:/MBD_Vehicle_Tools/SusDes/GUI');
+	%%---------------------------------------------------------------------------%%
+	SuspName     = 'Test'
+	Path         = 'C:\Scratch\TestLoad3';
+    %%---------------------------------------------------------------------------%%
+	Axle         = 'Rear';
+	PathKin      = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R027.mdl';
+    %%---------------------------------------------------------------------------%%
+	RHMin = 0;
+	RHMax = 70;
+	%%---------------------------------------------------------------------------%%
+	KinIn = KinReader(PathKin);
+	KinIn.DataRead();
+	%%---------------------------------------------------------------------------%%
+	%%---------------------------------------------------------------------------%%
+    KinIn.FKin.TRD_IB.X    = X(1);
+	KinIn.FKin.TRD_IB.Y    = X(2);
+    KinIn.FKin.TRD_IB.Z    = X(3);
+    KinIn.FKin.TRD_OB.X    = X(4);
+    KinIn.FKin.TRD_OB.Y    = X(5);	
+	KinIn.FKin.TRD_OB.Z    = X(6);	
+	%%---------------------------------------------------------------------------%%
+	LT = KinCalc(KinIn.FKin, Path);
+	LT.SusTravel(RHMin,RHMax, 1.0);
+	%%---------------------------------------------------------------------------%%
+	Data.Travel.Out    = LT.Out;
+	ErrRH          = (RHMin:1:RHMax);
+	E_Toe          = CurveError(ErrRH, ErrRH, zeros(1,numel(ErrRH)),Data.Travel.Out.RH, Data.Travel.Out.Toe);
+	%%---------------------------------------------------------------------------%%
+	Error = E_Toe;
+	%%---------------------------------------------------------------------------%%	
+end
