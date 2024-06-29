@@ -5,10 +5,10 @@ function Error = KinErrorCalc(X,Ref)
 	%%---------------------------------------------------------------------------%%
 	NowTime      = now;
 	SuspName     = 'Test'	
-	Path         = sprintf('C:/Scratch/TestLoad5_%06.0f',FolIdx.ID);
+	Path         = sprintf('C:/Scratch/Opt_gr/TestLoad_%06.0f',FolIdx.ID);
     %%---------------------------------------------------------------------------%%
 	Axle         = 'Rear';
-	PathKin      = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R028.mdl';
+	PathKin      = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R030.mdl';
     %%---------------------------------------------------------------------------%%
 	RHMin = 0;
 	RHMax = 70;
@@ -68,7 +68,7 @@ function Error = KinErrorCalc(X,Ref)
 	%%---------------------------------------------------------------------------%%
 	Error = wGlobal*(E_Toe*wToe+E_CamberGain*wCamberGain+E_Dive*wDive+E_Squat*wSquat+E_RCz*wRCz);
 	%%---------------------------------------------------------------------------%%
-	fid = fopen('C:\Scratch\OptRun.dat','a');
+	fid = fopen('C:\Scratch\Opt_gr\OptRun.dat','a');
 	fprintf(fid, 'Data :');
 	for k = 1:numel(X)
 		fprintf(fid, ' %6.3f', X(k));

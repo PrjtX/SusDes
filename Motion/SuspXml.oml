@@ -602,11 +602,14 @@ classdef SuspXml < handle
 		
 			if strcmp(obj.Mode,'Steer')== 1
 				
-				ToeOpp  = -interp1(-obj.Out.Rack,-obj.Out.Toe, obj.Out.Rack, 'extrap', 'linear');
-				RHOpp   = interp1(-obj.Out.Rack, obj.Out.RH, obj.Out.Rack, 'extrap', 'linear');
-				obj.Out.DeltaToe = (obj.Out.Toe + ToeOpp);
+				
+				ToeOpp            = -interp1(-obj.Out.Rack,-obj.Out.Toe, obj.Out.Rack, 'extrap', 'linear');
+				RHOpp             = interp1(-obj.Out.Rack, obj.Out.RH, obj.Out.Rack, 'extrap', 'linear');
+				obj.Out.DeltaToe  = (obj.Out.Toe + ToeOpp);
 				obj.Out.SteerAvrg = (obj.Out.Toe - ToeOpp)/2;
 				obj.Out.DeltaRH   = -(obj.Out.RH - RHOpp);
+				obj.Out.SteerRatio        = diff(obj.Out.SteerAvrg)./diff(obj.Out.Rack);
+				obj.Out.SteerRatio(end+1) = obj.Out.SteerRatio(end);
 									
 			end
 			

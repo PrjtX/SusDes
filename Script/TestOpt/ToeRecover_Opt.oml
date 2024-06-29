@@ -10,8 +10,8 @@ Path         = 'C:\Scratch\TestLoad2';
 
 RHMin = 0;
 RHMax = 70;
-KinPath1  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R021.mdl';
-KinPath2  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R028.mdl';
+KinPath1  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R030.mdl';
+KinPath2  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_R030.mdl';
 
 KinIn1 = KinReader(KinPath1);
 KinIn1.DataRead();
@@ -62,10 +62,10 @@ lb = Num(:,1);
 ub = Num(:,3);
 
 % options = grsmoptimset('MaxIter', 200, 'Display', 'iter')
-%[x,fval,info,output] = fmincon(@fun,x0,[],[],[],[],lb,ub);
+[x,fval,info,output] = fmincon(@fun,x0,[],[],[],[],lb,ub);
 
 % x = grsm(@fun,x0,[],[],[],[],lb,ub)
 
 
 % options = gaoptimset('Generations', 200, 'Display', 'iter')
-[x,fval,info,output] = ga(@fun,numel(x0),[],[],[],[],lb,ub,[]);
+% [x,fval,info,output] = ga(@fun,numel(x0),[],[],[],[],lb,ub,[]);

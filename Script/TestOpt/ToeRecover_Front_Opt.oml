@@ -1,0 +1,64 @@
+%%%------------------------------------------------------------------------------------%%%
+clear all
+close all
+clc
+%%---------------------------------------------------------------------------%%
+R = addpath('..\..\Design', '..\..\Tools', '..\..\Motion', '..\..\Loads', '..\..\GUI');
+%%---------------------------------------------------------------------------%%
+SuspName     = 'Test'
+Path         = 'C:\Scratch\TestLoad2';
+
+RHMin = 0;
+RHMax = 70;
+SteerMax = 30;
+KinPath  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_F018.mdl';
+
+KinIn = KinReader(KinPath);
+KinIn.DataRead();
+LT = KinCalc(KinIn.FKin, Path);
+LT.SusTravel(RHMin,RHMax, 1.0);
+Data.Out    = LT.Out;
+Data.KinOut = LT.KinOut;
+
+LS = KinCalc(KinIn.FKin, Path);
+LS.SusSteer(SteerMax, 1.0)	
+SData.Out    = LS.Out;
+
+
+Ref.RH         = (RHMin:1:RHMax);
+Ref.CamberGain = interp1(Data.KinOut.RH,Data.KinOut.CamberGain, Ref.RH, 'linear', 'extrap');
+Ref.RCz        = interp1(Data.KinOut.RH,Data.KinOut.RCz, Ref.RH, 'linear', 'extrap');
+Ref.Dive       = interp1(Data.KinOut.RH,Data.KinOut.Dive, Ref.RH, 'linear', 'extrap');
+Ref.Squat      = interp1(Data.KinOut.RH,Data.KinOut.Squat, Ref.RH, 'linear', 'extrap');
+
+Ref.Rack       = (-SteerMax:1:SteerMax);
+Ref.SteerRatio = interp1(SData.Out.Rack,SData.Out.SteerRatio, Ref.Rack, 'linear', 'extrap');
+Ref.DeltaToe   = interp1(SData.Out.Rack,SData.Out.DeltaToe, Ref.Rack, 'linear', 'extrap').*0.5;
+
+% X(1)  = KinIn.FKin.TRD_IB.X;
+% X(2)  = KinIn.FKin.TRD_IB.Y;
+% X(3)  = KinIn.FKin.TRD_OB.X;
+% X(4)  = KinIn.FKin.TRD_OB.Y;
+% X(5)  = KinIn.FKin.TRD_OB.Z;
+   
+FolIdx    = load('C:\Scratch\NFolder.mat');
+ID = 0;
+save('C:\Scratch\NFolder.mat', 'ID');
+
+%Error = ToeErrorCalc(TRD_IB_Coord);
+fun = @(x) KinErrorCalc_Front(x,Ref);
+
+Num = xlsread('Kin.xlsx', 'Front', 'E3:G6');
+
+x0 = Num(:,2);
+
+lb = Num(:,1);
+ub = Num(:,3);
+
+% options = grsmoptimset('MaxIter', 200, 'Display', 'iter')
+% [x,fval,info,output] = fmincon(@fun,x0,[],[],[],[],lb,ub);
+
+%x = grsm(@fun,x0,[],[],[],[],lb,ub)
+
+% options = gaoptimset('Generations', 200, 'Display', 'iter')
+[x,fval,info,output] = ga(@fun,numel(x0),[],[],[],[],lb,ub,[]);

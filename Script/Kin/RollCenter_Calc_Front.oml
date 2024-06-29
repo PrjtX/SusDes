@@ -1,0 +1,218 @@
+%%%------------------------------------------------------------------------------------%%%
+clear all
+close all
+clc
+%%---------------------------------------------------------------------------%%
+tic
+%%---------------------------------------------------------------------------%%
+R = addpath('..\..\Design', '..\..\Tools', '..\..\Motion', '..\..\Loads', '..\..\GUI');
+%%---------------------------------------------------------------------------%%
+SuspName     = 'Test'
+Path         = 'C:\Scratch\TestLoad2';
+
+Axle         = 'Front';
+Kin(1).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_F031.mdl';
+Kin(2).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_F032.mdl';
+Kin(3).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_F033.mdl';
+% Kin(4).Path  = 'C:\Users\nikif\OneDrive\ProjectX\SimVersion\Study006B\Param\Kinematic\Kin_F033.mdl';
+
+
+
+Kin(1).Col   = 'b';
+Kin(2).Col   = 'r';
+Kin(3).Col   = 'g';
+% Kin(4).Col   = 'k';
+
+
+Kin(1).Name  = 'F033';
+Kin(2).Name  = 'F034';
+Kin(3).Name  = 'F035';
+% Kin(4).Name  = 'F033';
+
+
+
+
+RHMin = -10;
+RHMax = 110;
+SteerMax = 30
+%%---------------------------------------------------------------------------%%
+for k = 1:numel(Kin)
+	clear KinIn LT
+	KinIn = KinReader(Kin(k).Path);
+	KinIn.DataRead();
+	%%---------------------------------------------------------------------------%%
+	%%---------------------------------------------------------------------------%%
+	LT = KinCalc(KinIn.FKin, Path);
+	LT.SusTravel(RHMin,RHMax, 1.0);
+	%%---%%
+	LS = KinCalc(KinIn.FKin, Path);
+	LS.SusSteer(SteerMax, 1.0)
+	%%---------------------------------------------------------------------------%%
+	Data(k).Travel.Out    = LT.Out;
+	Data(k).Travel.KinOut = LT.KinOut;
+	if strcmp(Axle, 'Front') == 1
+		Data(k).Steer.Out     = LS.Out;
+	end
+end
+
+fig1 = figure();
+undock(fig1)
+
+subplot(2,1,1)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('Damper lenght [mm]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.Out.RH,Data(k).Travel.Out.Len_Damper, Kin(k).Col)
+end
+
+legend({Kin.Name })
+
+subplot(2,1,2)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('Arb Angle [deg]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.Out.RH,Data(k).Travel.Out.ArbRot, Kin(k).Col)
+end
+
+
+fig2 = figure();
+undock(fig2)
+
+subplot(2,2,1)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('Roll center Z [mm]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.KinOut.RH,Data(k).Travel.KinOut.RCz, Kin(k).Col)
+end
+legend({Kin.Name })
+
+subplot(2,2,2)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('CamberGain [deg/100mm]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.KinOut.RH,Data(k).Travel.KinOut.CamberGain*100*180/pi, Kin(k).Col)
+end
+
+subplot(2,2,3)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('Dive [-]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.KinOut.RH,Data(k).Travel.KinOut.Dive, Kin(k).Col)
+end
+
+subplot(2,2,4)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('Squat [-]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.KinOut.RH,Data(k).Travel.KinOut.Squat, Kin(k).Col)
+end
+
+if strcmp(Axle, 'Front') == 1
+	
+	
+	fig3 = figure();
+	undock(fig3)
+
+	subplot(2,1,1)
+	hold on
+	grid on
+	xlabel('Inner Wheel <- Rack [mm] -> Outer Wheel')
+	ylabel('Toe Out <- Toe [deg] -> Toe In')
+	for k = 1:numel(Data)
+		plot(Data(k).Steer.Out.Rack,Data(k).Steer.Out.Toe, Kin(k).Col)
+	end
+	legend({Kin.Name })
+
+	subplot(2,1,2)
+	hold on
+	grid on
+	xlabel('Rack [mm]')
+	ylabel('RH [mm]')
+	for k = 1:numel(Data)
+		plot(Data(k).Steer.Out.Rack,Data(k).Steer.Out.RH, Kin(k).Col)
+	end
+	
+    fig6 = figure();
+	undock(fig6)
+	
+    subplot(2,1,1)
+	hold on
+	grid on
+	xlabel('Rack [mm]')
+	ylabel('SeerRatio [deg/mm]')
+	for k = 1:numel(Data)
+		plot(Data(k).Steer.Out.Rack,Data(k).Steer.Out.SteerRatio, Kin(k).Col)
+	end
+	legend({Kin.Name })
+
+	subplot(2,1,2)
+	hold on
+	grid on
+	xlabel('Rack [mm]')
+	ylabel('Pro Ackerman <- Delta Toe [deg] -> Anti Ackerman')
+	for k = 1:numel(Data)
+		plot(Data(k).Steer.Out.Rack,Data(k).Steer.Out.DeltaToe, Kin(k).Col)
+	end
+	legend({Kin.Name })	
+		
+end
+
+
+fig4 = figure();
+undock(fig4)
+
+subplot(1,1,1)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('Toe [deg]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.Out.RH,Data(k).Travel.Out.Toe, Kin(k).Col)
+end
+legend({Kin.Name })
+
+
+fig5 = figure();
+undock(fig5)
+
+for k = 1:numel(Data)
+	
+	damp_MR = diff(Data(k).Travel.Out.Len_Damper)./diff(Data(k).Travel.Out.RH);
+	Data(k).Travel.Out.Damper_MR = [damp_MR(1); damp_MR'];
+	
+	Arb_MR = diff(Data(k).Travel.Out.ArbRot)./diff(Data(k).Travel.Out.RH);
+	Data(k).Travel.Out.Arb_MR = [Arb_MR(1); Arb_MR'];
+	
+end
+
+subplot(2,1,1)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('damper Motion Ratio [mm/mm]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.Out.RH,Data(k).Travel.Out.Damper_MR, Kin(k).Col)
+end
+
+legend({Kin.Name })
+
+subplot(2,1,2)
+hold on
+grid on
+xlabel('RH [mm]')
+ylabel('arb angle motion ration [deg/mm]')
+for k = 1:numel(Data)
+	plot(Data(k).Travel.Out.RH,Data(k).Travel.Out.Arb_MR, Kin(k).Col)
+end
